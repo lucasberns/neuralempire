@@ -7,10 +7,20 @@ export type Setor = 'varejo' | 'saude' | 'financas' | 'industria' | 'tech'
 
 export interface Contract {
   id: string
+  emoji: string
   titulo: string
   /** Briefing em linguagem de negócio — nunca "faça uma regressão" (GDD §7.1). */
   briefing: string
   setor: Setor
+  /** Skill que este contrato prova (GDD §6). */
+  skillId: string
+  /** Meta de métrica em linguagem simples (GDD §7.1). */
+  metaLabel: string
+  /** Recompensa ao entregar (todos os testes, inclusive ocultos, passando). */
+  payout: number
+  reputacao: number
+  /** Contratos que precisam estar concluídos antes deste (grafo de progressão). */
+  prereqContractIds: string[]
   /** CSV servido pelo próprio app (entra no precache do SW → offline). */
   datasetUrl: string
   starterCode: string
@@ -19,4 +29,8 @@ export interface Contract {
   tests: TestSpec[]
   /** Roda após todos os testes passarem; define `_ne_result` (dict) exibido ao jogador. */
   metricsCode: string
+  /** Dicas progressivas (onboarding guiado, GDD §12). */
+  hints: string[]
+  /** Solução de referência, revelável (o jogador pode aprender vendo). */
+  solution: string
 }

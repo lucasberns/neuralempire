@@ -1,7 +1,7 @@
 const PREVIEW_ROWS = 6
 
 // ponytail: split por vírgula basta — o CSV é nosso, sem aspas nem vírgulas em valores.
-export function DataPreview({ csv }: { csv: string }) {
+export function DataPreview({ csv, note }: { csv: string; note?: string }) {
   const lines = csv.trim().split('\n')
   const header = (lines[0] ?? '').split(',')
   const rows = lines.slice(1, 1 + PREVIEW_ROWS).map((l) => l.split(','))
@@ -29,9 +29,8 @@ export function DataPreview({ csv }: { csv: string }) {
         </table>
       </div>
       <p className="muted">
-        Mostrando {rows.length} de {lines.length - 1} dias. No código, os primeiros{' '}
-        {lines.length - 1 - 12} viram <code>dados_treino</code> e os 12 finais,{' '}
-        <code>dados_novos</code>.
+        Mostrando {rows.length} de {lines.length - 1} linhas.
+        {note ? ` ${note}` : ''}
       </p>
     </div>
   )

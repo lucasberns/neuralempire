@@ -1,25 +1,30 @@
 import { kvGet, kvSet } from './db'
 
-export interface LastResult {
-  passed: number
-  total: number
-  at: string // ISO
-}
-
 export interface GameState {
-  version: 1
+  version: 2
   updatedAt: string // ISO
-  demo: {
-    code: string
-    lastResult?: LastResult
-  }
-  // Fases seguintes penduram aqui: contratos ativos, skills/runas, carteira (GDD §12).
+  money: number
+  reputation: number // 0–100 global (GDD §4.3)
+  streak: { count: number; lastDayISO: string | null }
+  hardwareLevel: number // índice em HARDWARE (content.ts)
+  contracts: { activeId: string | null; doneIds: string[] }
+  /** Código do editor por contrato (o rascunho do jogador sobrevive à navegação). */
+  codeByContract: Record<string, string>
 }
 
 const SAVE_KEY = 'save'
 
-export function newGameState(starterCode: string): GameState {
-  return { version: 1, updatedAt: new Date().toISOString(), demo: { code: starterCode } }
+export function newGameState(): GameState {
+  return {
+    version: 2,
+    updatedAt: new Date().toISOString(),
+    money: 200, // começa apertado na garagem (GDD §2)
+    reputation: 12,
+    streak: { count: 0, lastDayISO: null },
+    hardwareLevel: 0,
+    contracts: { activeId: null, doneIds: [] },
+    codeByContract: {},
+  }
 }
 
 // Fronteira de confiança: o save pode vir de um arquivo importado por fora.
@@ -27,23 +32,35 @@ export function newGameState(starterCode: string): GameState {
 export function isGameState(v: unknown): v is GameState {
   if (typeof v !== 'object' || v === null) return false
   const o = v as Record<string, unknown>
-  if (o.version !== 1 || typeof o.updatedAt !== 'string') return false
-  const demo = o.demo as Record<string, unknown> | undefined
-  if (typeof demo !== 'object' || demo === null) return false
-  if (typeof demo.code !== 'string' || demo.code.length > 100_000) return false
-  if (demo.lastResult !== undefined) {
-    const r = demo.lastResult as Record<string, unknown>
-    if (typeof r !== 'object' || r === null) return false
-    if (typeof r.passed !== 'number' || typeof r.total !== 'number' || typeof r.at !== 'string')
-      return false
-  }
+  if (o.version !== 2 || typeof o.updatedAt !== 'string') return false
+  if (typeof o.money !== 'number' || typeof o.reputation !== 'number') return false
+  if (typeof o.hardwareLevel !== 'number') return false
+  const s = o.streak as Record<string, unknown> | undefined
+  if (typeof s !== 'object' || s === null || typeof s.count !== 'number') return false
+  const c = o.contracts as Record<string, unknown> | undefined
+  if (typeof c !== 'object' || c === null || !Array.isArray(c.doneIds)) return false
+  if (typeof o.codeByContract !== 'object' || o.codeByContract === null) return false
   return true
+}
+
+// Save v1 (fase 0): só tinha demo.code. Recupera o rascunho e reinicia o resto.
+function migrateV1(v: unknown): GameState | null {
+  if (typeof v !== 'object' || v === null) return null
+  const o = v as Record<string, unknown>
+  if (o.version !== 1) return null
+  const demo = o.demo as Record<string, unknown> | undefined
+  const base = newGameState()
+  if (demo && typeof demo.code === 'string') {
+    base.codeByContract['previsao-padaria'] = demo.code
+  }
+  return base
 }
 
 export async function loadGame(): Promise<GameState | null> {
   try {
     const raw = await kvGet<unknown>(SAVE_KEY)
-    return isGameState(raw) ? raw : null
+    if (isGameState(raw)) return raw
+    return migrateV1(raw)
   } catch {
     return null // IndexedDB indisponível (ex.: navegação privada) → começa do zero
   }
@@ -71,7 +88,8 @@ export async function importSave(file: File): Promise<GameState> {
   } catch {
     throw new Error('O arquivo não é um JSON válido.')
   }
-  if (!isGameState(data)) throw new Error('Este arquivo não é um save do Neural Empire.')
-  await saveGame(data)
-  return data
+  const state = isGameState(data) ? data : migrateV1(data)
+  if (!state) throw new Error('Este arquivo não é um save do Neural Empire.')
+  await saveGame(state)
+  return state
 }
