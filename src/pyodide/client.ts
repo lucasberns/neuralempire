@@ -1,0 +1,100 @@
+// Fachada da UI para o worker: fila de execuções por id, timeout com
+// reinício do worker (loop infinito no código do usuário não pode travar o jogo).
+import type { Progress, RunOutcome, RunRequest, WorkerRequest, WorkerResponse } from './messages'
+
+export type ClientState =
+  | { phase: 'loading'; progress: Progress }
+  | { phase: 'ready' }
+  | { phase: 'error'; message: string }
+
+export type RunArgs = Omit<RunRequest, 'type' | 'id'>
+
+const RUN_TIMEOUT_MS = 60_000
+
+interface Pending {
+  resolve: (o: RunOutcome) => void
+  reject: (e: Error) => void
+  timer: number
+}
+
+export class PyodideClient {
+  private worker!: Worker
+  private ready!: Promise<void>
+  private pending = new Map<number, Pending>()
+  private nextId = 1
+
+  constructor(private onState: (s: ClientState) => void) {
+    this.spawn()
+  }
+
+  private spawn(): void {
+    this.onState({ phase: 'loading', progress: { message: 'Iniciando…', loaded: 0, total: 1 } })
+    this.worker = new Worker(new URL('./worker.ts', import.meta.url), { type: 'module' })
+    this.ready = new Promise<void>((resolve, reject) => {
+      this.worker.onmessage = (e: MessageEvent<WorkerResponse>) => {
+        const msg = e.data
+        switch (msg.type) {
+          case 'progress':
+            this.onState({ phase: 'loading', progress: msg })
+            break
+          case 'ready':
+            this.onState({ phase: 'ready' })
+            resolve()
+            break
+          case 'init-error':
+            this.onState({ phase: 'error', message: msg.message })
+            reject(new Error(msg.message))
+            break
+          case 'result':
+            this.settle(msg.id, (p) => p.resolve(msg))
+            break
+          case 'run-error':
+            this.settle(msg.id, (p) => p.reject(new Error(msg.message)))
+            break
+        }
+      }
+    })
+    this.ready.catch(() => undefined) // erro já reportado via onState
+    this.post({ type: 'init' })
+  }
+
+  private post(msg: WorkerRequest): void {
+    this.worker.postMessage(msg)
+  }
+
+  private settle(id: number, fn: (p: Pending) => void): void {
+    const p = this.pending.get(id)
+    if (!p) return
+    this.pending.delete(id)
+    clearTimeout(p.timer)
+    fn(p)
+  }
+
+  async run(args: RunArgs): Promise<RunOutcome> {
+    await this.ready
+    const id = this.nextId++
+    return new Promise<RunOutcome>((resolve, reject) => {
+      const timer = window.setTimeout(() => {
+        this.pending.delete(id)
+        this.restart()
+        reject(
+          new Error(
+            'Tempo esgotado — seu código pode ter entrado em loop infinito. O Python foi reiniciado.',
+          ),
+        )
+      }, RUN_TIMEOUT_MS)
+      this.pending.set(id, { resolve, reject, timer })
+      this.post({ type: 'run', id, ...args })
+    })
+  }
+
+  private restart(): void {
+    this.worker.terminate()
+    for (const p of this.pending.values()) {
+      clearTimeout(p.timer)
+      p.reject(new Error('Execução cancelada.'))
+    }
+    this.pending.clear()
+    this.spawn() // recarrega do cache do SW — bem mais rápido que o 1º load
+  }
+}
