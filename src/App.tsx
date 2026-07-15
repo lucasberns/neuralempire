@@ -49,7 +49,9 @@ export default function App() {
   return (
     <>
       <header className="app-header">
-        <h1>⚡ Neural Empire</h1>
+        <h1>
+          ⚡ Neural Empire <span className="build-id">build {__BUILD_ID__}</span>
+        </h1>
         <div className="header-actions">
           <button onClick={() => game && exportSave(game)} disabled={!game}>
             Exportar save

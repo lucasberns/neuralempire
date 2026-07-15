@@ -48,7 +48,7 @@ export const DEMO_CONTRACT: Contract = {
     'vendas com a temperatura, se era fim de semana e se tinha promoção. Ele quer saber ' +
     'quantos pães vai vender nos próximos dias para assar a quantidade certa. ' +
     'Errar por até 8 pães em média, ele aceita.',
-  datasetUrl: '/datasets/padaria.csv',
+  datasetUrl: `${import.meta.env.BASE_URL}datasets/padaria.csv`,
   starterCode: STARTER_CODE,
   setupCode: SETUP_CODE,
   metricsCode: METRICS_CODE,

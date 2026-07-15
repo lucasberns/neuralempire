@@ -16,6 +16,14 @@ npm run preview   # serve o build (necessário p/ testar o service worker/PWA)
 > O primeiro load baixa ~60 MB do CDN (Pyodide + numpy/pandas/scikit-learn).
 > Depois disso o service worker mantém tudo em cache e o app funciona **offline**.
 
+## Deploy e atualização do PWA
+
+Todo push na `main` roda [.github/workflows/deploy.yml](.github/workflows/deploy.yml):
+build → publica em `https://lucasberns.github.io/neuralempire/`. Cada build gera
+hashes novos no precache do Workbox, então PWAs instalados detectam o service
+worker novo e **atualizam sozinhos** (`registerType: 'autoUpdate'`). O "build
+{data}" no cabeçalho do app confirma qual versão está rodando.
+
 ## Arquitetura
 
 ```

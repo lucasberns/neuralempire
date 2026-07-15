@@ -3,6 +3,10 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
+  // Servido no GitHub Pages em /neuralempire/ (deploy automático a cada push — ver .github/workflows/deploy.yml)
+  base: '/neuralempire/',
+  // Muda a cada build → prova visual de que o PWA instalado atualizou após um push
+  define: { __BUILD_ID__: JSON.stringify(new Date().toISOString().slice(0, 16).replace('T', ' ')) },
   plugins: [
     react(),
     VitePWA({
