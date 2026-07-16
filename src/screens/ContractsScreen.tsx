@@ -1,7 +1,14 @@
 import type { GameState } from '../persistence/saveGame'
 import type { View } from '../nav'
 import type { Contract } from '../engine/contracts'
-import { CONTRACTS, contractById, isAvailable, isDone } from '../game/content'
+import {
+  CONTRACTS,
+  RELAMPAGO,
+  isDone,
+  relampagoAvailable,
+  skillOfContract,
+  skillStatus,
+} from '../game/content'
 
 const money = (n: number) => `R$ ${n.toLocaleString('pt-BR')}`
 
@@ -13,18 +20,21 @@ const SECTOR_LABEL: Record<Contract['setor'], string> = {
   tech: 'Tech',
 }
 
-function ContractCard({
+type CardState = 'done' | 'boss' | 'runas' | 'bloqueada'
+
+function BossCard({
   c,
   state,
   onAccept,
+  onRunes,
 }: {
   c: Contract
-  state: 'done' | 'available' | 'locked'
+  state: CardState
   onAccept: () => void
+  onRunes: () => void
 }) {
-  const prereq = c.prereqContractIds.map((id) => contractById(id)?.titulo).filter(Boolean)
   return (
-    <article className={`contract-card is-${state}`}>
+    <article className={`contract-card is-${state === 'boss' ? 'available' : state === 'done' ? 'done' : 'locked'}`}>
       <header className="cc-head">
         <span className="cc-emoji">{c.emoji}</span>
         <div className="cc-titles">
@@ -51,14 +61,17 @@ function ContractCard({
         </div>
       </div>
 
-      {state === 'available' && (
+      {state === 'boss' && (
         <button className="btn btn-primary" onClick={onAccept}>
-          Aceitar contrato →
+          ⚔ Fazer a Prova de Domínio →
         </button>
       )}
-      {state === 'locked' && (
-        <p className="cc-lock">🔒 Precisa entregar antes: {prereq.join(', ')}</p>
+      {state === 'runas' && (
+        <button className="btn btn-ghost" onClick={onRunes}>
+          Treine as 2 runas no quadro para liberar →
+        </button>
       )}
+      {state === 'bloqueada' && <p className="cc-lock">🔒 Domine a skill anterior primeiro.</p>}
       {state === 'done' && <p className="cc-lock ok">✓ Skill dominada — pagamento recebido.</p>}
     </article>
   )
@@ -73,12 +86,12 @@ export function ContractsScreen({
   onGameChange: (g: GameState) => void
   onNavigate: (v: View) => void
 }) {
-  function accept(c: Contract) {
+  function open(c: Contract) {
     onGameChange({ ...game, contracts: { ...game.contracts, activeId: c.id } })
     onNavigate('workbench')
   }
 
-  const ordered = [...CONTRACTS].sort((a, b) => a.payout - b.payout)
+  const relampagoOn = relampagoAvailable(game)
 
   return (
     <section className="screen">
@@ -86,9 +99,46 @@ export function ContractsScreen({
         <h2 className="screen-title">Mesa de Contratos</h2>
         <p className="muted">Traduza o problema do cliente em código. O holdout é secreto.</p>
       </div>
-      {ordered.map((c) => {
-        const state = isDone(game, c.id) ? 'done' : isAvailable(game, c) ? 'available' : 'locked'
-        return <ContractCard key={c.id} c={c} state={state} onAccept={() => accept(c)} />
+
+      <article className={`contract-card relampago-card${relampagoOn ? '' : ' is-locked'}`}>
+        <header className="cc-head">
+          <span className="cc-emoji">⚡</span>
+          <div className="cc-titles">
+            <h3 className="panel-title">{RELAMPAGO.titulo}</h3>
+            <span className="chip">Diário · 3 min</span>
+          </div>
+        </header>
+        <p className="cc-brief">
+          Um trabalho rápido por dia mantém seu streak e paga um trocado. {RELAMPAGO.metaLabel}.
+        </p>
+        {relampagoOn ? (
+          <button className="btn btn-primary" onClick={() => open(RELAMPAGO)}>
+            ⚡ Pegar o relâmpago (+{money(RELAMPAGO.payout)}) →
+          </button>
+        ) : (
+          <p className="cc-lock ok">✓ Relâmpago de hoje já feito. Volte amanhã.</p>
+        )}
+      </article>
+
+      {CONTRACTS.map((c) => {
+        const skill = skillOfContract(c.id)
+        const st = skill ? skillStatus(game, skill) : 'boss'
+        const state: CardState = isDone(game, c.id)
+          ? 'done'
+          : st === 'boss'
+            ? 'boss'
+            : st === 'runas'
+              ? 'runas'
+              : 'bloqueada'
+        return (
+          <BossCard
+            key={c.id}
+            c={c}
+            state={state}
+            onAccept={() => open(c)}
+            onRunes={() => onNavigate('skills')}
+          />
+        )
       })}
     </section>
   )

@@ -1,0 +1,33 @@
+.onb-back {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  background: radial-gradient(90% 70% at 50% 20%, rgba(142, 209, 44, 0.08), transparent 60%), #070a09;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.onb {
+  max-width: 44ch;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.onb-title {
+  font-family: var(--mono);
+  font-size: 2rem;
+  color: var(--lime);
+}
+.onb-cta {
+  font-family: var(--mono);
+  font-weight: 700;
+  color: #0a1206;
+  background: linear-gradient(180deg, var(--lime), var(--lime-2));
+  border: 1px solid var(--lime);
+  border-radius: 11px;
+  padding: 14px;
+  min-height: 48px;
+  cursor: pointer;
+}

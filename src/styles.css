@@ -528,6 +528,27 @@ button {
   }
 }
 
+.cfg-econ {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--amber);
+  border: 1px solid var(--line-bright);
+  border-radius: var(--r-sm);
+  padding: 9px 12px;
+  margin-bottom: 10px;
+}
+
+/* card do contrato-relâmpago */
+.relampago-card.contract-card {
+  border-color: rgba(255, 191, 71, 0.4);
+}
+.relampago-card .cc-emoji {
+  filter: drop-shadow(0 0 8px rgba(255, 191, 71, 0.7));
+}
+
 /* sheet de configurações */
 .sheet-back {
   position: fixed;

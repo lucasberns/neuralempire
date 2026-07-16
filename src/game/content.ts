@@ -6,6 +6,9 @@ import type { GameState } from '../persistence/saveGame'
 
 const DATASET = (name: string) => `${import.meta.env.BASE_URL}datasets/${name}`
 
+// ---------------------------------------------------------------- Economia
+export const RENT_PER_TURN = 60 // energia + aluguel da garagem, cobrado a cada entrega (GDD §4.1)
+
 // ---------------------------------------------------------------- Hardware
 export interface Hardware {
   nome: string
@@ -25,24 +28,29 @@ export interface SkillDef {
   id: string
   nome: string
   desc: string
-  /** Contrato que prova a skill (undefined = ainda não jogável nesta fase). */
-  contractId?: string
+  /** Boss da skill: contrato sem dica + interrogatório (GDD §5.2). */
+  contractId: string
+  /** Skills que precisam estar dominadas antes desta (grafo do GDD §6). */
+  prereqSkillIds: string[]
 }
 
 export const SKILLS: SkillDef[] = [
-  { id: 'ler', nome: 'Ler Dados', desc: 'Carregar tabelas, olhar colunas, resumir com pandas.', contractId: 'boletim-padaria' },
-  { id: 'explorar', nome: 'Explorar Dados', desc: 'Média, mediana, dispersão, correlação.' },
-  { id: 'limpar', nome: 'Limpar Dados', desc: 'Faltantes, outliers, duplicatas, tipos errados.' },
-  { id: 'regressao', nome: 'Regressão Linear', desc: 'Reta, erro quadrático, treino/teste, MAE.', contractId: 'previsao-padaria' },
+  { id: 'ler', nome: 'Ler Dados', desc: 'Carregar tabelas, olhar colunas, resumir com pandas.', contractId: 'boletim-padaria', prereqSkillIds: [] },
+  { id: 'explorar', nome: 'Explorar Dados', desc: 'Média, correlação, o que os dados dizem.', contractId: 'analise-clima', prereqSkillIds: ['ler'] },
+  { id: 'limpar', nome: 'Limpar Dados', desc: 'Valores faltantes, sujeira, tipos errados.', contractId: 'faxina-cadastro', prereqSkillIds: ['explorar'] },
+  { id: 'regressao', nome: 'Regressão Linear', desc: 'Reta, erro quadrático, treino/teste, MAE.', contractId: 'previsao-padaria', prereqSkillIds: ['limpar'] },
 ]
 
-// ---------------------------------------------------------------- Contratos
+export const skillById = (id: string) => SKILLS.find((s) => s.id === id)
+export const skillOfContract = (contractId: string) => SKILLS.find((s) => s.contractId === contractId)
+
+// ---------------------------------------------------------------- Setups Python
 const SETUP_LER = `import io
 import pandas as pd
 dados = pd.read_csv(io.StringIO(_ne_csv))
 `
 
-// Últimos 12 dias ficam fora do treino: são o holdout dos testes ocultos (GDD §7.1).
+// Últimos 12 dias fora do treino: holdout dos testes ocultos (GDD §7.1).
 const SETUP_REGRESSAO = `import io
 import pandas as pd
 _ne_df = pd.read_csv(io.StringIO(_ne_csv))
@@ -51,6 +59,7 @@ _ne_holdout = _ne_df.iloc[-12:].reset_index(drop=True)
 dados_novos = _ne_holdout.drop(columns=["vendas"])
 `
 
+// ---------------------------------------------------------------- Contratos (bosses)
 export const CONTRACTS: Contract[] = [
   {
     id: 'boletim-padaria',
@@ -103,6 +112,153 @@ assert abs(_r - float(dados["vendas"].mean())) < 0.01
     solution: `def media_de_vendas(dados):
     return dados['vendas'].mean()
 `,
+    interrogation: [
+      {
+        q: 'O Seu Joaquim pergunta: "esse tal de média, o que ele me diz na prática?"',
+        options: [
+          'O valor mais vendido de todos os dias',
+          'Quanto ele vende num dia típico, no geral',
+          'O maior número de pães que ele já vendeu',
+        ],
+        correct: 1,
+      },
+    ],
+  },
+  {
+    id: 'analise-clima',
+    emoji: '🌡️',
+    titulo: 'Será que é o calor?',
+    setor: 'varejo',
+    skillId: 'explorar',
+    briefing:
+      'O Seu Joaquim desconfia que vende mais pão nos dias quentes, mas não tem certeza. ' +
+      'Com o mesmo caderninho, descubra: existe relação entre a temperatura e as vendas? ' +
+      'Devolva a correlação entre as duas colunas — um número de -1 a 1.',
+    metaLabel: 'Devolver a correlação entre temperatura e vendas',
+    payout: 240,
+    reputacao: 8,
+    prereqContractIds: ['boletim-padaria'],
+    datasetUrl: DATASET('padaria.csv'),
+    starterCode: `def correlacao_temp_vendas(dados):
+    # dados: tabela com as colunas 'temperatura' e 'vendas'.
+    # Devolva a correlação entre 'temperatura' e 'vendas'.
+    ...
+`,
+    setupCode: SETUP_LER,
+    tests: [
+      {
+        name: 'Devolve um número entre -1 e 1',
+        hidden: false,
+        code: `_r = float(correlacao_temp_vendas(dados))
+assert -1.0001 <= _r <= 1.0001, "Correla\\u00e7\\u00e3o fica sempre entre -1 e 1"
+`,
+      },
+      {
+        name: 'É a correlação certa das duas colunas',
+        hidden: true,
+        code: `_r = float(correlacao_temp_vendas(dados))
+assert abs(_r - float(dados["temperatura"].corr(dados["vendas"]))) < 0.01
+`,
+      },
+    ],
+    metricsCode: `_r = float(correlacao_temp_vendas(dados))
+_ne_result = {
+    "Correla\\u00e7\\u00e3o encontrada": round(_r, 3),
+    "Leitura": "quanto mais perto de 1, mais o calor puxa as vendas",
+}
+`,
+    hints: [
+      'Uma coluna do pandas tem o método .corr() que mede a relação com outra coluna.',
+      "Pegue as duas colunas: dados['temperatura'] e dados['vendas'].",
+      "Junte: dados['temperatura'].corr(dados['vendas']).",
+    ],
+    solution: `def correlacao_temp_vendas(dados):
+    return dados['temperatura'].corr(dados['vendas'])
+`,
+    interrogation: [
+      {
+        q: 'Cliente: "deu 0,8 de correlação. Isso quer dizer o quê?"',
+        options: [
+          'Que o calor causa 80% das vendas',
+          'Que temperatura e vendas sobem juntas com força',
+          'Que 80 dias tiveram calor',
+        ],
+        correct: 1,
+      },
+      {
+        q: 'Se a correlação desse perto de 0, o que você diria?',
+        options: [
+          'Que temperatura e vendas quase não andam juntas',
+          'Que os dados estão errados',
+          'Que vende mais no frio, com certeza',
+        ],
+        correct: 0,
+      },
+    ],
+  },
+  {
+    id: 'faxina-cadastro',
+    emoji: '🧹',
+    titulo: 'A lista bagunçada',
+    setor: 'varejo',
+    skillId: 'limpar',
+    briefing:
+      'O Seu Joaquim começou a anotar os clientes fiéis, mas a lista veio cheia de buracos — ' +
+      'gente sem idade, sem gasto anotado. Antes de usar esses dados, alguém precisa saber o ' +
+      'tamanho da bagunça. Quantas informações estão faltando na tabela inteira?',
+    metaLabel: 'Contar quantas células estão vazias (faltantes)',
+    payout: 300,
+    reputacao: 10,
+    prereqContractIds: ['analise-clima'],
+    datasetUrl: DATASET('clientes.csv'),
+    starterCode: `def total_faltantes(dados):
+    # dados: tabela de clientes com algumas células vazias (faltantes).
+    # Devolva quantas células estão faltando no total.
+    ...
+`,
+    setupCode: SETUP_LER,
+    tests: [
+      {
+        name: 'total_faltantes(dados) devolve um número inteiro',
+        hidden: false,
+        code: `_r = total_faltantes(dados)
+assert _r is not None, "A fun\\u00e7\\u00e3o retornou None \\u2014 faltou o return?"
+assert int(_r) == _r, "O total de faltantes \\u00e9 um n\\u00famero inteiro"
+`,
+      },
+      {
+        name: 'Conta certo os faltantes da tabela',
+        hidden: true,
+        code: `_r = int(total_faltantes(dados))
+assert _r == int(dados.isnull().sum().sum())
+`,
+      },
+    ],
+    metricsCode: `_r = int(total_faltantes(dados))
+_ne_result = {
+    "C\\u00e9lulas faltando": _r,
+    "Total de c\\u00e9lulas": int(dados.size),
+}
+`,
+    hints: [
+      'O método .isnull() marca com True cada célula vazia da tabela.',
+      'Somando com .sum() duas vezes você conta todas as células True da tabela inteira.',
+      'Junte: dados.isnull().sum().sum() e converta para int.',
+    ],
+    solution: `def total_faltantes(dados):
+    return int(dados.isnull().sum().sum())
+`,
+    interrogation: [
+      {
+        q: 'Cliente: "por que se preocupar com esses campos vazios?"',
+        options: [
+          'Porque a maioria dos modelos quebra ou erra feio com dados faltando',
+          'Porque campo vazio deixa a tabela feia',
+          'Não tem problema nenhum, pode ignorar',
+        ],
+        correct: 0,
+      },
+    ],
   },
   {
     id: 'previsao-padaria',
@@ -111,13 +267,13 @@ assert abs(_r - float(dados["vendas"].mean())) < 0.01
     setor: 'varejo',
     skillId: 'regressao',
     briefing:
-      'O Seu Joaquim gostou do boletim e voltou com um pedido maior: parar de jogar pão fora. ' +
+      'O Seu Joaquim confia em você agora e quer o pulo do gato: parar de jogar pão fora. ' +
       'Ele anotou, por 60 dias, a temperatura, se era fim de semana e se tinha promoção. ' +
       'Preveja quantos pães ele vai vender nos próximos dias. Errar por até 8 pães em média, ele aceita.',
     metaLabel: 'MAE ≤ 8 nos 12 dias de entrega',
     payout: 420,
     reputacao: 12,
-    prereqContractIds: ['boletim-padaria'],
+    prereqContractIds: ['faxina-cadastro'],
     datasetUrl: DATASET('padaria.csv'),
     starterCode: `from sklearn.linear_model import LinearRegression
 
@@ -156,7 +312,6 @@ assert np.isfinite(_res).all(), "H\\u00e1 previs\\u00f5es que n\\u00e3o s\\u00e3
 `,
       },
       {
-        // Pega quem devolve um valor constante (a média) em vez de treinar um modelo.
         name: 'Teste oculto: o modelo realmente reage aos dados',
         hidden: true,
         code: `import numpy as np
@@ -165,7 +320,6 @@ assert float(np.std(_res)) > 1.0
 `,
       },
       {
-        // Qualidade real no holdout que o jogador nunca viu.
         name: 'Teste oculto: entrega dentro da meta (MAE ≤ 8)',
         hidden: true,
         code: `import numpy as np
@@ -199,24 +353,106 @@ def prever_vendas(dados_treino, dados_novos):
     modelo.fit(X, y)
     return modelo.predict(dados_novos[colunas])
 `,
+    interrogation: [
+      {
+        q: 'Cliente: "por que você separou uns dias e não usou todos pra treinar?"',
+        options: [
+          'Pra testar o modelo em dias que ele nunca viu e saber se ele acerta de verdade',
+          'Pra treinar mais rápido',
+          'Porque sobra dado, não faz diferença',
+        ],
+        correct: 0,
+      },
+      {
+        q: 'Cliente: "esse MAE de 6 pães significa o quê pro meu negócio?"',
+        options: [
+          'Que erro, em média, uns 6 pães pra mais ou pra menos por dia',
+          'Que acerto 6% das vezes',
+          'Que vou perder 6 reais por dia',
+        ],
+        correct: 0,
+      },
+    ],
   },
 ]
 
+// Contrato-relâmpago diário (GDD §7.2): 3 min, mantém streak e reputação.
+export const RELAMPAGO: Contract = {
+  id: 'relampago-diario',
+  emoji: '⚡',
+  titulo: 'Relâmpago do dia',
+  setor: 'varejo',
+  skillId: 'ler',
+  briefing:
+    'Trabalho rápido pra manter a máquina girando: o Seu Joaquim só quer o maior número de ' +
+    'vendas registrado no caderninho. Devolva o valor máximo da coluna de vendas.',
+  metaLabel: 'Devolver o maior valor de vendas',
+  payout: 40,
+  reputacao: 1,
+  prereqContractIds: [],
+  datasetUrl: DATASET('padaria.csv'),
+  starterCode: `def maior_venda(dados):
+    # Devolva o maior valor da coluna 'vendas'.
+    ...
+`,
+  setupCode: SETUP_LER,
+  tests: [
+    {
+      name: 'Devolve um número',
+      hidden: false,
+      code: `_r = maior_venda(dados)
+assert _r is not None, "Faltou o return?"
+float(_r)
+`,
+    },
+    {
+      name: 'É o máximo certo',
+      hidden: true,
+      code: `assert abs(float(maior_venda(dados)) - float(dados["vendas"].max())) < 0.01
+`,
+    },
+  ],
+  metricsCode: `_ne_result = {"Maior venda": round(float(maior_venda(dados)), 1)}
+`,
+  hints: ["Uma coluna tem o método .max(): dados['vendas'].max()."],
+  solution: `def maior_venda(dados):
+    return dados['vendas'].max()
+`,
+  interrogation: [],
+}
+
 // ---------------------------------------------------------------- Regras puras
-export const contractById = (id: string) => CONTRACTS.find((c) => c.id === id)
+export const contractById = (id: string): Contract | undefined =>
+  id === RELAMPAGO.id ? RELAMPAGO : CONTRACTS.find((c) => c.id === id)
 
 export const isDone = (g: GameState, id: string) => g.contracts.doneIds.includes(id)
 
 export const isAvailable = (g: GameState, c: Contract) =>
   !isDone(g, c.id) && c.prereqContractIds.every((id) => isDone(g, id))
 
-export type SkillStatus = 'bloqueada' | 'disponivel' | 'dominada' | 'em-breve'
+// -------- Runas + boss (GDD §5)
+export const emptyRunes = { intuicao: false, matematica: false }
+export const runesOf = (g: GameState, skillId: string) => g.runes[skillId] ?? emptyRunes
+export const runesComplete = (g: GameState, skillId: string) => {
+  const r = runesOf(g, skillId)
+  return r.intuicao && r.matematica
+}
+
+export type SkillStatus = 'bloqueada' | 'runas' | 'boss' | 'dominada'
 
 export function skillStatus(g: GameState, s: SkillDef): SkillStatus {
-  if (!s.contractId) return 'em-breve'
   if (isDone(g, s.contractId)) return 'dominada'
-  const c = contractById(s.contractId)
-  return c && isAvailable(g, c) ? 'disponivel' : 'bloqueada'
+  const prereqsOk = s.prereqSkillIds.every((id) => {
+    const p = skillById(id)
+    return p && isDone(g, p.contractId)
+  })
+  if (!prereqsOk) return 'bloqueada'
+  return runesComplete(g, s.id) ? 'boss' : 'runas'
+}
+
+export function completeRune(g: GameState, skillId: string, rune: 'intuicao' | 'matematica'): GameState {
+  const cur = runesOf(g, skillId)
+  return { ...g, runes: { ...g.runes, [skillId]: { ...cur, [rune]: true } } }
 }
 
 export const currentHardware = (g: GameState) => HARDWARE[g.hardwareLevel] ?? HARDWARE[0]
@@ -224,26 +460,42 @@ export const nextHardware = (g: GameState): Hardware | undefined => HARDWARE[g.h
 
 const today = () => new Date().toISOString().slice(0, 10)
 
-/** Aplica a recompensa de um contrato entregue. Idempotente: não paga de novo. */
+/**
+ * Aplica a entrega de um contrato: paga (proporcional ao acerto do interrogatório),
+ * cobra o custo fixo do turno, sobe reputação e streak. Idempotente p/ bosses.
+ * `interrogationScore` ∈ [0,1] (1 = acertou tudo). Relâmpago não conta como boss.
+ */
 export function completeContract(
   g: GameState,
   c: Contract,
-): { next: GameState; bonus: boolean; already: boolean } {
-  if (isDone(g, c.id)) return { next: g, bonus: false, already: true }
+  interrogationScore = 1,
+): { next: GameState; earned: number; rent: number } {
+  const isBoss = c.id !== RELAMPAGO.id
+  if (isBoss && isDone(g, c.id)) return { next: g, earned: 0, rent: 0 }
+
   const streakDay = today()
   const streak =
     g.streak.lastDayISO === streakDay
       ? g.streak
       : { count: g.streak.count + 1, lastDayISO: streakDay }
+
+  // pagamento penaliza erros no interrogatório (mín. 50%), arredondado
+  const earned = Math.round(c.payout * (0.5 + 0.5 * interrogationScore))
+  const turn = g.turn + 1
+  const rent = RENT_PER_TURN
+  const doneIds = isBoss ? [...g.contracts.doneIds, c.id] : g.contracts.doneIds
+
   const next: GameState = {
     ...g,
-    money: g.money + c.payout,
+    money: g.money + earned - rent,
     reputation: Math.min(100, g.reputation + c.reputacao),
     streak,
-    // Mantém activeId: a bancada continua montada p/ o jogador ver a recompensa.
-    contracts: { ...g.contracts, doneIds: [...g.contracts.doneIds, c.id] },
+    turn,
+    rentPaidUpTo: turn,
+    contracts: { ...g.contracts, doneIds },
+    relampagoLastDayISO: isBoss ? g.relampagoLastDayISO : streakDay,
   }
-  return { next, bonus: false, already: false }
+  return { next, earned, rent }
 }
 
 export function buyHardware(g: GameState): GameState | null {
@@ -251,3 +503,6 @@ export function buyHardware(g: GameState): GameState | null {
   if (!nxt || g.money < nxt.custo) return null
   return { ...g, money: g.money - nxt.custo, hardwareLevel: g.hardwareLevel + 1 }
 }
+
+/** Relâmpago liberado uma vez por dia (GDD §8). */
+export const relampagoAvailable = (g: GameState) => g.relampagoLastDayISO !== today()

@@ -7,7 +7,8 @@ import type { View } from '../nav'
 import { CodeEditor } from '../editor/CodeEditor'
 import { DataPreview } from '../components/DataPreview'
 import { TestResults } from '../components/TestResults'
-import { completeContract, isDone } from '../game/content'
+import { Interrogatorio } from './Interrogatorio'
+import { RENT_PER_TURN, completeContract, isDone } from '../game/content'
 
 const money = (n: number) => `R$ ${n.toLocaleString('pt-BR')}`
 
@@ -33,7 +34,8 @@ export function WorkbenchScreen({
   const [runError, setRunError] = useState<string | null>(null)
   const [hintsOpen, setHintsOpen] = useState(0)
   const [showSolution, setShowSolution] = useState(false)
-  const [reward, setReward] = useState<{ payout: number; rep: number } | null>(null)
+  const [interrogating, setInterrogating] = useState(false)
+  const [reward, setReward] = useState<{ earned: number; rep: number; rent: number } | null>(null)
   const [editorNonce, setEditorNonce] = useState(0) // bump → remonta o editor com o código novo
 
   const code = game.codeByContract[contract.id] ?? contract.starterCode
@@ -48,6 +50,13 @@ export function WorkbenchScreen({
 
   function setCode(next: string) {
     onGameChange({ ...game, codeByContract: { ...game.codeByContract, [contract.id]: next } })
+  }
+
+  function finalize(interrogationScore: number) {
+    const { next, earned, rent } = completeContract(game, contract, interrogationScore)
+    onGameChange(next)
+    setReward({ earned, rep: contract.reputacao, rent })
+    setInterrogating(false)
   }
 
   async function run() {
@@ -66,11 +75,8 @@ export function WorkbenchScreen({
       })
       setOutcome(result)
       if (result.ok && !done) {
-        const { next, already } = completeContract(game, contract)
-        if (!already) {
-          onGameChange(next)
-          setReward({ payout: contract.payout, rep: contract.reputacao })
-        }
+        if (contract.interrogation.length > 0) setInterrogating(true) // boss → interrogatório
+        else finalize(1) // relâmpago / sem perguntas
       }
     } catch (e) {
       setRunError(e instanceof Error ? e.message : String(e))
@@ -86,7 +92,8 @@ export function WorkbenchScreen({
           {contract.emoji} {contract.titulo}
         </h2>
         <p className="muted">
-          Meta: <b>{contract.metaLabel}</b> · Paga {money(contract.payout)}
+          Meta: <b>{contract.metaLabel}</b> · Paga até {money(contract.payout)} · Custo do mês{' '}
+          {money(RENT_PER_TURN)}
         </p>
       </div>
 
@@ -183,12 +190,15 @@ export function WorkbenchScreen({
           <div className="reward-burst">✓</div>
           <h3 className="panel-title">Contrato entregue!</h3>
           <p>
-            <b className="amber">+{money(reward.payout)}</b> no caixa e{' '}
-            <b>+{reward.rep} de reputação</b>. Skill dominada na árvore.
+            <b className="amber">+{money(reward.earned)}</b> no caixa e{' '}
+            <b>+{reward.rep} de reputação</b>.
+          </p>
+          <p className="muted">
+            Custo fixo do mês descontado: −{money(reward.rent)} (energia + aluguel).
           </p>
           <div className="assist-row">
-            <button className="btn btn-primary" onClick={() => onNavigate('contratos')}>
-              Próximo contrato →
+            <button className="btn btn-primary" onClick={() => onNavigate('lab')}>
+              Voltar à garagem →
             </button>
             <button className="btn btn-ghost" onClick={() => onNavigate('skills')}>
               Ver árvore
@@ -198,6 +208,10 @@ export function WorkbenchScreen({
       )}
 
       {outcome && <TestResults outcome={outcome} />}
+
+      {interrogating && (
+        <Interrogatorio questions={contract.interrogation} onFinish={(score) => finalize(score)} />
+      )}
     </section>
   )
 }
