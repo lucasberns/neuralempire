@@ -770,11 +770,16 @@ export function completeContract(
       : { count: g.streak.count + 1, lastDayISO: streakDay }
 
   // pagamento penaliza erros no interrogatório (mín. 50%), arredondado
-  const earned = Math.round(c.payout * (0.5 + 0.5 * interrogationScore))
+  let earned = Math.round(c.payout * (0.5 + 0.5 * interrogationScore))
+  // Ferrugem (GDD §5.3): contrato do bairro de uma skill enferrujada paga menos.
+  const rusty = c.repeatable && isRusted(g, c.skillId, streakDay)
+  if (rusty) earned = Math.round(earned * 0.6)
   // Só o boss é um "mês" com custo fixo; bairro/relâmpago são gigas avulsas.
   const rent = isBoss ? RENT_PER_TURN : 0
   const turn = isBoss ? g.turn + 1 : g.turn
   const doneIds = isBoss ? [...g.contracts.doneIds, c.id] : g.contracts.doneIds
+  // Entregar/refazer o trabalho de uma skill conta como revisão (tira ferrugem).
+  const reviewSkillId = isBoss ? skillOfContract(c.id)?.id : c.repeatable ? c.skillId : undefined
 
   const next: GameState = {
     ...g,
@@ -785,6 +790,7 @@ export function completeContract(
     rentPaidUpTo: turn,
     contracts: { ...g.contracts, doneIds },
     relampagoLastDayISO: isRelampago ? streakDay : g.relampagoLastDayISO,
+    skillReview: reviewSkillId ? bumpReview(g.skillReview, reviewSkillId, streakDay) : g.skillReview,
   }
   return { next, earned, rent }
 }
@@ -797,3 +803,73 @@ export function buyHardware(g: GameState): GameState | null {
 
 /** Relâmpago liberado uma vez por dia (GDD §8). */
 export const relampagoAvailable = (g: GameState) => g.relampagoLastDayISO !== today()
+
+// ---------------------------------------------------------------- Economia de tensão (GDD §4.4)
+// Conta diária do laboratório (energia + aluguel) — cresce com o hardware.
+export const dailyBill = (hardwareLevel: number) => 30 + hardwareLevel * 30
+export const LOAN = 400 // valor do empréstimo do agiota
+const DEBT_INTEREST = 1.1 // juros por dia sobre a dívida
+
+const daysBetween = (aISO: string, bISO: string) =>
+  Math.floor((Date.parse(bISO) - Date.parse(aISO)) / 86_400_000)
+
+/** Cobra a conta do lab uma vez por dia + aplica juros da dívida. Idempotente no mesmo dia. */
+export function applyDailyBill(g: GameState, todayISO: string): { next: GameState; charged: number } {
+  if (g.lastBillDayISO === todayISO) return { next: g, charged: 0 }
+  const charged = dailyBill(g.hardwareLevel)
+  const debt = g.debt > 0 ? Math.round(g.debt * DEBT_INTEREST) : 0
+  return { next: { ...g, money: g.money - charged, debt, lastBillDayISO: todayISO }, charged }
+}
+
+export const agiotaAvailable = (g: GameState) => g.money < 0
+export const takeLoan = (g: GameState): GameState => ({ ...g, money: g.money + LOAN, debt: g.debt + LOAN })
+export function payAgiota(g: GameState): GameState {
+  const pay = Math.min(Math.max(g.money, 0), g.debt)
+  return { ...g, money: g.money - pay, debt: g.debt - pay }
+}
+
+/** Fundo do poço: sem saída plausível → pode declarar falência. */
+export const falenciaAvailable = (g: GameState) => g.money <= -200 || g.debt >= 1500
+
+/** Falência (GDD §4.4): perde lab, upgrades e dinheiro. NUNCA perde skills. New Game+. */
+export function declararFalencia(g: GameState): GameState {
+  return {
+    ...g,
+    money: 200,
+    hardwareLevel: 0,
+    debt: 0,
+    ngPlus: g.ngPlus + 1,
+    lastBillDayISO: today(),
+    // mantém: contracts.doneIds (skills), runes, skillReview, achievements, streak, onboarded
+  }
+}
+
+// ---------------------------------------------------------------- Ferrugem (GDD §5.3)
+// Intervalos crescentes tipo SM-2: revisou 1x → enferruja em 3d; 2x → 7d; 3x → 21d; 4x+ → 60d.
+const RUST_INTERVALS = [3, 7, 21, 60]
+
+const bumpReview = (
+  rev: GameState['skillReview'],
+  skillId: string,
+  todayISO: string,
+): GameState['skillReview'] => {
+  const level = (rev[skillId]?.level ?? 0) + 1
+  return { ...rev, [skillId]: { lastISO: todayISO, level } }
+}
+
+/** Uma skill dominada enferruja se ficou sem uso além do intervalo atual. */
+export function isRusted(g: GameState, skillId: string, todayISO: string): boolean {
+  const s = skillById(skillId)
+  if (!s || !isDone(g, s.contractId)) return false
+  const rev = g.skillReview[skillId]
+  if (!rev) return false
+  const interval = RUST_INTERVALS[Math.min(rev.level - 1, RUST_INTERVALS.length - 1)] ?? RUST_INTERVALS[0]
+  return daysBetween(rev.lastISO, todayISO) > interval
+}
+
+/** Revisão-relâmpago que tira a ferrugem e empurra o próximo intervalo (GDD §5.3). */
+export function reviewSkill(g: GameState, skillId: string): GameState {
+  return { ...g, skillReview: bumpReview(g.skillReview, skillId, today()) }
+}
+
+export const todayISO = () => today()

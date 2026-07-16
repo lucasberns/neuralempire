@@ -9,12 +9,20 @@ import { WorkbenchScreen } from './screens/WorkbenchScreen'
 import { RunaScreen } from './screens/RunaScreen'
 import { Onboarding } from './screens/Onboarding'
 import {
+  LOAN,
+  agiotaAvailable,
+  applyDailyBill,
   completeRune,
   contractById,
+  declararFalencia,
+  falenciaAvailable,
   isKata,
   pendingAchievements,
+  reviewSkill,
   skillById,
   skillOfKata,
+  takeLoan,
+  todayISO,
 } from './game/content'
 import {
   exportSave,
@@ -58,6 +66,15 @@ export default function App() {
     setNotice(`🏆 Conquista: ${novas.map((a) => a.nome).join(' · ')}`)
   }, [game])
 
+  // Conta diária do lab (GDD §4.1): cobra uma vez por dia. Idempotente → não faz loop.
+  useEffect(() => {
+    if (!game) return
+    const { next, charged } = applyDailyBill(game, todayISO())
+    if (charged <= 0) return
+    setGame(next)
+    setNotice(`🧾 Conta do laboratório: −R$ ${charged} (energia + aluguel)`)
+  }, [game])
+
   async function onImportFile(file: File) {
     try {
       setGame(await importSave(file))
@@ -78,6 +95,46 @@ export default function App() {
 
   if (!game.onboarded) {
     return <Onboarding onDone={() => setGame({ ...game, onboarded: true })} />
+  }
+
+  // Agiota (GDD §4.4): aparece quando o caixa fica negativo. Empréstimo ou falência.
+  if (agiotaAvailable(game)) {
+    const money = `R$ ${game.money.toLocaleString('pt-BR')}`
+    return (
+      <div className="agiota-back">
+        <div className="agiota" role="dialog" aria-label="O agiota tech">
+          <span className="agiota-face">🦈</span>
+          <h2 className="agiota-title">O agiota tech</h2>
+          <p>
+            Seu caixa está em <b className="red">{money}</b>. Sem dinheiro, o laboratório para.
+            {game.debt > 0 && (
+              <>
+                {' '}
+                Você já deve <b className="amber">R$ {game.debt.toLocaleString('pt-BR')}</b> (juros
+                todo dia).
+              </>
+            )}
+          </p>
+          <button className="btn btn-primary" onClick={() => setGame(takeLoan(game))}>
+            Pegar R$ {LOAN} emprestado (com juros)
+          </button>
+          {falenciaAvailable(game) && (
+            <button
+              className="btn btn-ghost danger"
+              onClick={() => {
+                setGame(declararFalencia(game))
+                setNotice('💥 Falência. Perdeu o lab — mas o conhecimento é seu. New Game+.')
+              }}
+            >
+              Declarar falência (recomeça a garagem, skills mantidas)
+            </button>
+          )}
+          <p className="footnote left">
+            Conhecimento é o único ativo à prova de falência. Suas skills nunca somem.
+          </p>
+        </div>
+      </div>
+    )
   }
 
   const active = game.contracts.activeId ? contractById(game.contracts.activeId) : undefined
@@ -130,6 +187,10 @@ export default function App() {
                 onOpenBoss={(contractId) => {
                   setGame({ ...game, contracts: { ...game.contracts, activeId: contractId } })
                   setView('workbench')
+                }}
+                onReview={(skillId) => {
+                  setGame(reviewSkill(game, skillId))
+                  setNotice('✨ Ferrugem removida. A skill voltou a brilhar.')
                 }}
               />
             )}

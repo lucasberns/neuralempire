@@ -1,6 +1,6 @@
 import type { GameState } from '../persistence/saveGame'
 import type { RuneKind } from '../nav'
-import { SKILLS, runesOf, skillStatus, type SkillStatus } from '../game/content'
+import { SKILLS, isRusted, runesOf, skillStatus, todayISO, type SkillStatus } from '../game/content'
 
 const STATUS_META: Record<SkillStatus, { label: string; glyph: string }> = {
   dominada: { label: 'Dominada', glyph: '✓' },
@@ -14,12 +14,15 @@ export function SkillTreeScreen({
   onOpenRune,
   onOpenKata,
   onOpenBoss,
+  onReview,
 }: {
   game: GameState
   onOpenRune: (skillId: string, kind: RuneKind) => void
   onOpenKata: (skillId: string) => void
   onOpenBoss: (contractId: string) => void
+  onReview: (skillId: string) => void
 }) {
+  const hoje = todayISO()
   const dominadas = SKILLS.filter((s) => skillStatus(game, s) === 'dominada').length
 
   return (
@@ -39,8 +42,9 @@ export function SkillTreeScreen({
           const active = status !== 'bloqueada'
           const bossReady = status === 'boss'
           const done = status === 'dominada'
+          const rusted = done && isRusted(game, s.id, hoje)
           return (
-            <div key={s.id} className={`skill-node is-${status}`}>
+            <div key={s.id} className={`skill-node is-${status}${rusted ? ' is-rusted' : ''}`}>
               {i > 0 && <span className={`skill-link ${active ? '' : 'dim'}`} />}
               <div className="skill-orb">
                 <span className="skill-tier">T1·{i + 1}</span>
@@ -49,7 +53,11 @@ export function SkillTreeScreen({
               <div className="skill-body">
                 <div className="skill-top">
                   <h3 className="panel-title">{s.nome}</h3>
-                  <span className={`chip status-${status}`}>{meta.label}</span>
+                  {rusted ? (
+                    <span className="chip status-rusted">Enferrujada</span>
+                  ) : (
+                    <span className={`chip status-${status}`}>{meta.label}</span>
+                  )}
                 </div>
                 <p className="muted">{s.desc}</p>
 
@@ -79,8 +87,22 @@ export function SkillTreeScreen({
                   </button>
                 </div>
 
+                {rusted && (
+                  <p className="footnote left rust-warn">
+                    Sem uso, sua equipe enferrujou aqui — contratos do bairro dessa skill pagam
+                    menos. Uma revisão rápida tira a ferrugem.
+                  </p>
+                )}
+                {rusted && (
+                  <button className="btn btn-primary sm" onClick={() => onReview(s.id)}>
+                    🔧 Revisar (tirar a ferrugem)
+                  </button>
+                )}
                 {(bossReady || done) && (
-                  <button className="btn btn-primary sm" onClick={() => onOpenBoss(s.contractId)}>
+                  <button
+                    className={`btn ${rusted ? 'btn-ghost' : 'btn-primary'} sm`}
+                    onClick={() => onOpenBoss(s.contractId)}
+                  >
                     {done ? 'Revisar a Prova' : '⚔ Fazer a Prova de Domínio'}
                   </button>
                 )}

@@ -8,7 +8,9 @@ import {
   SKILLS,
   buyHardware,
   currentHardware,
+  dailyBill,
   nextHardware,
+  payAgiota,
   relampagoAvailable,
   skillStatus,
 } from '../game/content'
@@ -88,6 +90,11 @@ export function LabScreen({
         <span className="ov-stat amber" title="Caixa">◈ {money(game.money)}</span>
         <span className="ov-stat cyan" title="Reputação">★ {game.reputation}</span>
         <span className="ov-stat lime" title="Streak">▲ {game.streak.count}</span>
+        {game.debt > 0 && (
+          <span className="ov-stat red" title="Dívida com o agiota">
+            ⚠ {money(game.debt)}
+          </span>
+        )}
       </div>
 
       <div className="ov ov-bl">
@@ -122,9 +129,23 @@ export function LabScreen({
           <div className="sheet" role="dialog" aria-label="Configurações" onClick={(e) => e.stopPropagation()}>
             <h3 className="panel-title">Configurações</h3>
             <div className="cfg-econ">
-              <span>Mês {game.turn + 1}</span>
-              <span>Custo fixo por entrega: {money(RENT_PER_TURN)}</span>
+              <span>Conta diária: {money(dailyBill(game.hardwareLevel))}</span>
+              <span>Custo por entrega: {money(RENT_PER_TURN)}</span>
             </div>
+            {game.debt > 0 && (
+              <div className="cfg-debt">
+                <span>
+                  Dívida com o agiota: <b className="red">{money(game.debt)}</b>
+                </span>
+                <button
+                  className="btn btn-ghost sm"
+                  disabled={game.money <= 0}
+                  onClick={() => onGameChange(payAgiota(game))}
+                >
+                  Pagar o que der
+                </button>
+              </div>
+            )}
             <p className="muted">
               O save fica no aparelho e funciona offline. Backup em JSON para levar a outro
               dispositivo:

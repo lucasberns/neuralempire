@@ -24,6 +24,12 @@ export interface GameState {
   onboarded: boolean // já viu a introdução (o tio, o bilhete)?
   relampagoLastDayISO: string | null // controle do contrato-relâmpago diário
   achievements: string[] // conquistas desbloqueadas (GDD §8)
+  // Economia de tensão (GDD §4.4)
+  debt: number // dívida com o agiota (cresce com juros por dia)
+  ngPlus: number // quantas falências superadas (New Game+)
+  lastBillDayISO: string | null // último dia em que a conta do lab foi cobrada
+  // Ferrugem / repetição espaçada (GDD §5.3): por skill, quando foi revisada e o nível do intervalo
+  skillReview: Record<string, { lastISO: string; level: number }>
 }
 
 const SAVE_KEY = 'save'
@@ -44,6 +50,10 @@ export function newGameState(): GameState {
     onboarded: false,
     relampagoLastDayISO: null,
     achievements: [],
+    debt: 0,
+    ngPlus: 0,
+    lastBillDayISO: null,
+    skillReview: {},
   }
 }
 
@@ -104,8 +114,18 @@ function migrateOld(v: unknown): GameState | null {
 export async function loadGame(): Promise<GameState | null> {
   try {
     const raw = await kvGet<unknown>(SAVE_KEY)
-    // achievements chegou depois do v3; normaliza saves que não o têm.
-    if (isGameState(raw)) return { ...raw, achievements: raw.achievements ?? [] }
+    // campos que chegaram depois do v3; normaliza saves que não os têm.
+    if (isGameState(raw)) {
+      const base = newGameState()
+      return {
+        ...raw,
+        achievements: raw.achievements ?? [],
+        debt: raw.debt ?? 0,
+        ngPlus: raw.ngPlus ?? 0,
+        lastBillDayISO: raw.lastBillDayISO ?? null,
+        skillReview: raw.skillReview ?? base.skillReview,
+      }
+    }
     return migrateOld(raw)
   } catch {
     return null // IndexedDB indisponível (ex.: navegação privada) → começa do zero

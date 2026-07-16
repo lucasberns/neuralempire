@@ -119,6 +119,12 @@ p {
 .cyan {
   color: var(--cyan);
 }
+.red {
+  color: var(--red);
+}
+.ov-stat.red {
+  color: var(--red);
+}
 .footnote {
   color: var(--dim);
   font-family: var(--mono);
@@ -539,6 +545,78 @@ button {
   border-radius: var(--r-sm);
   padding: 9px 12px;
   margin-bottom: 10px;
+}
+.cfg-debt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  border: 1px solid rgba(255, 95, 86, 0.4);
+  border-radius: var(--r-sm);
+  padding: 8px 12px;
+  margin-bottom: 10px;
+}
+.btn.sm {
+  min-height: 38px;
+  padding: 7px 12px;
+  margin-top: 0;
+}
+
+/* Agiota (crise de caixa) */
+.agiota-back {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: radial-gradient(90% 70% at 50% 30%, rgba(255, 95, 86, 0.12), transparent 60%), #070a09;
+}
+.agiota {
+  max-width: 46ch;
+  width: 100%;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: linear-gradient(160deg, var(--panel-2), var(--panel));
+  border: 1px solid rgba(255, 95, 86, 0.5);
+  border-radius: 18px;
+  padding: 26px 22px;
+  box-shadow: 0 0 50px -18px rgba(255, 95, 86, 0.6);
+}
+.agiota-face {
+  font-size: 2.6rem;
+}
+.agiota-title {
+  font-family: var(--mono);
+  color: var(--red);
+}
+.agiota .btn.danger {
+  border-color: rgba(255, 95, 86, 0.5);
+  color: var(--red);
+}
+
+/* Ferrugem (skill enferrujada) */
+.skill-node.is-rusted .skill-orb {
+  border-color: rgba(255, 159, 71, 0.55);
+  color: #ff9f47;
+  box-shadow: none;
+  filter: saturate(0.7);
+}
+.skill-node.is-rusted .skill-orb .skill-glyph {
+  animation: none;
+}
+.chip.status-rusted {
+  color: #ff9f47;
+  border-color: rgba(255, 159, 71, 0.5);
+  background: rgba(255, 159, 71, 0.08);
+}
+.rust-warn {
+  color: #ffb877 !important;
 }
 
 /* card do contrato-relâmpago */
