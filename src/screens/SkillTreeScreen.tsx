@@ -1,5 +1,5 @@
 import type { GameState } from '../persistence/saveGame'
-import type { View } from '../components/BottomNav'
+import type { View } from '../nav'
 import { SKILLS, contractById, isAvailable, skillStatus, type SkillStatus } from '../game/content'
 
 const STATUS_META: Record<SkillStatus, { label: string; glyph: string }> = {

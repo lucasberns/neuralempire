@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { PyodideClient, type ClientState } from './pyodide/client'
-import { StatHud } from './components/StatHud'
-import { BottomNav, type View } from './components/BottomNav'
+import { TopBar } from './components/TopBar'
+import type { View } from './nav'
 import { LabScreen } from './screens/LabScreen'
 import { ContractsScreen } from './screens/ContractsScreen'
 import { SkillTreeScreen } from './screens/SkillTreeScreen'
@@ -58,58 +58,57 @@ export default function App() {
   }
 
   const active = game.contracts.activeId ? contractById(game.contracts.activeId) : undefined
-  const onWorkbench = view === 'workbench' && active && clientRef.current
 
   return (
-    <div className="app">
-      <StatHud game={game} />
-
+    <>
       {notice && (
         <div className="toast" onClick={() => setNotice(null)}>
           {notice} <span className="toast-x">✕</span>
         </div>
       )}
 
-      <main className="app-main">
-        {view === 'lab' && (
-          <LabScreen
-            game={game}
-            onGameChange={setGame}
-            onNavigate={setView}
-            onExport={() => exportSave(game)}
-            onImport={() => fileRef.current?.click()}
-          />
-        )}
-        {view === 'contratos' && (
-          <ContractsScreen game={game} onGameChange={setGame} onNavigate={setView} />
-        )}
-        {view === 'skills' && (
-          <SkillTreeScreen game={game} onGameChange={setGame} onNavigate={setView} />
-        )}
-        {onWorkbench && (
-          <WorkbenchScreen
-            contract={active}
-            client={clientRef.current!}
-            pyState={pyState}
-            game={game}
-            onGameChange={setGame}
-            onNavigate={setView}
-          />
-        )}
-        {view === 'workbench' && !active && (
-          <section className="screen">
-            <div className="panel">
-              <h3 className="panel-title">Nenhum contrato aberto</h3>
-              <p className="muted">Escolha um contrato na mesa para abrir a bancada.</p>
-              <button className="btn btn-primary" onClick={() => setView('contratos')}>
-                Ir para os contratos →
-              </button>
-            </div>
-          </section>
-        )}
-      </main>
-
-      <BottomNav view={view} onNavigate={setView} hasActive={!!active} />
+      {view === 'lab' ? (
+        <LabScreen
+          game={game}
+          onGameChange={setGame}
+          onNavigate={setView}
+          onExport={() => exportSave(game)}
+          onImport={() => fileRef.current?.click()}
+        />
+      ) : (
+        <div className="app">
+          <TopBar game={game} onBack={() => setView('lab')} />
+          <main className="app-main">
+            {view === 'contratos' && (
+              <ContractsScreen game={game} onGameChange={setGame} onNavigate={setView} />
+            )}
+            {view === 'skills' && (
+              <SkillTreeScreen game={game} onGameChange={setGame} onNavigate={setView} />
+            )}
+            {view === 'workbench' && active && clientRef.current && (
+              <WorkbenchScreen
+                contract={active}
+                client={clientRef.current}
+                pyState={pyState}
+                game={game}
+                onGameChange={setGame}
+                onNavigate={setView}
+              />
+            )}
+            {view === 'workbench' && !active && (
+              <section className="screen">
+                <div className="panel">
+                  <h3 className="panel-title">Nenhum contrato aberto</h3>
+                  <p className="muted">Escolha um contrato na mesa para abrir a bancada.</p>
+                  <button className="btn btn-primary" onClick={() => setView('contratos')}>
+                    Ir para os contratos →
+                  </button>
+                </div>
+              </section>
+            )}
+          </main>
+        </div>
+      )}
 
       <input
         ref={fileRef}
@@ -122,6 +121,6 @@ export default function App() {
           e.target.value = ''
         }}
       />
-    </div>
+    </>
   )
 }

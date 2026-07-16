@@ -1,4 +1,4 @@
-// Cena isométrica da garagem — o "modo de jogo" (estilo Game Dev Tycoon):
+// Cena isométrica da garagem — o modo de jogo (estilo Game Dev Tycoon):
 // você está dentro do espaço, na frente do PC, e ele evolui com o hardware.
 // Projeção iso via SVG gerado por código (nada de path data na mão) → leve, offline,
 // escala perfeito no mobile e combina com o visual neon-terminal do jogo.
@@ -71,26 +71,16 @@ function Leds({ x, y, z, n, cls }: { x: number; y: number; z: number; n: number;
   )
 }
 
-// Rótulo de hotspot: ponto + texto mono, sempre visível (mobile não tem hover confiável).
-function Label({ at, text }: { at: Pt; text: string }) {
-  const [x, y] = at
-  return (
-    <g className="hot-label" pointerEvents="none">
-      <circle cx={x} cy={y} r={2.6} className="hot-dot" />
-      <text x={x + 6} y={y + 3.5}>
-        {text}
-      </text>
-    </g>
-  )
-}
-
 export type Hotspot = 'pc' | 'door' | 'board'
 
 export function GarageScene({
   level,
+  notify,
   onSelect,
 }: {
   level: number
+  /** Contratos esperando → badge de notificação sobre a porta. */
+  notify: number
   onSelect: (h: Hotspot) => void
 }) {
   // Grade do piso
@@ -106,6 +96,10 @@ export function GarageScene({
   const door = pts(iso(0, 1.4, 0), iso(0, 2.6, 0), iso(0, 2.6, 1.9), iso(0, 1.4, 1.9))
   // Quadro de skills na parede A (y=0), x 0.5..2.0, z 1.0..2.0
   const board = pts(iso(0.5, 0, 1.0), iso(2.0, 0, 1.0), iso(2.0, 0, 2.0), iso(0.5, 0, 2.0))
+  // Tapete sob a mesa/cadeira (estilo GDT)
+  const rug = pts(iso(2.2, 0.1), iso(5.3, 0.1), iso(5.3, 2.3), iso(2.2, 2.3))
+
+  const [badgeX, badgeY] = iso(0, 2.0, 2.75)
 
   return (
     <svg className="garage" viewBox="0 0 480 300" preserveAspectRatio="xMidYMid meet" role="img"
@@ -121,15 +115,17 @@ export function GarageScene({
       <polygon className="wall" points={wallA} />
       <polygon className="wall wall-b" points={wallB} />
 
-      {/* piso + grade */}
+      {/* piso + grade + tapete */}
       <polygon className="floor" points={floor} />
       <polygon className="floor-glow" points={floor} fill="url(#floorGlow)" />
       {grid.map(([a, b], i) => (
         <line key={i} className="grid" x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} />
       ))}
+      <polygon className="rug" points={rug} />
 
       {/* quadro de skills (parede A) */}
       <g className="hot" onClick={() => onSelect('board')} role="button" tabIndex={0}
+        aria-label="Quadro de skills"
         onKeyDown={(e) => e.key === 'Enter' && onSelect('board')}>
         <polygon className="panelboard" points={board} />
         <line className="board-line" x1={iso(0.7, 0, 1.7)[0]} y1={iso(0.7, 0, 1.7)[1]}
@@ -140,9 +136,18 @@ export function GarageScene({
 
       {/* porta (parede B) */}
       <g className="hot" onClick={() => onSelect('door')} role="button" tabIndex={0}
+        aria-label={notify > 0 ? `Porta — ${notify} contrato(s) esperando` : 'Porta'}
         onKeyDown={(e) => e.key === 'Enter' && onSelect('door')}>
         <polygon className="door" points={door} />
         <circle className="door-knob" cx={iso(0, 1.6, 0.95)[0]} cy={iso(0, 1.6, 0.95)[1]} r={1.8} />
+        {notify > 0 && (
+          <g className="notify">
+            <circle className="notify-dot" cx={badgeX} cy={badgeY} r={8} />
+            <text className="notify-n" x={badgeX} y={badgeY + 3}>
+              {notify}
+            </text>
+          </g>
+        )}
       </g>
 
       {/* rack de GPUs (nível 2) — canto do fundo */}
@@ -158,6 +163,7 @@ export function GarageScene({
 
       {/* monitor principal (brilho cresce com o nível) */}
       <g className="hot" onClick={() => onSelect('pc')} role="button" tabIndex={0}
+        aria-label="Computador — abrir a bancada"
         onKeyDown={(e) => e.key === 'Enter' && onSelect('pc')}>
         <Box x={3.0} y={0.34} z={0.82} w={0.95} d={0.12} h={level >= 1 ? 0.7 : 0.56} tone="mon" />
         <polygon
@@ -188,10 +194,16 @@ export function GarageScene({
         )}
       </g>
 
-      {/* cadeira */}
+      {/* cadeira + personagem (de costas, olhando o monitor — estilo GDT) */}
       <g>
-        <Box x={3.2} y={1.35} z={0} w={0.6} d={0.6} h={0.45} tone="chair" />
-        <Box x={3.2} y={1.85} z={0.45} w={0.6} d={0.12} h={0.55} tone="chair" />
+        {/* assento, alinhado ao centro do monitor principal */}
+        <Box x={3.15} y={1.05} z={0} w={0.6} d={0.55} h={0.45} tone="chair" />
+        {/* dev sentado: tronco sobre o assento */}
+        <Box x={3.24} y={1.08} z={0.45} w={0.44} d={0.36} h={0.6} tone="person" />
+        {/* encosto atrás do tronco (mais perto da câmera → desenhado depois) */}
+        <Box x={3.15} y={1.6} z={0.45} w={0.6} d={0.14} h={0.7} tone="chair" />
+        {/* cabeça acima do encosto */}
+        <circle className="dev-head" cx={iso(3.46, 1.26, 1.28)[0]} cy={iso(3.46, 1.26, 1.28)[1]} r={5.2} />
       </g>
 
       {/* caixotes / tralha da garagem */}
@@ -203,11 +215,6 @@ export function GarageScene({
       <line className="lamp-wire" x1={iso(3.0, 1.7, WH)[0]} y1={iso(3.0, 1.7, WH)[1]}
         x2={iso(3.0, 1.7, 1.95)[0]} y2={iso(3.0, 1.7, 1.95)[1]} />
       <circle className="bulb" cx={iso(3.0, 1.7, 1.9)[0]} cy={iso(3.0, 1.7, 1.9)[1]} r={4} />
-
-      {/* rótulos dos hotspots */}
-      <Label at={iso(3.5, 0.34, level >= 1 ? 1.5 : 1.36)} text="BANCADA" />
-      <Label at={iso(0, 2.0, 1.95)} text="CONTRATOS" />
-      <Label at={iso(1.25, 0, 2.05)} text="SKILLS" />
     </svg>
   )
 }

@@ -1,17 +1,13 @@
+import { useState } from 'react'
 import type { GameState } from '../persistence/saveGame'
-import type { View } from '../components/BottomNav'
+import type { View } from '../nav'
 import { GarageScene, type Hotspot } from './GarageScene'
-import {
-  CONTRACTS,
-  buyHardware,
-  currentHardware,
-  isAvailable,
-  isDone,
-  nextHardware,
-} from '../game/content'
+import { CONTRACTS, buyHardware, currentHardware, isAvailable, nextHardware } from '../game/content'
 
 const money = (n: number) => `R$ ${n.toLocaleString('pt-BR')}`
 
+// A garagem É o jogo (estilo Game Dev Tycoon): cena maximizada, HUD mínimo,
+// e as funções só se alcançam pelos hotspots (PC, porta, quadro).
 export function LabScreen({
   game,
   onGameChange,
@@ -25,133 +21,90 @@ export function LabScreen({
   onExport: () => void
   onImport: () => void
 }) {
+  const [zooming, setZooming] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
+
   const hw = currentHardware(game)
   const next = nextHardware(game)
-  const canBuy = next ? game.money >= next.custo : false
-
-  const doneCount = game.contracts.doneIds.length
-  const openContracts = CONTRACTS.filter((c) => isAvailable(game, c))
-  const knocking = openContracts[0] // cliente batendo na porta
+  const waiting = CONTRACTS.filter((c) => isAvailable(game, c)).length
   const hasActive = game.contracts.activeId !== null
+  const firstTime = game.contracts.doneIds.length === 0 && !hasActive
 
-  function onHotspot(h: Hotspot) {
-    if (h === 'door') onNavigate('contratos')
-    else if (h === 'board') onNavigate('skills')
-    else onNavigate(hasActive ? 'workbench' : 'contratos') // 'pc' → bancada ou escolher contrato
+  function go(h: Hotspot) {
+    if (zooming) return
+    if (h === 'door') return onNavigate('contratos')
+    if (h === 'board') return onNavigate('skills')
+    // PC: a câmera mergulha até a mesa antes de abrir a bancada
+    const target: View = hasActive ? 'workbench' : 'contratos'
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return onNavigate(target)
+    setZooming(true)
+    window.setTimeout(() => onNavigate(target), 620)
   }
 
   return (
-    <section className="screen">
-      <div className="panel hero-panel">
-        <span className="chip chip-cyan">Capítulo 1 · A Garagem</span>
-        <GarageScene level={game.hardwareLevel} onSelect={onHotspot} />
-        <div className="hero-meta">
-          <h2 className="panel-title">{hw.nome}</h2>
-          <p className="muted">{hw.desc} <span className="hero-hint">Toque no PC, na porta ou no quadro.</span></p>
-        </div>
+    <div className={`garage-stage${zooming ? ' zoom-desk' : ''}`}>
+      <GarageScene level={game.hardwareLevel} notify={waiting} onSelect={go} />
+
+      {/* HUD mínimo */}
+      <header className="ov ov-tl" aria-hidden>
+        <span className="hud-logo">◢◤</span>
+        <span className="ov-brand">
+          NEURAL<span className="hud-logo-accent">://</span>EMPIRE
+        </span>
+      </header>
+
+      <div className="ov ov-tr">
+        <span className="ov-stat amber" title="Caixa">◈ {money(game.money)}</span>
+        <span className="ov-stat cyan" title="Reputação">★ {game.reputation}</span>
+        <span className="ov-stat lime" title="Streak">▲ {game.streak.count}</span>
       </div>
 
-      <div className="stat-grid">
-        <div className="stat-cell">
-          <span className="stat-k">Caixa</span>
-          <span className="stat-v amber">{money(game.money)}</span>
-        </div>
-        <div className="stat-cell">
-          <span className="stat-k">Reputação</span>
-          <span className="stat-v">
-            {game.reputation}
-            <small>/100</small>
-          </span>
-          <div className="meter">
-            <div className="meter-fill" style={{ width: `${game.reputation}%` }} />
-          </div>
-        </div>
-        <div className="stat-cell">
-          <span className="stat-k">Contratos entregues</span>
-          <span className="stat-v lime">{doneCount}</span>
-        </div>
-        <div className="stat-cell">
-          <span className="stat-k">Streak</span>
-          <span className="stat-v">🔥 {game.streak.count}</span>
-        </div>
-      </div>
-
-      {knocking ? (
-        <button className="panel door-panel" onClick={() => onNavigate('contratos')}>
-          <span className="door-knock">✷</span>
-          <div>
-            <h3 className="panel-title">Tem cliente na porta</h3>
-            <p className="muted">
-              {knocking.emoji} {knocking.titulo} — {openContracts.length} contrato
-              {openContracts.length > 1 ? 's' : ''} esperando.
-            </p>
-          </div>
-          <span className="door-cta">Ver →</span>
-        </button>
-      ) : (
-        <div className="panel">
-          <h3 className="panel-title">Silêncio na garagem</h3>
-          <p className="muted">
-            {doneCount > 0
-              ? 'Você limpou a fila. Novos clientes chegam conforme sua reputação cresce.'
-              : 'Nenhum contrato disponível agora.'}
-          </p>
-        </div>
-      )}
-
-      <div className="panel">
-        <div className="panel-head">
-          <h3 className="panel-title">Upgrade de hardware</h3>
-          <span className="chip">{game.hardwareLevel + 1}/3</span>
-        </div>
-        {next ? (
-          <>
-            <div className="upgrade-row">
-              <div>
-                <b>{next.nome}</b>
-                <p className="muted">{next.desc}</p>
-              </div>
-              <span className="price amber">{money(next.custo)}</span>
-            </div>
-            <button
-              className="btn btn-primary"
-              disabled={!canBuy}
-              onClick={() => {
-                const g = buyHardware(game)
-                if (g) onGameChange(g)
-              }}
-            >
-              {canBuy ? `Comprar ${next.nome}` : `Faltam ${money(next.custo - game.money)}`}
-            </button>
-          </>
-        ) : (
-          <p className="muted">
-            Você tem o melhor da garagem. Deep learning e datacenter chegam nos próximos capítulos.
-          </p>
+      <div className="ov ov-bl">
+        <span className="ov-hw">{hw.nome}</span>
+        {next && (
+          <button
+            className="ov-upgrade"
+            disabled={game.money < next.custo}
+            onClick={() => {
+              const g = buyHardware(game)
+              if (g) onGameChange(g)
+            }}
+          >
+            ⬆ {next.nome} · {money(next.custo)}
+          </button>
         )}
       </div>
 
-      <div className="panel backup-panel">
-        <div className="panel-head">
-          <h3 className="panel-title">Backup do save</h3>
-          <span className="chip">local · offline</span>
-        </div>
-        <p className="muted">Tudo fica salvo no aparelho. Exporte um JSON para levar a outro dispositivo.</p>
-        <div className="assist-row">
-          <button className="btn btn-ghost" onClick={onExport}>
-            ⤓ Exportar
-          </button>
-          <button className="btn btn-ghost" onClick={onImport}>
-            ↳ Importar
-          </button>
-        </div>
-      </div>
+      <button className="ov ov-br" aria-label="Configurações" onClick={() => setSettingsOpen(true)}>
+        ⚙
+      </button>
 
-      <p className="footnote">
-        {isDone(game, 'boletim-padaria')
-          ? 'Conhecimento é o único ativo à prova de falência.'
-          : 'Dica: aceite o primeiro contrato para começar a faturar.'}
-      </p>
-    </section>
+      {firstTime && <p className="ov ov-hint">Toque no PC, na porta ou no quadro</p>}
+
+      {/* Configurações: backup do save + versão */}
+      {settingsOpen && (
+        <div className="sheet-back" onClick={() => setSettingsOpen(false)}>
+          <div className="sheet" role="dialog" aria-label="Configurações" onClick={(e) => e.stopPropagation()}>
+            <h3 className="panel-title">Configurações</h3>
+            <p className="muted">
+              O save fica no aparelho e funciona offline. Backup em JSON para levar a outro
+              dispositivo:
+            </p>
+            <div className="assist-row">
+              <button className="btn btn-ghost" onClick={onExport}>
+                ⤓ Exportar save
+              </button>
+              <button className="btn btn-ghost" onClick={onImport}>
+                ↳ Importar save
+              </button>
+            </div>
+            <p className="footnote left">build {__BUILD_ID__}</p>
+            <button className="btn btn-primary" onClick={() => setSettingsOpen(false)}>
+              Fechar
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   )
 }

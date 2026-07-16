@@ -1,5 +1,5 @@
 import type { GameState } from '../persistence/saveGame'
-import type { View } from '../components/BottomNav'
+import type { View } from '../nav'
 import type { Contract } from '../engine/contracts'
 import { CONTRACTS, contractById, isAvailable, isDone } from '../game/content'
 
