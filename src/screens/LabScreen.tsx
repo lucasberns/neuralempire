@@ -1,5 +1,6 @@
 import type { GameState } from '../persistence/saveGame'
 import type { View } from '../components/BottomNav'
+import { GarageScene, type Hotspot } from './GarageScene'
 import {
   CONTRACTS,
   buyHardware,
@@ -10,31 +11,6 @@ import {
 } from '../game/content'
 
 const money = (n: number) => `R$ ${n.toLocaleString('pt-BR')}`
-
-// Cena da garagem em CSS: o "brilho" do lab cresce com o nível de hardware.
-function LabScene({ level }: { level: number }) {
-  return (
-    <div className={`lab-scene lvl-${level}`} aria-hidden>
-      <div className="lab-glow" />
-      <div className="lab-floor" />
-      <div className="lab-rig">
-        <div className="rig-screen">
-          <span className="rig-code">
-            &gt;_ fit()
-            <br />
-            &gt;_ predict()
-          </span>
-        </div>
-        <div className="rig-tower">
-          {Array.from({ length: level + 1 }).map((_, i) => (
-            <span key={i} className="rig-led" style={{ animationDelay: `${i * 0.3}s` }} />
-          ))}
-        </div>
-      </div>
-      <div className="lab-door" />
-    </div>
-  )
-}
 
 export function LabScreen({
   game,
@@ -56,15 +32,22 @@ export function LabScreen({
   const doneCount = game.contracts.doneIds.length
   const openContracts = CONTRACTS.filter((c) => isAvailable(game, c))
   const knocking = openContracts[0] // cliente batendo na porta
+  const hasActive = game.contracts.activeId !== null
+
+  function onHotspot(h: Hotspot) {
+    if (h === 'door') onNavigate('contratos')
+    else if (h === 'board') onNavigate('skills')
+    else onNavigate(hasActive ? 'workbench' : 'contratos') // 'pc' → bancada ou escolher contrato
+  }
 
   return (
     <section className="screen">
       <div className="panel hero-panel">
         <span className="chip chip-cyan">Capítulo 1 · A Garagem</span>
-        <LabScene level={game.hardwareLevel} />
+        <GarageScene level={game.hardwareLevel} onSelect={onHotspot} />
         <div className="hero-meta">
           <h2 className="panel-title">{hw.nome}</h2>
-          <p className="muted">{hw.desc}</p>
+          <p className="muted">{hw.desc} <span className="hero-hint">Toque no PC, na porta ou no quadro.</span></p>
         </div>
       </div>
 

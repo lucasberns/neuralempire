@@ -379,121 +379,170 @@ button {
   padding: 14px 15px 16px;
 }
 
-.lab-scene {
-  position: relative;
-  height: 190px;
-  overflow: hidden;
+/* Cena isométrica da garagem (SVG gerado por código em GarageScene.tsx) */
+.garage {
+  display: block;
+  width: 100%;
+  height: auto;
   background:
-    radial-gradient(80% 120% at 50% 120%, rgba(142, 209, 44, 0.12), transparent 60%),
+    radial-gradient(90% 70% at 50% 30%, rgba(142, 209, 44, 0.08), transparent 65%),
     linear-gradient(180deg, #0b1310, #060907);
 }
-.lab-glow {
-  position: absolute;
-  inset: auto 0 -40% 0;
-  height: 80%;
-  background: radial-gradient(60% 100% at 50% 100%, rgba(182, 241, 69, 0.2), transparent 70%);
-  filter: blur(6px);
+.garage .wall {
+  fill: #0c1512;
+  stroke: var(--line-bright);
+  stroke-width: 0.6;
 }
-.lab-floor {
-  position: absolute;
-  inset: auto 0 0 0;
-  height: 46px;
-  background: repeating-linear-gradient(
-    90deg,
-    transparent 0 22px,
-    rgba(182, 241, 69, 0.08) 22px 23px
-  );
-  border-top: 1px solid rgba(182, 241, 69, 0.25);
-  transform: perspective(200px) rotateX(45deg);
-  transform-origin: bottom;
+.garage .wall-b {
+  fill: #0a120f;
 }
-.lab-door {
-  position: absolute;
-  right: 20px;
-  bottom: 46px;
-  width: 46px;
-  height: 74px;
-  border: 2px solid var(--line-bright);
-  border-bottom: none;
-  border-radius: 6px 6px 0 0;
-  background: linear-gradient(180deg, #0d1410, #0a0f0c);
+.garage .floor {
+  fill: #0a0f0d;
+  stroke: rgba(182, 241, 69, 0.28);
+  stroke-width: 0.8;
 }
-.lab-rig {
-  position: absolute;
-  left: 26px;
-  bottom: 46px;
-  display: flex;
-  align-items: flex-end;
-  gap: 12px;
+.garage .grid {
+  stroke: rgba(182, 241, 69, 0.12);
+  stroke-width: 0.5;
 }
-.rig-screen {
-  width: 86px;
-  height: 60px;
-  border-radius: 5px;
-  border: 2px solid var(--line-bright);
-  background: linear-gradient(160deg, #08120a, #040705);
-  box-shadow: inset 0 0 18px rgba(182, 241, 69, 0.18);
-  display: grid;
-  place-items: center;
-  position: relative;
-}
-.rig-screen::after {
-  /* varredura scanline */
-  content: '';
-  position: absolute;
-  inset: 3px;
-  background: linear-gradient(rgba(182, 241, 69, 0.12), transparent 40%);
-  animation: scan 3.4s linear infinite;
-  border-radius: 3px;
-}
-.rig-code {
-  font-family: var(--mono);
-  font-size: 0.55rem;
-  color: var(--lime);
-  text-shadow: 0 0 8px rgba(182, 241, 69, 0.7);
-  line-height: 1.4;
-}
-.rig-tower {
-  width: 26px;
-  height: 66px;
-  border-radius: 4px;
-  border: 2px solid var(--line-bright);
-  background: linear-gradient(180deg, #0d1410, #080b09);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  padding: 6px 0;
-}
-.rig-led {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--lime);
-  box-shadow: 0 0 8px var(--lime);
-  animation: blink 1.6s ease-in-out infinite;
-}
-/* níveis mais altos = mais brilho na cena */
-.lab-scene.lvl-1 .lab-glow,
-.lab-scene.lvl-2 .lab-glow {
-  background: radial-gradient(60% 100% at 50% 100%, rgba(88, 214, 255, 0.22), transparent 70%);
-}
-.lab-scene.lvl-2 .rig-tower {
-  box-shadow: 0 0 26px -6px rgba(88, 214, 255, 0.6);
+.garage .floor-glow {
+  pointer-events: none;
 }
 
-@keyframes scan {
-  from {
-    transform: translateY(-60%);
-  }
-  to {
-    transform: translateY(160%);
-  }
+/* caixas: topo claro, faces laterais progressivamente escuras + arestas neon */
+.garage .box polygon {
+  stroke: rgba(182, 241, 69, 0.35);
+  stroke-width: 0.7;
+  stroke-linejoin: round;
+}
+.garage .f-t {
+  fill: #26332a;
+}
+.garage .f-r {
+  fill: #1a241d;
+}
+.garage .f-l {
+  fill: #121a15;
+}
+.garage .tone-desk .f-t { fill: #2e2620; }
+.garage .tone-desk .f-r { fill: #221c17; }
+.garage .tone-desk .f-l { fill: #17120f; }
+.garage .tone-crate .f-t { fill: #2c2519; }
+.garage .tone-crate .f-r { fill: #211b12; }
+.garage .tone-crate .f-l { fill: #16110b; }
+.garage .tone-rack polygon {
+  stroke: rgba(88, 214, 255, 0.55);
+}
+.garage .tone-rack .f-t { fill: #16242b; }
+.garage .tone-rack .f-r { fill: #101c22; }
+.garage .tone-rack .f-l { fill: #0b141a; }
+.garage .tone-mon polygon,
+.garage .tone-tower polygon { stroke: rgba(182, 241, 69, 0.5); }
+
+/* telas e leds */
+.garage .screen {
+  fill: rgba(142, 209, 44, 0.5);
+  stroke: var(--lime);
+  stroke-width: 0.6;
+  filter: drop-shadow(0 0 5px rgba(182, 241, 69, 0.8));
+  animation: screen-flicker 4s ease-in-out infinite;
+}
+.garage .screen.bright {
+  fill: rgba(182, 241, 69, 0.72);
+}
+.garage .screen.cyan {
+  fill: rgba(88, 214, 255, 0.6);
+  stroke: var(--cyan);
+  filter: drop-shadow(0 0 5px rgba(88, 214, 255, 0.8));
+}
+.garage .led {
+  fill: var(--lime);
+  filter: drop-shadow(0 0 4px var(--lime));
+  animation: blink 1.8s ease-in-out infinite;
+}
+.garage .led.cyan {
+  fill: var(--cyan);
+  filter: drop-shadow(0 0 4px var(--cyan));
+}
+.garage .bulb {
+  fill: var(--amber);
+  filter: drop-shadow(0 0 8px rgba(255, 191, 71, 0.9));
+  animation: bulb-pulse 5s ease-in-out infinite;
+}
+.garage .lamp-wire {
+  stroke: var(--line-bright);
+  stroke-width: 0.8;
+}
+
+/* porta e quadro (hotspots na parede) */
+.garage .door {
+  fill: #101713;
+  stroke: var(--line-bright);
+  stroke-width: 1;
+}
+.garage .door-knob {
+  fill: var(--amber);
+}
+.garage .panelboard {
+  fill: rgba(88, 214, 255, 0.06);
+  stroke: rgba(88, 214, 255, 0.5);
+  stroke-width: 0.7;
+}
+.garage .board-line {
+  stroke: rgba(88, 214, 255, 0.6);
+  stroke-width: 0.7;
+}
+
+/* hotspots */
+.garage .hot {
+  cursor: pointer;
+}
+.garage .hot:hover .screen,
+.garage .hot:focus-visible .screen {
+  fill: var(--lime);
+}
+.garage .hot:focus-visible {
+  outline: none;
+}
+.garage .hot:hover .door,
+.garage .hot:focus-visible .door {
+  stroke: var(--lime);
+}
+.garage .hot:hover .panelboard,
+.garage .hot:focus-visible .panelboard {
+  stroke: var(--lime);
+}
+.garage .hot-label text {
+  fill: var(--muted);
+  font-family: var(--mono);
+  font-size: 6.5px;
+  letter-spacing: 0.5px;
+}
+.garage .hot-dot {
+  fill: var(--lime);
+  filter: drop-shadow(0 0 3px var(--lime));
+  animation: blink 2.2s ease-in-out infinite;
+}
+
+.hero-hint {
+  display: block;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--lime-2);
+  margin-top: 4px;
+}
+
+@keyframes screen-flicker {
+  48% { opacity: 1; }
+  50% { opacity: 0.82; }
+  52% { opacity: 1; }
+}
+@keyframes bulb-pulse {
+  50% { opacity: 0.7; }
 }
 @keyframes blink {
   50% {
-    opacity: 0.25;
+    opacity: 0.3;
   }
 }
 
