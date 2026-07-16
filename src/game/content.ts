@@ -28,21 +28,24 @@ export interface SkillDef {
   id: string
   nome: string
   desc: string
-  /** Boss da skill: contrato sem dica + interrogatório (GDD §5.2). */
+  /** Boss da skill: contrato + interrogatório (GDD §5.2). */
   contractId: string
+  /** Runa do Código: kata de prática (GDD §5.1), destravado antes do boss. */
+  kataId: string
   /** Skills que precisam estar dominadas antes desta (grafo do GDD §6). */
   prereqSkillIds: string[]
 }
 
 export const SKILLS: SkillDef[] = [
-  { id: 'ler', nome: 'Ler Dados', desc: 'Carregar tabelas, olhar colunas, resumir com pandas.', contractId: 'boletim-padaria', prereqSkillIds: [] },
-  { id: 'explorar', nome: 'Explorar Dados', desc: 'Média, correlação, o que os dados dizem.', contractId: 'analise-clima', prereqSkillIds: ['ler'] },
-  { id: 'limpar', nome: 'Limpar Dados', desc: 'Valores faltantes, sujeira, tipos errados.', contractId: 'faxina-cadastro', prereqSkillIds: ['explorar'] },
-  { id: 'regressao', nome: 'Regressão Linear', desc: 'Reta, erro quadrático, treino/teste, MAE.', contractId: 'previsao-padaria', prereqSkillIds: ['limpar'] },
+  { id: 'ler', nome: 'Ler Dados', desc: 'Carregar tabelas, olhar colunas, resumir com pandas.', contractId: 'boletim-padaria', kataId: 'kata-ler', prereqSkillIds: [] },
+  { id: 'explorar', nome: 'Explorar Dados', desc: 'Média, correlação, o que os dados dizem.', contractId: 'analise-clima', kataId: 'kata-explorar', prereqSkillIds: ['ler'] },
+  { id: 'limpar', nome: 'Limpar Dados', desc: 'Valores faltantes, sujeira, tipos errados.', contractId: 'faxina-cadastro', kataId: 'kata-limpar', prereqSkillIds: ['explorar'] },
+  { id: 'regressao', nome: 'Regressão Linear', desc: 'Reta, erro quadrático, treino/teste, MAE.', contractId: 'previsao-padaria', kataId: 'kata-regressao', prereqSkillIds: ['limpar'] },
 ]
 
 export const skillById = (id: string) => SKILLS.find((s) => s.id === id)
 export const skillOfContract = (contractId: string) => SKILLS.find((s) => s.contractId === contractId)
+export const skillOfKata = (kataId: string) => SKILLS.find((s) => s.kataId === kataId)
 
 // ---------------------------------------------------------------- Setups Python
 const SETUP_LER = `import io
@@ -421,21 +424,155 @@ float(_r)
   interrogation: [],
 }
 
+// ---------------------------------------------------------------- Runa do Código (katas)
+// Prática guiada (GDD §5.1): menor que o boss, com dicas — treina a mão antes da Prova.
+// Sem pagamento/interrogatório; concluir marca a runa 'codigo'. Corretos por construção.
+export const KATAS: Contract[] = [
+  {
+    id: 'kata-ler',
+    emoji: '📖',
+    titulo: 'Kata · Ler Dados',
+    setor: 'varejo',
+    skillId: 'ler',
+    briefing: 'Aquecimento: quantos dias o Seu Joaquim anotou no caderninho? Devolva o número de linhas da tabela.',
+    metaLabel: 'Devolver o número de linhas',
+    payout: 0,
+    reputacao: 0,
+    prereqContractIds: [],
+    datasetUrl: DATASET('padaria.csv'),
+    starterCode: `def numero_de_dias(dados):
+    # Devolva quantas linhas a tabela tem.
+    ...
+`,
+    setupCode: SETUP_LER,
+    tests: [
+      { name: 'Devolve um número inteiro', hidden: false, code: `_r = numero_de_dias(dados)\nassert _r is not None, "Faltou o return?"\nassert int(_r) == _r\n` },
+      { name: 'É a contagem certa de linhas', hidden: true, code: `assert int(numero_de_dias(dados)) == int(len(dados))\n` },
+    ],
+    metricsCode: `_ne_result = {"Linhas": int(numero_de_dias(dados))}\n`,
+    hints: ['len(x) devolve o tamanho de uma lista ou tabela.', 'Numa tabela do pandas, len(dados) já dá o número de linhas.'],
+    solution: `def numero_de_dias(dados):
+    return len(dados)
+`,
+    interrogation: [],
+  },
+  {
+    id: 'kata-explorar',
+    emoji: '🌡️',
+    titulo: 'Kata · Explorar Dados',
+    setor: 'varejo',
+    skillId: 'explorar',
+    briefing: 'Aquecimento: qual foi a temperatura média nesses dias? Devolva a média da coluna temperatura.',
+    metaLabel: 'Devolver a média da temperatura',
+    payout: 0,
+    reputacao: 0,
+    prereqContractIds: [],
+    datasetUrl: DATASET('padaria.csv'),
+    starterCode: `def media_temperatura(dados):
+    # Devolva a média da coluna 'temperatura'.
+    ...
+`,
+    setupCode: SETUP_LER,
+    tests: [
+      { name: 'Devolve um número', hidden: false, code: `_r = media_temperatura(dados)\nassert _r is not None, "Faltou o return?"\nfloat(_r)\n` },
+      { name: 'É a média certa da temperatura', hidden: true, code: `assert abs(float(media_temperatura(dados)) - float(dados["temperatura"].mean())) < 0.01\n` },
+    ],
+    metricsCode: `_ne_result = {"Temperatura média": round(float(media_temperatura(dados)), 1)}\n`,
+    hints: ["Acesse a coluna com dados['temperatura'].", "Some o método .mean(): dados['temperatura'].mean()."],
+    solution: `def media_temperatura(dados):
+    return dados['temperatura'].mean()
+`,
+    interrogation: [],
+  },
+  {
+    id: 'kata-limpar',
+    emoji: '🧽',
+    titulo: 'Kata · Limpar Dados',
+    setor: 'varejo',
+    skillId: 'limpar',
+    briefing: 'Aquecimento: na lista de clientes, quantos estão SEM a idade preenchida? Conte os faltantes só da coluna idade.',
+    metaLabel: 'Contar faltantes na coluna idade',
+    payout: 0,
+    reputacao: 0,
+    prereqContractIds: [],
+    datasetUrl: DATASET('clientes.csv'),
+    starterCode: `def idades_faltando(dados):
+    # Devolva quantas células da coluna 'idade' estão vazias (faltando).
+    ...
+`,
+    setupCode: SETUP_LER,
+    tests: [
+      { name: 'Devolve um número inteiro', hidden: false, code: `_r = idades_faltando(dados)\nassert _r is not None, "Faltou o return?"\nassert int(_r) == _r\n` },
+      { name: 'Conta certo os faltantes da coluna idade', hidden: true, code: `assert int(idades_faltando(dados)) == int(dados["idade"].isnull().sum())\n` },
+    ],
+    metricsCode: `_ne_result = {"Idades faltando": int(idades_faltando(dados))}\n`,
+    hints: ["dados['idade'].isnull() marca True onde falta.", "Some com .sum(): dados['idade'].isnull().sum() e converta para int."],
+    solution: `def idades_faltando(dados):
+    return int(dados['idade'].isnull().sum())
+`,
+    interrogation: [],
+  },
+  {
+    id: 'kata-regressao',
+    emoji: '📈',
+    titulo: 'Kata · Regressão',
+    setor: 'varejo',
+    skillId: 'regressao',
+    briefing: 'Aquecimento antes da Prova: treine um LinearRegression e devolva as previsões para os dias novos. Aqui não cobramos a meta — só fazer o modelo prever.',
+    metaLabel: 'Devolver uma previsão para cada dia novo',
+    payout: 0,
+    reputacao: 0,
+    prereqContractIds: [],
+    datasetUrl: DATASET('padaria.csv'),
+    starterCode: `from sklearn.linear_model import LinearRegression
+
+def prever(dados_treino, dados_novos):
+    # 1. X = colunas de entrada, y = vendas (de dados_treino)
+    # 2. modelo = LinearRegression().fit(X, y)
+    # 3. devolva modelo.predict(dados_novos)
+    ...
+`,
+    setupCode: SETUP_REGRESSAO,
+    tests: [
+      { name: 'Uma previsão para cada dia novo', hidden: false, code: `import numpy as np\n_r = np.asarray(prever(dados_treino, dados_novos)).ravel()\nassert len(_r) == len(dados_novos)\n` },
+      { name: 'As previsões são números válidos', hidden: true, code: `import numpy as np\n_r = np.asarray(prever(dados_treino, dados_novos), dtype=float).ravel()\nassert np.isfinite(_r).all()\n` },
+    ],
+    metricsCode: `import numpy as np\n_r = np.asarray(prever(dados_treino, dados_novos), dtype=float).ravel()\n_ne_result = {"Previs\\u00f5es feitas": int(len(_r))}\n`,
+    hints: [
+      'Colunas de entrada: ["temperatura", "fim_de_semana", "promocao"]. Alvo: "vendas".',
+      'X = dados_treino[colunas]; y = dados_treino["vendas"].',
+      'modelo = LinearRegression(); modelo.fit(X, y); return modelo.predict(dados_novos[colunas]).',
+    ],
+    solution: `from sklearn.linear_model import LinearRegression
+
+def prever(dados_treino, dados_novos):
+    colunas = ["temperatura", "fim_de_semana", "promocao"]
+    modelo = LinearRegression()
+    modelo.fit(dados_treino[colunas], dados_treino["vendas"])
+    return modelo.predict(dados_novos[colunas])
+`,
+    interrogation: [],
+  },
+]
+
 // ---------------------------------------------------------------- Regras puras
 export const contractById = (id: string): Contract | undefined =>
-  id === RELAMPAGO.id ? RELAMPAGO : CONTRACTS.find((c) => c.id === id)
+  id === RELAMPAGO.id
+    ? RELAMPAGO
+    : (CONTRACTS.find((c) => c.id === id) ?? KATAS.find((c) => c.id === id))
 
 export const isDone = (g: GameState, id: string) => g.contracts.doneIds.includes(id)
 
 export const isAvailable = (g: GameState, c: Contract) =>
   !isDone(g, c.id) && c.prereqContractIds.every((id) => isDone(g, id))
 
-// -------- Runas + boss (GDD §5)
-export const emptyRunes = { intuicao: false, matematica: false }
-export const runesOf = (g: GameState, skillId: string) => g.runes[skillId] ?? emptyRunes
+// -------- Runas + boss (GDD §5): 3 runas (intuição, matemática, código) liberam o boss.
+export const emptyRunes = { intuicao: false, matematica: false, codigo: false }
+// Normaliza (saves antigos podem não ter 'codigo').
+export const runesOf = (g: GameState, skillId: string) => ({ ...emptyRunes, ...(g.runes[skillId] ?? {}) })
 export const runesComplete = (g: GameState, skillId: string) => {
   const r = runesOf(g, skillId)
-  return r.intuicao && r.matematica
+  return r.intuicao && r.matematica && r.codigo
 }
 
 export type SkillStatus = 'bloqueada' | 'runas' | 'boss' | 'dominada'
@@ -450,7 +587,11 @@ export function skillStatus(g: GameState, s: SkillDef): SkillStatus {
   return runesComplete(g, s.id) ? 'boss' : 'runas'
 }
 
-export function completeRune(g: GameState, skillId: string, rune: 'intuicao' | 'matematica'): GameState {
+export function completeRune(
+  g: GameState,
+  skillId: string,
+  rune: 'intuicao' | 'matematica' | 'codigo',
+): GameState {
   const cur = runesOf(g, skillId)
   return { ...g, runes: { ...g.runes, [skillId]: { ...cur, [rune]: true } } }
 }

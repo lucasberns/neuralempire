@@ -1,9 +1,10 @@
 import { kvGet, kvSet } from './db'
 
-/** Progresso das runas de uma skill (GDD §5.1). Código = o próprio boss. */
+/** Progresso das 3 runas de uma skill (GDD §5.1): intuição, matemática, código (kata). */
 export interface RuneProgress {
   intuicao: boolean
   matematica: boolean
+  codigo: boolean
 }
 
 export interface GameState {
@@ -87,7 +88,7 @@ function migrateOld(v: unknown): GameState | null {
       base.rentPaidUpTo = c.doneIds.length // não cobra aluguel retroativo
       base.onboarded = c.doneIds.length > 0
       // contratos já entregues: dá as runas como feitas p/ não re-travar (skillId derivado no content)
-      for (const id of c.doneIds) base.runes[id] = { intuicao: true, matematica: true }
+      for (const id of c.doneIds) base.runes[id] = { intuicao: true, matematica: true, codigo: true }
     }
     if (o.codeByContract && typeof o.codeByContract === 'object') {
       base.codeByContract = o.codeByContract as Record<string, string>

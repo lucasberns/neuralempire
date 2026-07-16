@@ -14,18 +14,23 @@ const money = (n: number) => `R$ ${n.toLocaleString('pt-BR')}`
 
 export function WorkbenchScreen({
   contract,
+  mode = 'boss',
   client,
   pyState,
   game,
   onGameChange,
   onNavigate,
+  onKataDone,
 }: {
   contract: Contract
+  /** 'kata' = Runa do Código (prática, não paga); 'boss' = Prova de Domínio. */
+  mode?: 'kata' | 'boss'
   client: PyodideClient
   pyState: ClientState
   game: GameState
   onGameChange: (g: GameState) => void
   onNavigate: (v: View) => void
+  onKataDone?: () => void
 }) {
   const [csv, setCsv] = useState<string | null>(null)
   const [csvError, setCsvError] = useState<string | null>(null)
@@ -35,6 +40,7 @@ export function WorkbenchScreen({
   const [hintsOpen, setHintsOpen] = useState(0)
   const [showSolution, setShowSolution] = useState(false)
   const [interrogating, setInterrogating] = useState(false)
+  const [kataPassed, setKataPassed] = useState(false)
   const [reward, setReward] = useState<{ earned: number; rep: number; rent: number } | null>(null)
   const [editorNonce, setEditorNonce] = useState(0) // bump → remonta o editor com o código novo
 
@@ -74,9 +80,12 @@ export function WorkbenchScreen({
         metrics: contract.metricsCode,
       })
       setOutcome(result)
-      if (result.ok && !done) {
-        if (contract.interrogation.length > 0) setInterrogating(true) // boss → interrogatório
-        else finalize(1) // relâmpago / sem perguntas
+      if (result.ok) {
+        if (mode === 'kata') setKataPassed(true) // runa do código: sem pagamento/interrogatório
+        else if (!done) {
+          if (contract.interrogation.length > 0) setInterrogating(true) // boss → interrogatório
+          else finalize(1) // relâmpago / sem perguntas
+        }
       }
     } catch (e) {
       setRunError(e instanceof Error ? e.message : String(e))
@@ -92,8 +101,16 @@ export function WorkbenchScreen({
           {contract.emoji} {contract.titulo}
         </h2>
         <p className="muted">
-          Meta: <b>{contract.metaLabel}</b> · Paga até {money(contract.payout)} · Custo do mês{' '}
-          {money(RENT_PER_TURN)}
+          {mode === 'kata' ? (
+            <>
+              Runa do Código · treino, não paga · Meta: <b>{contract.metaLabel}</b>
+            </>
+          ) : (
+            <>
+              Meta: <b>{contract.metaLabel}</b> · Paga até {money(contract.payout)} · Custo do mês{' '}
+              {money(RENT_PER_TURN)}
+            </>
+          )}
         </p>
       </div>
 
@@ -184,6 +201,17 @@ export function WorkbenchScreen({
       </div>
 
       {runError && <div className="panel error-card">{runError}</div>}
+
+      {kataPassed && (
+        <div className="panel reward-panel">
+          <div className="reward-burst">◆</div>
+          <h3 className="panel-title">Runa do Código concluída!</h3>
+          <p className="muted">Mão treinada. Agora a Prova de Domínio pode liberar no quadro.</p>
+          <button className="btn btn-primary" onClick={() => onKataDone?.()}>
+            Voltar ao quadro →
+          </button>
+        </div>
+      )}
 
       {reward && (
         <div className="panel reward-panel">

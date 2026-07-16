@@ -12,10 +12,12 @@ const STATUS_META: Record<SkillStatus, { label: string; glyph: string }> = {
 export function SkillTreeScreen({
   game,
   onOpenRune,
+  onOpenKata,
   onOpenBoss,
 }: {
   game: GameState
   onOpenRune: (skillId: string, kind: RuneKind) => void
+  onOpenKata: (skillId: string) => void
   onOpenBoss: (contractId: string) => void
 }) {
   const dominadas = SKILLS.filter((s) => skillStatus(game, s) === 'dominada').length
@@ -67,7 +69,14 @@ export function SkillTreeScreen({
                       </button>
                     )
                   })}
-                  <span className={`rune ${done ? 'on' : ''}`}>{'{}'} Código = a Prova</span>
+                  <button
+                    className={`rune ${runes.codigo ? 'on' : ''}`}
+                    disabled={!active || runes.codigo || done}
+                    onClick={() => onOpenKata(s.id)}
+                  >
+                    {runes.codigo ? '✓ ' : ''}
+                    {'{}'} Código
+                  </button>
                 </div>
 
                 {(bossReady || done) && (
