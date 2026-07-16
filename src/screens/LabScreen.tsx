@@ -2,7 +2,15 @@ import { useEffect, useState } from 'react'
 import type { GameState } from '../persistence/saveGame'
 import type { View } from '../nav'
 import { GarageScene, type Hotspot } from './GarageScene'
-import { CONTRACTS, buyHardware, currentHardware, isAvailable, nextHardware } from '../game/content'
+import {
+  RENT_PER_TURN,
+  SKILLS,
+  buyHardware,
+  currentHardware,
+  nextHardware,
+  relampagoAvailable,
+  skillStatus,
+} from '../game/content'
 
 const money = (n: number) => `R$ ${n.toLocaleString('pt-BR')}`
 
@@ -38,7 +46,9 @@ export function LabScreen({
 
   const hw = currentHardware(game)
   const next = nextHardware(game)
-  const waiting = CONTRACTS.filter((c) => isAvailable(game, c)).length
+  // bosses prontos (runas feitas) + relâmpago do dia = clientes na porta
+  const waiting =
+    SKILLS.filter((s) => skillStatus(game, s) === 'boss').length + (relampagoAvailable(game) ? 1 : 0)
   const hasActive = game.contracts.activeId !== null
   const firstTime = game.contracts.doneIds.length === 0 && !hasActive
 
@@ -110,6 +120,10 @@ export function LabScreen({
         <div className="sheet-back" onClick={() => setSettingsOpen(false)}>
           <div className="sheet" role="dialog" aria-label="Configurações" onClick={(e) => e.stopPropagation()}>
             <h3 className="panel-title">Configurações</h3>
+            <div className="cfg-econ">
+              <span>Mês {game.turn + 1}</span>
+              <span>Custo fixo por entrega: {money(RENT_PER_TURN)}</span>
+            </div>
             <p className="muted">
               O save fica no aparelho e funciona offline. Backup em JSON para levar a outro
               dispositivo:

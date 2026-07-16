@@ -1,48 +1,45 @@
 import type { GameState } from '../persistence/saveGame'
-import type { View } from '../nav'
-import { SKILLS, contractById, isAvailable, skillStatus, type SkillStatus } from '../game/content'
+import type { RuneKind } from '../nav'
+import { SKILLS, runesOf, skillStatus, type SkillStatus } from '../game/content'
 
 const STATUS_META: Record<SkillStatus, { label: string; glyph: string }> = {
   dominada: { label: 'Dominada', glyph: '✓' },
-  disponivel: { label: 'Disponível', glyph: '▸' },
+  boss: { label: 'Prova liberada', glyph: '⚔' },
+  runas: { label: 'Em treino', glyph: '▸' },
   bloqueada: { label: 'Bloqueada', glyph: '🔒' },
-  'em-breve': { label: 'Em breve', glyph: '…' },
 }
 
 export function SkillTreeScreen({
   game,
-  onGameChange,
-  onNavigate,
+  onOpenRune,
+  onOpenBoss,
 }: {
   game: GameState
-  onGameChange: (g: GameState) => void
-  onNavigate: (v: View) => void
+  onOpenRune: (skillId: string, kind: RuneKind) => void
+  onOpenBoss: (contractId: string) => void
 }) {
   const dominadas = SKILLS.filter((s) => skillStatus(game, s) === 'dominada').length
-
-  function openContract(contractId: string) {
-    onGameChange({ ...game, contracts: { ...game.contracts, activeId: contractId } })
-    onNavigate('workbench')
-  }
 
   return (
     <section className="screen">
       <div className="screen-head">
         <h2 className="screen-title">Árvore de Skills</h2>
         <p className="muted">
-          Tier 1 · Fundamentos — {dominadas}/{SKILLS.length} dominadas. Cada skill = 3 runas + 1 boss.
+          Tier 1 · Fundamentos — {dominadas}/{SKILLS.length} dominadas. Cada skill: 2 runas + a Prova de Domínio.
         </p>
       </div>
 
       <div className="skill-tree">
         {SKILLS.map((s, i) => {
           const status = skillStatus(game, s)
-          const contract = s.contractId ? contractById(s.contractId) : undefined
-          const playable = contract ? isAvailable(game, contract) : false
           const meta = STATUS_META[status]
+          const runes = runesOf(game, s.id)
+          const active = status !== 'bloqueada'
+          const bossReady = status === 'boss'
+          const done = status === 'dominada'
           return (
             <div key={s.id} className={`skill-node is-${status}`}>
-              {i > 0 && <span className={`skill-link ${status === 'bloqueada' || status === 'em-breve' ? 'dim' : ''}`} />}
+              {i > 0 && <span className={`skill-link ${active ? '' : 'dim'}`} />}
               <div className="skill-orb">
                 <span className="skill-tier">T1·{i + 1}</span>
                 <span className="skill-glyph">{meta.glyph}</span>
@@ -53,18 +50,36 @@ export function SkillTreeScreen({
                   <span className={`chip status-${status}`}>{meta.label}</span>
                 </div>
                 <p className="muted">{s.desc}</p>
+
                 <div className="runes">
-                  <span className={`rune ${status === 'dominada' ? 'on' : ''}`}>◆ Intuição</span>
-                  <span className={`rune ${status === 'dominada' ? 'on' : ''}`}>Σ Matemática</span>
-                  <span className={`rune ${status === 'dominada' ? 'on' : ''}`}>{'{}'} Código</span>
+                  {(['intuicao', 'matematica'] as RuneKind[]).map((k) => {
+                    const doneRune = runes[k]
+                    const label = k === 'intuicao' ? '◆ Intuição' : 'Σ Matemática'
+                    return (
+                      <button
+                        key={k}
+                        className={`rune ${doneRune ? 'on' : ''}`}
+                        disabled={!active || doneRune || done}
+                        onClick={() => onOpenRune(s.id, k)}
+                      >
+                        {doneRune ? '✓ ' : ''}
+                        {label}
+                      </button>
+                    )
+                  })}
+                  <span className={`rune ${done ? 'on' : ''}`}>{'{}'} Código = a Prova</span>
                 </div>
-                {playable && (
-                  <button className="btn btn-primary sm" onClick={() => openContract(s.contractId!)}>
-                    {status === 'dominada' ? 'Revisar' : 'Fazer a prova →'}
+
+                {(bossReady || done) && (
+                  <button className="btn btn-primary sm" onClick={() => onOpenBoss(s.contractId)}>
+                    {done ? 'Revisar a Prova' : '⚔ Fazer a Prova de Domínio'}
                   </button>
                 )}
-                {status === 'em-breve' && (
-                  <p className="footnote left">Chega numa próxima atualização do currículo.</p>
+                {status === 'runas' && (
+                  <p className="footnote left">Complete as 2 runas para liberar a Prova.</p>
+                )}
+                {status === 'bloqueada' && (
+                  <p className="footnote left">Domine a skill anterior primeiro.</p>
                 )}
               </div>
             </div>

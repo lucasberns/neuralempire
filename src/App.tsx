@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { PyodideClient, type ClientState } from './pyodide/client'
 import { TopBar } from './components/TopBar'
-import type { View } from './nav'
+import type { View, RuneKind } from './nav'
 import { LabScreen } from './screens/LabScreen'
 import { ContractsScreen } from './screens/ContractsScreen'
 import { SkillTreeScreen } from './screens/SkillTreeScreen'
 import { WorkbenchScreen } from './screens/WorkbenchScreen'
-import { contractById } from './game/content'
+import { RunaScreen } from './screens/RunaScreen'
+import { Onboarding } from './screens/Onboarding'
+import { completeRune, contractById, skillById } from './game/content'
 import {
   exportSave,
   importSave,
@@ -23,6 +25,7 @@ export default function App() {
   })
   const [game, setGame] = useState<GameState | null>(null)
   const [view, setView] = useState<View>('lab')
+  const [runa, setRuna] = useState<{ skillId: string; kind: RuneKind } | null>(null)
   const [cameFromDesk, setCameFromDesk] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
   const clientRef = useRef<PyodideClient | null>(null)
@@ -33,7 +36,6 @@ export default function App() {
     void loadGame().then((s) => setGame(s ?? newGameState()))
   }, [])
 
-  // Autosave com debounce a cada mudança de estado.
   useEffect(() => {
     if (!game) return
     const t = setTimeout(() => void saveGame(game).catch(() => undefined), 800)
@@ -58,7 +60,16 @@ export default function App() {
     )
   }
 
+  if (!game.onboarded) {
+    return <Onboarding onDone={() => setGame({ ...game, onboarded: true })} />
+  }
+
   const active = game.contracts.activeId ? contractById(game.contracts.activeId) : undefined
+  const goLab = () => {
+    setCameFromDesk(view === 'workbench')
+    setView('lab')
+  }
+  const back = view === 'runa' ? () => setView('skills') : goLab
 
   return (
     <>
@@ -82,19 +93,34 @@ export default function App() {
         />
       ) : (
         <div className="app">
-          <TopBar
-            game={game}
-            onBack={() => {
-              setCameFromDesk(view === 'workbench')
-              setView('lab')
-            }}
-          />
+          <TopBar game={game} onBack={back} />
           <main className="app-main">
             {view === 'contratos' && (
               <ContractsScreen game={game} onGameChange={setGame} onNavigate={setView} />
             )}
             {view === 'skills' && (
-              <SkillTreeScreen game={game} onGameChange={setGame} onNavigate={setView} />
+              <SkillTreeScreen
+                game={game}
+                onOpenRune={(skillId, kind) => {
+                  setRuna({ skillId, kind })
+                  setView('runa')
+                }}
+                onOpenBoss={(contractId) => {
+                  setGame({ ...game, contracts: { ...game.contracts, activeId: contractId } })
+                  setView('workbench')
+                }}
+              />
+            )}
+            {view === 'runa' && runa && (
+              <RunaScreen
+                kind={runa.kind}
+                skillNome={skillById(runa.skillId)?.nome ?? ''}
+                onComplete={() => {
+                  setGame(completeRune(game, runa.skillId, runa.kind))
+                  setRuna(null)
+                  setView('skills')
+                }}
+              />
             )}
             {view === 'workbench' && active && clientRef.current && (
               <WorkbenchScreen

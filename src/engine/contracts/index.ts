@@ -33,4 +33,12 @@ export interface Contract {
   hints: string[]
   /** Solução de referência, revelável (o jogador pode aprender vendo). */
   solution: string
+  /** Interrogatório do cliente (GDD §5.2): erros reduzem o pagamento. */
+  interrogation: InterrogationQuestion[]
+}
+
+export interface InterrogationQuestion {
+  q: string
+  options: string[]
+  correct: number // índice da opção correta
 }

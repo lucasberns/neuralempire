@@ -1,7 +1,13 @@
 import { kvGet, kvSet } from './db'
 
+/** Progresso das runas de uma skill (GDD §5.1). Código = o próprio boss. */
+export interface RuneProgress {
+  intuicao: boolean
+  matematica: boolean
+}
+
 export interface GameState {
-  version: 2
+  version: 3
   updatedAt: string // ISO
   money: number
   reputation: number // 0–100 global (GDD §4.3)
@@ -10,13 +16,19 @@ export interface GameState {
   contracts: { activeId: string | null; doneIds: string[] }
   /** Código do editor por contrato (o rascunho do jogador sobrevive à navegação). */
   codeByContract: Record<string, string>
+  /** Runas concluídas por skill (GDD §5.1). */
+  runes: Record<string, RuneProgress>
+  turn: number // nº de entregas concluídas (avança o "mês")
+  rentPaidUpTo: number // último turno em que o custo fixo já foi cobrado
+  onboarded: boolean // já viu a introdução (o tio, o bilhete)?
+  relampagoLastDayISO: string | null // controle do contrato-relâmpago diário
 }
 
 const SAVE_KEY = 'save'
 
 export function newGameState(): GameState {
   return {
-    version: 2,
+    version: 3,
     updatedAt: new Date().toISOString(),
     money: 200, // começa apertado na garagem (GDD §2)
     reputation: 12,
@@ -24,6 +36,11 @@ export function newGameState(): GameState {
     hardwareLevel: 0,
     contracts: { activeId: null, doneIds: [] },
     codeByContract: {},
+    runes: {},
+    turn: 0,
+    rentPaidUpTo: 0,
+    onboarded: false,
+    relampagoLastDayISO: null,
   }
 }
 
@@ -32,35 +49,60 @@ export function newGameState(): GameState {
 export function isGameState(v: unknown): v is GameState {
   if (typeof v !== 'object' || v === null) return false
   const o = v as Record<string, unknown>
-  if (o.version !== 2 || typeof o.updatedAt !== 'string') return false
+  if (o.version !== 3 || typeof o.updatedAt !== 'string') return false
   if (typeof o.money !== 'number' || typeof o.reputation !== 'number') return false
-  if (typeof o.hardwareLevel !== 'number') return false
+  if (typeof o.hardwareLevel !== 'number' || typeof o.turn !== 'number') return false
+  if (typeof o.rentPaidUpTo !== 'number' || typeof o.onboarded !== 'boolean') return false
   const s = o.streak as Record<string, unknown> | undefined
   if (typeof s !== 'object' || s === null || typeof s.count !== 'number') return false
   const c = o.contracts as Record<string, unknown> | undefined
   if (typeof c !== 'object' || c === null || !Array.isArray(c.doneIds)) return false
   if (typeof o.codeByContract !== 'object' || o.codeByContract === null) return false
+  if (typeof o.runes !== 'object' || o.runes === null) return false
   return true
 }
 
-// Save v1 (fase 0): só tinha demo.code. Recupera o rascunho e reinicia o resto.
-function migrateV1(v: unknown): GameState | null {
+// Save v1 (fase 0): só demo.code. Save v2: economia sem runas/turno.
+function migrateOld(v: unknown): GameState | null {
   if (typeof v !== 'object' || v === null) return null
   const o = v as Record<string, unknown>
-  if (o.version !== 1) return null
-  const demo = o.demo as Record<string, unknown> | undefined
   const base = newGameState()
-  if (demo && typeof demo.code === 'string') {
-    base.codeByContract['previsao-padaria'] = demo.code
+
+  if (o.version === 1) {
+    const demo = o.demo as Record<string, unknown> | undefined
+    if (demo && typeof demo.code === 'string') base.codeByContract['previsao-padaria'] = demo.code
+    return base
   }
-  return base
+
+  if (o.version === 2) {
+    if (typeof o.money === 'number') base.money = o.money
+    if (typeof o.reputation === 'number') base.reputation = o.reputation
+    if (typeof o.hardwareLevel === 'number') base.hardwareLevel = o.hardwareLevel
+    const s = o.streak as { count?: number; lastDayISO?: string | null } | undefined
+    if (s && typeof s.count === 'number') base.streak = { count: s.count, lastDayISO: s.lastDayISO ?? null }
+    const c = o.contracts as { activeId?: string | null; doneIds?: string[] } | undefined
+    if (c && Array.isArray(c.doneIds)) {
+      base.contracts = { activeId: c.activeId ?? null, doneIds: c.doneIds }
+      base.turn = c.doneIds.length
+      base.rentPaidUpTo = c.doneIds.length // não cobra aluguel retroativo
+      base.onboarded = c.doneIds.length > 0
+      // contratos já entregues: dá as runas como feitas p/ não re-travar (skillId derivado no content)
+      for (const id of c.doneIds) base.runes[id] = { intuicao: true, matematica: true }
+    }
+    if (o.codeByContract && typeof o.codeByContract === 'object') {
+      base.codeByContract = o.codeByContract as Record<string, string>
+    }
+    return base
+  }
+
+  return null
 }
 
 export async function loadGame(): Promise<GameState | null> {
   try {
     const raw = await kvGet<unknown>(SAVE_KEY)
     if (isGameState(raw)) return raw
-    return migrateV1(raw)
+    return migrateOld(raw)
   } catch {
     return null // IndexedDB indisponível (ex.: navegação privada) → começa do zero
   }
@@ -88,7 +130,7 @@ export async function importSave(file: File): Promise<GameState> {
   } catch {
     throw new Error('O arquivo não é um JSON válido.')
   }
-  const state = isGameState(data) ? data : migrateV1(data)
+  const state = isGameState(data) ? data : migrateOld(data)
   if (!state) throw new Error('Este arquivo não é um save do Neural Empire.')
   await saveGame(state)
   return state

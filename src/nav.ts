@@ -1,1 +1,2 @@
-export type View = 'lab' | 'contratos' | 'skills' | 'workbench'
+export type View = 'lab' | 'contratos' | 'skills' | 'workbench' | 'runa'
+export type RuneKind = 'intuicao' | 'matematica'
