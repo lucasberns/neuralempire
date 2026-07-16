@@ -3,6 +3,7 @@ import type { GameState } from '../persistence/saveGame'
 import type { View } from '../nav'
 import { GarageScene, type Hotspot } from './GarageScene'
 import {
+  ACHIEVEMENTS,
   RENT_PER_TURN,
   SKILLS,
   buyHardware,
@@ -136,6 +137,24 @@ export function LabScreen({
                 ↳ Importar save
               </button>
             </div>
+            <h3 className="panel-title cfg-sec">
+              Conquistas · {game.achievements.length}/{ACHIEVEMENTS.length}
+            </h3>
+            <ul className="conquistas">
+              {ACHIEVEMENTS.map((a) => {
+                const got = game.achievements.includes(a.id)
+                return (
+                  <li key={a.id} className={got ? 'got' : 'locked'}>
+                    <span className="cq-ico">{got ? '🏆' : '🔒'}</span>
+                    <span>
+                      <b>{a.nome}</b>
+                      <small>{got ? a.desc : '???'}</small>
+                    </span>
+                  </li>
+                )
+              })}
+            </ul>
+
             <p className="footnote left">build {__BUILD_ID__}</p>
             <button className="btn btn-primary" onClick={() => setSettingsOpen(false)}>
               Fechar

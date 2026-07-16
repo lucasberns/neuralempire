@@ -46,6 +46,7 @@ export const SKILLS: SkillDef[] = [
 export const skillById = (id: string) => SKILLS.find((s) => s.id === id)
 export const skillOfContract = (contractId: string) => SKILLS.find((s) => s.contractId === contractId)
 export const skillOfKata = (kataId: string) => SKILLS.find((s) => s.kataId === kataId)
+export const isKata = (id: string) => id.startsWith('kata-')
 
 // ---------------------------------------------------------------- Setups Python
 const SETUP_LER = `import io
@@ -555,11 +556,75 @@ def prever(dados_treino, dados_novos):
   },
 ]
 
+// ---------------------------------------------------------------- Contratos do bairro (repetíveis)
+// GDD §7.2: contrato-padrão que dá renda contínua + replay. Reusa a TAREFA de um boss
+// já verificado (mesmo setup/testes), só troca a história — corretude herdada.
+const clone = (bossId: string, over: Partial<Contract>): Contract => {
+  const base = CONTRACTS.find((c) => c.id === bossId)!
+  return { ...base, repeatable: true, interrogation: [], ...over }
+}
+
+export const REPEATABLE: Contract[] = [
+  clone('boletim-padaria', {
+    id: 'bairro-mercadinho',
+    emoji: '🏪',
+    titulo: 'Mercadinho da Esquina',
+    briefing:
+      'Correu a fama do seu boletim. A dona do mercadinho quer a mesma coisa: a média de ' +
+      'vendas do caderno dela. Trabalho de rotina, paga na hora.',
+    metaLabel: 'Devolver a média de vendas',
+    payout: 110,
+    reputacao: 2,
+    prereqContractIds: ['boletim-padaria'],
+  }),
+  clone('analise-clima', {
+    id: 'bairro-sorveteria',
+    emoji: '🍦',
+    titulo: 'Sorveteria do Gelo',
+    briefing:
+      'A sorveteria jura que vende mais no calor. Rode a mesma análise de correlação entre ' +
+      'temperatura e vendas pra eles. Serviço rápido, cliente fiel.',
+    metaLabel: 'Devolver a correlação temperatura × vendas',
+    payout: 150,
+    reputacao: 2,
+    prereqContractIds: ['analise-clima'],
+  }),
+]
+
+// ---------------------------------------------------------------- Conquistas (GDD §8)
+export interface Achievement {
+  id: string
+  nome: string
+  desc: string
+  test: (g: GameState) => boolean
+}
+
+const skillBossDone = (g: GameState) =>
+  SKILLS.filter((s) => g.contracts.doneIds.includes(s.contractId)).length
+
+export const ACHIEVEMENTS: Achievement[] = [
+  { id: 'primeira-entrega', nome: 'Primeiro cliente', desc: 'Entregue seu primeiro contrato.', test: (g) => g.contracts.doneIds.length >= 1 },
+  { id: 'primeira-skill', nome: 'Aprendiz', desc: 'Domine sua primeira skill.', test: (g) => skillBossDone(g) >= 1 },
+  { id: 'meia-arvore', nome: 'Pegando o jeito', desc: 'Domine metade do Tier 1.', test: (g) => skillBossDone(g) >= 2 },
+  { id: 'tier1-completo', nome: 'Fundamentos sólidos', desc: 'Domine as 4 skills do Tier 1.', test: (g) => skillBossDone(g) >= SKILLS.length },
+  { id: 'turbinou', nome: 'Upgrade!', desc: 'Compre seu primeiro hardware melhor.', test: (g) => g.hardwareLevel >= 1 },
+  { id: 'rack', nome: 'Sala-cofre', desc: 'Monte o rack de GPUs.', test: (g) => g.hardwareLevel >= 2 },
+  { id: 'ritmo', nome: 'No embalo', desc: 'Chegue a um streak de 3.', test: (g) => g.streak.count >= 3 },
+  { id: 'faxineiro', nome: 'Dados limpos', desc: 'Domine Limpar Dados.', test: (g) => g.contracts.doneIds.includes('faxina-cadastro') },
+]
+
+/** Conquistas satisfeitas pelo estado mas ainda não registradas. */
+export function pendingAchievements(g: GameState): Achievement[] {
+  return ACHIEVEMENTS.filter((a) => a.test(g) && !g.achievements.includes(a.id))
+}
+
 // ---------------------------------------------------------------- Regras puras
 export const contractById = (id: string): Contract | undefined =>
   id === RELAMPAGO.id
     ? RELAMPAGO
-    : (CONTRACTS.find((c) => c.id === id) ?? KATAS.find((c) => c.id === id))
+    : (CONTRACTS.find((c) => c.id === id) ??
+      KATAS.find((c) => c.id === id) ??
+      REPEATABLE.find((c) => c.id === id))
 
 export const isDone = (g: GameState, id: string) => g.contracts.doneIds.includes(id)
 
@@ -611,7 +676,8 @@ export function completeContract(
   c: Contract,
   interrogationScore = 1,
 ): { next: GameState; earned: number; rent: number } {
-  const isBoss = c.id !== RELAMPAGO.id
+  const isRelampago = c.id === RELAMPAGO.id
+  const isBoss = !c.repeatable && !isRelampago // boss = prova única (avança o "mês" e cobra aluguel)
   if (isBoss && isDone(g, c.id)) return { next: g, earned: 0, rent: 0 }
 
   const streakDay = today()
@@ -622,8 +688,9 @@ export function completeContract(
 
   // pagamento penaliza erros no interrogatório (mín. 50%), arredondado
   const earned = Math.round(c.payout * (0.5 + 0.5 * interrogationScore))
-  const turn = g.turn + 1
-  const rent = RENT_PER_TURN
+  // Só o boss é um "mês" com custo fixo; bairro/relâmpago são gigas avulsas.
+  const rent = isBoss ? RENT_PER_TURN : 0
+  const turn = isBoss ? g.turn + 1 : g.turn
   const doneIds = isBoss ? [...g.contracts.doneIds, c.id] : g.contracts.doneIds
 
   const next: GameState = {
@@ -634,7 +701,7 @@ export function completeContract(
     turn,
     rentPaidUpTo: turn,
     contracts: { ...g.contracts, doneIds },
-    relampagoLastDayISO: isBoss ? g.relampagoLastDayISO : streakDay,
+    relampagoLastDayISO: isRelampago ? streakDay : g.relampagoLastDayISO,
   }
   return { next, earned, rent }
 }

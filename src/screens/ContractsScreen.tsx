@@ -4,6 +4,8 @@ import type { Contract } from '../engine/contracts'
 import {
   CONTRACTS,
   RELAMPAGO,
+  REPEATABLE,
+  isAvailable,
   isDone,
   relampagoAvailable,
   skillOfContract,
@@ -140,6 +142,34 @@ export function ContractsScreen({
           />
         )
       })}
+
+      {(() => {
+        const bairro = REPEATABLE.filter((c) => isAvailable(game, c))
+        if (bairro.length === 0) return null
+        return (
+          <>
+            <div className="screen-head bairro-head">
+              <h3 className="panel-title">Contratos do bairro</h3>
+              <p className="muted">Serviços de rotina que pagam na hora e você pode refazer sempre.</p>
+            </div>
+            {bairro.map((c) => (
+              <article key={c.id} className="contract-card is-available repeatable">
+                <header className="cc-head">
+                  <span className="cc-emoji">{c.emoji}</span>
+                  <div className="cc-titles">
+                    <h3 className="panel-title">{c.titulo}</h3>
+                    <span className="chip">Repetível · {money(c.payout)}</span>
+                  </div>
+                </header>
+                <p className="cc-brief">{c.briefing}</p>
+                <button className="btn btn-primary" onClick={() => open(c)}>
+                  Pegar serviço (+{money(c.payout)}) →
+                </button>
+              </article>
+            ))}
+          </>
+        )
+      })()}
     </section>
   )
 }

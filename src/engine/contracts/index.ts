@@ -35,6 +35,8 @@ export interface Contract {
   solution: string
   /** Interrogatório do cliente (GDD §5.2): erros reduzem o pagamento. */
   interrogation: InterrogationQuestion[]
+  /** Contrato-padrão repetível (GDD §7.2): não conta como boss, pode refazer por renda. */
+  repeatable?: boolean
 }
 
 export interface InterrogationQuestion {

@@ -23,6 +23,7 @@ export interface GameState {
   rentPaidUpTo: number // último turno em que o custo fixo já foi cobrado
   onboarded: boolean // já viu a introdução (o tio, o bilhete)?
   relampagoLastDayISO: string | null // controle do contrato-relâmpago diário
+  achievements: string[] // conquistas desbloqueadas (GDD §8)
 }
 
 const SAVE_KEY = 'save'
@@ -42,6 +43,7 @@ export function newGameState(): GameState {
     rentPaidUpTo: 0,
     onboarded: false,
     relampagoLastDayISO: null,
+    achievements: [],
   }
 }
 
@@ -102,7 +104,8 @@ function migrateOld(v: unknown): GameState | null {
 export async function loadGame(): Promise<GameState | null> {
   try {
     const raw = await kvGet<unknown>(SAVE_KEY)
-    if (isGameState(raw)) return raw
+    // achievements chegou depois do v3; normaliza saves que não o têm.
+    if (isGameState(raw)) return { ...raw, achievements: raw.achievements ?? [] }
     return migrateOld(raw)
   } catch {
     return null // IndexedDB indisponível (ex.: navegação privada) → começa do zero

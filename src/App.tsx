@@ -8,7 +8,14 @@ import { SkillTreeScreen } from './screens/SkillTreeScreen'
 import { WorkbenchScreen } from './screens/WorkbenchScreen'
 import { RunaScreen } from './screens/RunaScreen'
 import { Onboarding } from './screens/Onboarding'
-import { completeRune, contractById, skillById, skillOfKata } from './game/content'
+import {
+  completeRune,
+  contractById,
+  isKata,
+  pendingAchievements,
+  skillById,
+  skillOfKata,
+} from './game/content'
 import {
   exportSave,
   importSave,
@@ -26,7 +33,6 @@ export default function App() {
   const [game, setGame] = useState<GameState | null>(null)
   const [view, setView] = useState<View>('lab')
   const [runa, setRuna] = useState<{ skillId: string; kind: RuneKind } | null>(null)
-  const [wbKata, setWbKata] = useState(false) // workbench aberto como kata (runa do código)?
   const [cameFromDesk, setCameFromDesk] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
   const clientRef = useRef<PyodideClient | null>(null)
@@ -41,6 +47,15 @@ export default function App() {
     if (!game) return
     const t = setTimeout(() => void saveGame(game).catch(() => undefined), 800)
     return () => clearTimeout(t)
+  }, [game])
+
+  // Conquistas: destrava as satisfeitas pelo estado atual e avisa (GDD §8).
+  useEffect(() => {
+    if (!game) return
+    const novas = pendingAchievements(game)
+    if (novas.length === 0) return
+    setGame({ ...game, achievements: [...game.achievements, ...novas.map((a) => a.id)] })
+    setNotice(`🏆 Conquista: ${novas.map((a) => a.nome).join(' · ')}`)
   }, [game])
 
   async function onImportFile(file: File) {
@@ -109,12 +124,10 @@ export default function App() {
                 onOpenKata={(skillId) => {
                   const kataId = skillById(skillId)?.kataId
                   if (!kataId) return
-                  setWbKata(true)
                   setGame({ ...game, contracts: { ...game.contracts, activeId: kataId } })
                   setView('workbench')
                 }}
                 onOpenBoss={(contractId) => {
-                  setWbKata(false)
                   setGame({ ...game, contracts: { ...game.contracts, activeId: contractId } })
                   setView('workbench')
                 }}
@@ -134,7 +147,7 @@ export default function App() {
             {view === 'workbench' && active && clientRef.current && (
               <WorkbenchScreen
                 contract={active}
-                mode={wbKata ? 'kata' : 'boss'}
+                mode={isKata(active.id) ? 'kata' : 'boss'}
                 client={clientRef.current}
                 pyState={pyState}
                 game={game}
@@ -143,7 +156,6 @@ export default function App() {
                 onKataDone={() => {
                   const s = skillOfKata(active.id)
                   if (s) setGame(completeRune(game, s.id, 'codigo'))
-                  setWbKata(false)
                   setView('skills')
                 }}
               />

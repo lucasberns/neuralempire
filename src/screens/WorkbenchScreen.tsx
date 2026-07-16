@@ -105,6 +105,10 @@ export function WorkbenchScreen({
             <>
               Runa do Código · treino, não paga · Meta: <b>{contract.metaLabel}</b>
             </>
+          ) : contract.repeatable ? (
+            <>
+              Meta: <b>{contract.metaLabel}</b> · Paga {money(contract.payout)} · contrato do bairro
+            </>
           ) : (
             <>
               Meta: <b>{contract.metaLabel}</b> · Paga até {money(contract.payout)} · Custo do mês{' '}
@@ -221,9 +225,11 @@ export function WorkbenchScreen({
             <b className="amber">+{money(reward.earned)}</b> no caixa e{' '}
             <b>+{reward.rep} de reputação</b>.
           </p>
-          <p className="muted">
-            Custo fixo do mês descontado: −{money(reward.rent)} (energia + aluguel).
-          </p>
+          {reward.rent > 0 && (
+            <p className="muted">
+              Custo fixo do mês descontado: −{money(reward.rent)} (energia + aluguel).
+            </p>
+          )}
           <div className="assist-row">
             <button className="btn btn-primary" onClick={() => onNavigate('lab')}>
               Voltar à garagem →
