@@ -23,6 +23,7 @@ export default function App() {
   })
   const [game, setGame] = useState<GameState | null>(null)
   const [view, setView] = useState<View>('lab')
+  const [cameFromDesk, setCameFromDesk] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
   const clientRef = useRef<PyodideClient | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -71,13 +72,23 @@ export default function App() {
         <LabScreen
           game={game}
           onGameChange={setGame}
-          onNavigate={setView}
+          onNavigate={(v) => {
+            setCameFromDesk(false)
+            setView(v)
+          }}
           onExport={() => exportSave(game)}
           onImport={() => fileRef.current?.click()}
+          arriveFromDesk={cameFromDesk}
         />
       ) : (
         <div className="app">
-          <TopBar game={game} onBack={() => setView('lab')} />
+          <TopBar
+            game={game}
+            onBack={() => {
+              setCameFromDesk(view === 'workbench')
+              setView('lab')
+            }}
+          />
           <main className="app-main">
             {view === 'contratos' && (
               <ContractsScreen game={game} onGameChange={setGame} onNavigate={setView} />

@@ -382,10 +382,31 @@ button {
   height: 100%;
   /* câmera: mergulha até a mesa quando .zoom-desk está no palco */
   transition: transform 0.62s cubic-bezier(0.5, 0, 0.15, 1);
-  transform-origin: 64% 34%; /* centro da tela do monitor em coords do viewBox */
+  transform-origin: 73.6% 41.6%; /* centro da tela do monitor em coords do viewBox */
 }
 .garage-stage.zoom-desk .garage {
   transform: scale(2.6);
+}
+
+/* poeira flutuando */
+.mote {
+  position: absolute;
+  z-index: 6;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgba(182, 241, 69, 0.4);
+  filter: blur(0.5px);
+  animation: mote-drift 9s ease-in-out infinite;
+  pointer-events: none;
+}
+.mote.m1 { left: 22%; top: 30%; animation-delay: 0s; }
+.mote.m2 { left: 68%; top: 22%; animation-delay: -3s; animation-duration: 12s; }
+.mote.m3 { left: 40%; top: 62%; animation-delay: -6s; animation-duration: 10s; }
+.mote.m4 { left: 80%; top: 55%; animation-delay: -1.5s; background: rgba(88, 214, 255, 0.35); }
+@keyframes mote-drift {
+  0%, 100% { transform: translate(0, 0); opacity: 0.15; }
+  50% { transform: translate(9px, -16px); opacity: 0.7; }
 }
 
 /* overlays do HUD mínimo */
@@ -397,6 +418,11 @@ button {
   top: calc(12px + env(safe-area-inset-top));
   left: calc(14px + env(safe-area-inset-left));
   display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.ov-brand-row {
+  display: flex;
   align-items: center;
   gap: 7px;
   font-family: var(--mono);
@@ -404,18 +430,27 @@ button {
   font-size: 0.78rem;
   letter-spacing: 0.06em;
 }
+.ov-chapter {
+  font-family: var(--mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.14em;
+  color: var(--dim);
+}
 .ov-tr {
   top: calc(12px + env(safe-area-inset-top));
   right: calc(14px + env(safe-area-inset-right));
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 4px;
-  padding: 8px 11px;
+  gap: 2px;
+  padding: 6px 10px;
   border: 1px solid var(--line-bright);
   border-radius: var(--r-sm);
   background: rgba(10, 15, 13, 0.78);
   backdrop-filter: blur(8px);
+}
+.ov-tr .ov-stat {
+  font-size: 0.78rem;
 }
 .ov-bl {
   bottom: calc(14px + env(safe-area-inset-bottom));
@@ -443,11 +478,20 @@ button {
   min-height: 42px;
   cursor: pointer;
 }
+.ov-upgrade.ready {
+  box-shadow: 0 0 18px -6px rgba(182, 241, 69, 0.8);
+  animation: upgrade-glow 2.2s ease-in-out infinite;
+}
 .ov-upgrade:disabled {
   color: var(--dim);
   border-color: var(--line-bright);
   opacity: 0.7;
   cursor: default;
+}
+@keyframes upgrade-glow {
+  50% {
+    box-shadow: 0 0 26px -4px rgba(182, 241, 69, 0.9);
+  }
 }
 .ov-br {
   bottom: calc(14px + env(safe-area-inset-bottom));
@@ -510,29 +554,65 @@ button {
   }
 }
 .garage .wall {
-  fill: #0c1512;
-  stroke: var(--line-bright);
-  stroke-width: 0.6;
-}
-.garage .wall-b {
-  fill: #0a120f;
-}
-.garage .floor {
-  fill: #0a0f0d;
-  stroke: rgba(182, 241, 69, 0.28);
+  fill: #13211b;
+  stroke: rgba(182, 241, 69, 0.35);
   stroke-width: 0.8;
 }
+.garage .wall-b {
+  fill: #0e1a15;
+}
+.garage .floor {
+  fill: #0e1511;
+  stroke: rgba(182, 241, 69, 0.4);
+  stroke-width: 1;
+}
 .garage .grid {
-  stroke: rgba(182, 241, 69, 0.12);
+  stroke: rgba(182, 241, 69, 0.14);
   stroke-width: 0.5;
 }
-.garage .floor-glow {
+.garage .light-pool {
+  fill: rgba(255, 191, 71, 0.07);
   pointer-events: none;
 }
 .garage .rug {
-  fill: rgba(88, 214, 255, 0.06);
-  stroke: rgba(88, 214, 255, 0.22);
+  fill: rgba(88, 214, 255, 0.07);
+  stroke: rgba(88, 214, 255, 0.28);
+  stroke-width: 0.8;
+}
+.garage .door-mat {
+  fill: rgba(255, 191, 71, 0.08);
+  stroke: rgba(255, 191, 71, 0.3);
+  stroke-width: 0.6;
+}
+
+/* portão de garagem (lâminas) */
+.garage .roll-door polygon {
+  fill: #0f1b16;
+  stroke: rgba(182, 241, 69, 0.22);
   stroke-width: 0.7;
+}
+.garage .roll-door line {
+  stroke: rgba(182, 241, 69, 0.18);
+  stroke-width: 0.7;
+}
+
+/* pôster neon */
+.garage .poster polygon:first-child {
+  fill: #0c1713;
+  stroke: rgba(255, 191, 71, 0.45);
+  stroke-width: 0.8;
+}
+.garage .p-art {
+  stroke: none;
+}
+.garage .p-art.a1 { fill: rgba(182, 241, 69, 0.55); }
+.garage .p-art.a2 { fill: rgba(88, 214, 255, 0.45); }
+.garage .p-art.a3 { fill: rgba(255, 191, 71, 0.5); }
+
+/* alvo de toque generoso (invisível) */
+.garage .hit {
+  fill: rgba(0, 0, 0, 0);
+  cursor: pointer;
 }
 
 /* caixas: topo claro, faces laterais progressivamente escuras + arestas neon */
@@ -564,16 +644,38 @@ button {
 .garage .tone-rack .f-l { fill: #0b141a; }
 .garage .tone-mon polygon,
 .garage .tone-tower polygon { stroke: rgba(182, 241, 69, 0.5); }
-/* personagem (hoodie escuro com aresta cyan + cabeça) */
+/* personagem (hoodie escuro com aresta cyan + capuz + cabeça), digitando */
 .garage .tone-person polygon { stroke: rgba(88, 214, 255, 0.45); }
 .garage .tone-person .f-t { fill: #1d3540; }
 .garage .tone-person .f-r { fill: #16282f; }
 .garage .tone-person .f-l { fill: #101d23; }
+.garage .dev {
+  animation: dev-bob 2.6s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.garage .dev-hood {
+  fill: #16282f;
+  stroke: rgba(88, 214, 255, 0.45);
+  stroke-width: 0.7;
+}
 .garage .dev-head {
   fill: #d8b08c;
   stroke: rgba(0, 0, 0, 0.45);
   stroke-width: 0.7;
 }
+@keyframes dev-bob {
+  50% {
+    transform: translateY(-1.3px);
+  }
+}
+/* livros na prateleira */
+.garage .tone-book1 polygon { stroke: rgba(182, 241, 69, 0.5); }
+.garage .tone-book1 .f-t, .garage .tone-book1 .f-r, .garage .tone-book1 .f-l { fill: #22391c; }
+.garage .tone-book2 polygon { stroke: rgba(88, 214, 255, 0.5); }
+.garage .tone-book2 .f-t, .garage .tone-book2 .f-r, .garage .tone-book2 .f-l { fill: #163038; }
+.garage .tone-book3 polygon { stroke: rgba(255, 191, 71, 0.5); }
+.garage .tone-book3 .f-t, .garage .tone-book3 .f-r, .garage .tone-book3 .f-l { fill: #38301a; }
 
 /* telas e leds */
 .garage .screen {
@@ -590,6 +692,22 @@ button {
   fill: rgba(88, 214, 255, 0.6);
   stroke: var(--cyan);
   filter: drop-shadow(0 0 5px rgba(88, 214, 255, 0.8));
+}
+.garage .code-line {
+  stroke: #0a1206;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-dasharray: 10 3;
+  animation: typing 2.4s steps(8) infinite;
+}
+.garage .code-line.slow {
+  animation-duration: 3.4s;
+  animation-delay: -1.2s;
+}
+@keyframes typing {
+  to {
+    stroke-dashoffset: -26;
+  }
 }
 .garage .led {
   fill: var(--lime);
@@ -612,12 +730,18 @@ button {
 
 /* porta e quadro (hotspots na parede) */
 .garage .door {
-  fill: #101713;
-  stroke: var(--line-bright);
+  fill: #16241d;
+  stroke: rgba(182, 241, 69, 0.45);
   stroke-width: 1;
+}
+.garage .door-inset {
+  fill: rgba(0, 0, 0, 0.28);
+  stroke: rgba(182, 241, 69, 0.2);
+  stroke-width: 0.6;
 }
 .garage .door-knob {
   fill: var(--amber);
+  filter: drop-shadow(0 0 3px rgba(255, 191, 71, 0.7));
 }
 /* notificação de cliente sobre a porta */
 .garage .notify-dot {
@@ -641,18 +765,26 @@ button {
   }
 }
 .garage .panelboard {
-  fill: rgba(88, 214, 255, 0.06);
-  stroke: rgba(88, 214, 255, 0.5);
-  stroke-width: 0.7;
+  fill: #1a2620;
+  stroke: rgba(88, 214, 255, 0.55);
+  stroke-width: 0.9;
 }
-.garage .board-line {
-  stroke: rgba(88, 214, 255, 0.6);
-  stroke-width: 0.7;
+/* recados pregados no quadro */
+.garage .note {
+  stroke: rgba(0, 0, 0, 0.4);
+  stroke-width: 0.4;
 }
+.garage .note.n1 { fill: rgba(182, 241, 69, 0.5); }
+.garage .note.n2 { fill: rgba(255, 191, 71, 0.5); }
+.garage .note.n3 { fill: rgba(88, 214, 255, 0.5); }
+.garage .note.n4 { fill: rgba(231, 240, 234, 0.35); }
 
 /* hotspots */
 .garage .hot {
   cursor: pointer;
+}
+.garage .hot:active {
+  filter: brightness(1.6);
 }
 .garage .hot:hover .screen,
 .garage .hot:focus-visible .screen {
@@ -664,6 +796,7 @@ button {
 .garage .hot:hover .door,
 .garage .hot:focus-visible .door {
   stroke: var(--lime);
+  fill: #1c2e24;
 }
 .garage .hot:hover .panelboard,
 .garage .hot:focus-visible .panelboard {

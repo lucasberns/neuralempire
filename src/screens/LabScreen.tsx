@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { GameState } from '../persistence/saveGame'
 import type { View } from '../nav'
 import { GarageScene, type Hotspot } from './GarageScene'
@@ -14,15 +14,27 @@ export function LabScreen({
   onNavigate,
   onExport,
   onImport,
+  arriveFromDesk = false,
 }: {
   game: GameState
   onGameChange: (g: GameState) => void
   onNavigate: (v: View) => void
   onExport: () => void
   onImport: () => void
+  /** Voltando da bancada: entra com a câmera na mesa e afasta (zoom reverso). */
+  arriveFromDesk?: boolean
 }) {
-  const [zooming, setZooming] = useState(false)
+  const [zooming, setZooming] = useState(arriveFromDesk)
   const [settingsOpen, setSettingsOpen] = useState(false)
+
+  useEffect(() => {
+    if (!arriveFromDesk) return
+    // setTimeout (não rAF): rAF não dispara com a aba oculta e deixaria o zoom preso.
+    // 60ms dá tempo do frame inicial (zoomed) pintar → a transição CSS anima o afastamento.
+    const id = window.setTimeout(() => setZooming(false), 60)
+    return () => clearTimeout(id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const hw = currentHardware(game)
   const next = nextHardware(game)
@@ -43,14 +55,22 @@ export function LabScreen({
 
   return (
     <div className={`garage-stage${zooming ? ' zoom-desk' : ''}`}>
+      {/* poeira flutuando — atmosfera barata */}
+      <span className="mote m1" aria-hidden />
+      <span className="mote m2" aria-hidden />
+      <span className="mote m3" aria-hidden />
+      <span className="mote m4" aria-hidden />
       <GarageScene level={game.hardwareLevel} notify={waiting} onSelect={go} />
 
       {/* HUD mínimo */}
       <header className="ov ov-tl" aria-hidden>
-        <span className="hud-logo">◢◤</span>
-        <span className="ov-brand">
-          NEURAL<span className="hud-logo-accent">://</span>EMPIRE
-        </span>
+        <div className="ov-brand-row">
+          <span className="hud-logo">◢◤</span>
+          <span className="ov-brand">
+            NEURAL<span className="hud-logo-accent">://</span>EMPIRE
+          </span>
+        </div>
+        <span className="ov-chapter">CAP. 01 · A GARAGEM</span>
       </header>
 
       <div className="ov ov-tr">
@@ -61,18 +81,22 @@ export function LabScreen({
 
       <div className="ov ov-bl">
         <span className="ov-hw">{hw.nome}</span>
-        {next && (
-          <button
-            className="ov-upgrade"
-            disabled={game.money < next.custo}
-            onClick={() => {
-              const g = buyHardware(game)
-              if (g) onGameChange(g)
-            }}
-          >
-            ⬆ {next.nome} · {money(next.custo)}
-          </button>
-        )}
+        {next &&
+          (game.money >= next.custo ? (
+            <button
+              className="ov-upgrade ready"
+              onClick={() => {
+                const g = buyHardware(game)
+                if (g) onGameChange(g)
+              }}
+            >
+              ⬆ {next.nome} · {money(next.custo)}
+            </button>
+          ) : (
+            <button className="ov-upgrade" disabled>
+              🔒 {next.nome} · falta {money(next.custo - game.money)}
+            </button>
+          ))}
       </div>
 
       <button className="ov ov-br" aria-label="Configurações" onClick={() => setSettingsOpen(true)}>
