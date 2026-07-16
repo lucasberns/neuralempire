@@ -618,6 +618,89 @@ export function pendingAchievements(g: GameState): Achievement[] {
   return ACHIEVEMENTS.filter((a) => a.test(g) && !g.achievements.includes(a.id))
 }
 
+// ---------------------------------------------------------------- Aulas de código (ensino)
+// GDD §3/§12: ensina o Python de verdade — "qual código colocar", linha a linha.
+// Mapa por id do contrato (evita editar cada objeto). Aberta por padrão na Runa do Código.
+export interface LessonStep {
+  code: string
+  explica: string
+}
+export interface Lesson {
+  intro: string
+  passos: LessonStep[]
+}
+
+export const LESSONS: Record<string, Lesson> = {
+  'kata-ler': {
+    intro: 'A tabela chega na variável `dados` (um DataFrame do pandas). Você só precisa contar as linhas.',
+    passos: [
+      { code: 'def numero_de_dias(dados):', explica: 'Comece definindo a função com o nome exato que o teste espera.' },
+      { code: '    return len(dados)', explica: 'len(dados) conta quantas linhas a tabela tem. O return devolve esse número.' },
+    ],
+  },
+  'boletim-padaria': {
+    intro: 'Média = somar tudo e dividir pela quantidade. O pandas faz isso com .mean().',
+    passos: [
+      { code: 'def media_de_vendas(dados):', explica: 'A função recebe a tabela em `dados`.' },
+      { code: "    return dados['vendas'].mean()", explica: "dados['vendas'] pega só a coluna de vendas; .mean() calcula a média dela." },
+    ],
+  },
+  'kata-explorar': {
+    intro: 'Mesma ideia da média, mas agora na coluna da temperatura.',
+    passos: [
+      { code: 'def media_temperatura(dados):', explica: 'Recebe a tabela.' },
+      { code: "    return dados['temperatura'].mean()", explica: "Pega a coluna 'temperatura' e tira a média com .mean()." },
+    ],
+  },
+  'analise-clima': {
+    intro: 'Correlação mede se duas colunas sobem/descem juntas. O pandas tem .corr() para isso.',
+    passos: [
+      { code: 'def correlacao_temp_vendas(dados):', explica: 'Recebe a tabela.' },
+      { code: "    return dados['temperatura'].corr(dados['vendas'])", explica: "Pega a coluna temperatura e pede a correlação dela com a coluna vendas. Resultado entre -1 e 1." },
+    ],
+  },
+  'kata-limpar': {
+    intro: 'Célula vazia no pandas é NaN. .isnull() acha, .sum() conta.',
+    passos: [
+      { code: 'def idades_faltando(dados):', explica: 'Recebe a tabela.' },
+      { code: "    return int(dados['idade'].isnull().sum())", explica: "isnull() marca True onde falta; .sum() soma os True (conta); int() deixa como número inteiro." },
+    ],
+  },
+  'faxina-cadastro': {
+    intro: 'Agora conte os faltantes da tabela INTEIRA, não de uma coluna só — por isso dois .sum().',
+    passos: [
+      { code: 'def total_faltantes(dados):', explica: 'Recebe a tabela.' },
+      { code: '    return int(dados.isnull().sum().sum())', explica: 'O primeiro .sum() conta por coluna; o segundo soma todas as colunas → total da tabela.' },
+    ],
+  },
+  'kata-regressao': {
+    intro: 'Treinar um modelo é sempre o mesmo ritual: escolher as colunas, criar o modelo, .fit() (treinar) e .predict() (prever).',
+    passos: [
+      { code: 'from sklearn.linear_model import LinearRegression', explica: 'Traz o modelo de regressão do scikit-learn.' },
+      { code: 'def prever(dados_treino, dados_novos):', explica: 'Recebe os dados de treino e os dias novos.' },
+      { code: '    colunas = ["temperatura", "fim_de_semana", "promocao"]', explica: 'As colunas de entrada que o modelo usa para prever.' },
+      { code: '    modelo = LinearRegression()', explica: 'Cria o modelo (ainda vazio).' },
+      { code: '    modelo.fit(dados_treino[colunas], dados_treino["vendas"])', explica: 'Treina: aprende a relação entre as colunas e as vendas.' },
+      { code: '    return modelo.predict(dados_novos[colunas])', explica: 'Usa o modelo treinado para prever as vendas dos dias novos.' },
+    ],
+  },
+  'previsao-padaria': {
+    intro: 'Mesmo ritual do treino da runa, agora valendo: escolher colunas, criar, treinar (.fit) e prever (.predict).',
+    passos: [
+      { code: 'from sklearn.linear_model import LinearRegression', explica: 'Importa o modelo.' },
+      { code: 'def prever_vendas(dados_treino, dados_novos):', explica: 'Recebe treino e os dias a prever.' },
+      { code: '    colunas = ["temperatura", "fim_de_semana", "promocao"]', explica: 'Entradas do modelo.' },
+      { code: '    X = dados_treino[colunas]', explica: 'X = as colunas de entrada do treino.' },
+      { code: '    y = dados_treino["vendas"]', explica: 'y = o que queremos prever (vendas).' },
+      { code: '    modelo = LinearRegression()', explica: 'Cria o modelo.' },
+      { code: '    modelo.fit(X, y)', explica: 'Treina com X e y.' },
+      { code: '    return modelo.predict(dados_novos[colunas])', explica: 'Prevê as vendas dos dias novos.' },
+    ],
+  },
+}
+
+export const lessonFor = (id: string): Lesson | undefined => LESSONS[id]
+
 // ---------------------------------------------------------------- Regras puras
 export const contractById = (id: string): Contract | undefined =>
   id === RELAMPAGO.id

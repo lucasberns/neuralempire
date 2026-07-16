@@ -1010,6 +1010,86 @@ button {
     transform: rotate(360deg);
   }
 }
+/* Aula de código (ensino do Python) */
+.lesson {
+  border-color: rgba(88, 214, 255, 0.35);
+}
+.lesson > summary {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  cursor: pointer;
+  list-style: none;
+  font-family: var(--mono);
+}
+.lesson > summary::-webkit-details-marker {
+  display: none;
+}
+.lesson-title {
+  color: var(--cyan);
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+.lesson-hint {
+  color: var(--dim);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.lesson-intro {
+  color: #d6e2da;
+  font-size: 0.92rem;
+  margin: 12px 0;
+}
+.lesson-steps {
+  list-style: none;
+  margin: 0 0 14px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  counter-reset: lesson;
+}
+.lesson-steps li {
+  position: relative;
+  padding-left: 26px;
+}
+.lesson-steps li::before {
+  counter-increment: lesson;
+  content: counter(lesson);
+  position: absolute;
+  left: 0;
+  top: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-family: var(--mono);
+  font-size: 0.64rem;
+  color: var(--cyan);
+  border: 1px solid rgba(88, 214, 255, 0.4);
+}
+.lesson-code {
+  display: block;
+  background: #060907;
+  border: 1px solid var(--line);
+  border-left: 2px solid var(--cyan);
+  border-radius: 6px;
+  padding: 7px 10px;
+  color: var(--lime);
+  font-size: 0.82rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.lesson-explica {
+  display: block;
+  color: var(--muted);
+  font-size: 0.84rem;
+  margin-top: 4px;
+}
+
 .hints {
   margin: 12px 0 0;
   padding-left: 20px;

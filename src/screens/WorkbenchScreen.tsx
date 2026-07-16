@@ -8,7 +8,7 @@ import { CodeEditor } from '../editor/CodeEditor'
 import { DataPreview } from '../components/DataPreview'
 import { TestResults } from '../components/TestResults'
 import { Interrogatorio } from './Interrogatorio'
-import { RENT_PER_TURN, completeContract, isDone } from '../game/content'
+import { RENT_PER_TURN, completeContract, isDone, lessonFor } from '../game/content'
 
 const money = (n: number) => `R$ ${n.toLocaleString('pt-BR')}`
 
@@ -47,6 +47,7 @@ export function WorkbenchScreen({
   const code = game.codeByContract[contract.id] ?? contract.starterCode
   const done = isDone(game, contract.id)
   const pyReady = pyState.phase === 'ready'
+  const lesson = lessonFor(contract.id)
 
   useEffect(() => {
     fetch(contract.datasetUrl)
@@ -132,6 +133,33 @@ export function WorkbenchScreen({
               : undefined
           }
         />
+      )}
+
+      {lesson && (
+        <details className="panel lesson" open={mode === 'kata'}>
+          <summary>
+            <span className="lesson-title">📖 Como escrever esse código</span>
+            <span className="lesson-hint">passo a passo</span>
+          </summary>
+          <p className="lesson-intro">{lesson.intro}</p>
+          <ol className="lesson-steps">
+            {lesson.passos.map((p, i) => (
+              <li key={i}>
+                <code className="lesson-code">{p.code}</code>
+                <span className="lesson-explica">{p.explica}</span>
+              </li>
+            ))}
+          </ol>
+          <button
+            className="btn btn-ghost"
+            onClick={() => {
+              setCode(contract.solution)
+              setEditorNonce((n) => n + 1)
+            }}
+          >
+            Escrever esse exemplo no editor pra mim
+          </button>
+        </details>
       )}
 
       <div className="panel">
