@@ -61,6 +61,7 @@ export function RunaLerMatematica({ onComplete }: { onComplete: () => void }) {
   }
 
   const tirarDoSlot = (idx: number) => {
+    if (status === 'certo') return
     setState((s) => {
       const id = s.slots[idx]
       if (id === null) return s
