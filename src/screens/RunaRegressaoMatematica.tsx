@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import './RunaMatematica.css'
+import './RunaRegressaoMatematica.css'
 
 // Runa da Matemática (GDD §5.1, §5.4 tier 1 = visual): montar a "receita do erro"
 // (mínimos quadrados pra leigo) ordenando 4 passos embaralhados. Tap-to-place —
@@ -42,7 +42,7 @@ function embaralhar(): number[] {
   return a
 }
 
-export function RunaMatematica({ onComplete }: { onComplete: () => void }) {
+export function RunaRegressaoMatematica({ onComplete }: { onComplete: () => void }) {
   const [pool, setPool] = useState<number[]>(embaralhar)
   const [slots, setSlots] = useState<(number | null)[]>([null, null, null, null])
   // 'idle' | 'errado' | 'certo' — controla feedback do Verificar.

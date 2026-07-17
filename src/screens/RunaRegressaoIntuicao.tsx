@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import './RunaIntuicao.css'
+import './RunaRegressaoIntuicao.css'
 
 // Runa da Intuição (GDD §5.1 / Apêndice A): regressão linear visual — arrastar uma
 // reta sobre os pontos e ver o erro (barras vermelhas) mudar em tempo real; concluir
@@ -48,7 +48,7 @@ const prefersReduced = () =>
   typeof window !== 'undefined' &&
   window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
 
-export function RunaIntuicao({ onComplete }: { onComplete: () => void }) {
+export function RunaRegressaoIntuicao({ onComplete }: { onComplete: () => void }) {
   const [slope, setSlope] = useState(2)
   const [intercept, setIntercept] = useState(90)
   const [solved, setSolved] = useState(false)
