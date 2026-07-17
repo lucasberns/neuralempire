@@ -1,4 +1,5 @@
 import { kvGet, kvSet } from './db'
+import { skillOfContract } from '../game/content'
 
 /** Progresso das 3 runas de uma skill (GDD §5.1): intuição, matemática, código (kata). */
 export interface RuneProgress {
@@ -120,8 +121,12 @@ function migrateOld(v: unknown): GameState | null {
       base.turn = c.doneIds.length
       base.rentPaidUpTo = c.doneIds.length // não cobra aluguel retroativo
       base.onboarded = c.doneIds.length > 0
-      // contratos já entregues: dá as runas como feitas p/ não re-travar (skillId derivado no content)
-      for (const id of c.doneIds) base.runes[id] = { intuicao: true, matematica: true, codigo: true }
+      // contratos já entregues: dá as runas como feitas p/ não re-travar, chaveado pela SKILL
+      // (não pelo contrato — bug anterior deixava `runes` órfão pra qualquer save migrado)
+      for (const id of c.doneIds) {
+        const skillId = skillOfContract(id)?.id
+        if (skillId) base.runes[skillId] = { intuicao: true, matematica: true, codigo: true }
+      }
     }
     if (o.codeByContract && typeof o.codeByContract === 'object') {
       base.codeByContract = o.codeByContract as Record<string, string>
