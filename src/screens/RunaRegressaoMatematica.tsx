@@ -43,26 +43,38 @@ function embaralhar(): number[] {
 }
 
 export function RunaRegressaoMatematica({ onComplete }: { onComplete: () => void }) {
-  const [pool, setPool] = useState<number[]>(embaralhar)
-  const [slots, setSlots] = useState<(number | null)[]>([null, null, null, null])
+  const [state, setState] = useState<{ pool: number[]; slots: (number | null)[] }>(() => ({
+    pool: embaralhar(),
+    slots: [null, null, null, null],
+  }))
   // 'idle' | 'errado' | 'certo' — controla feedback do Verificar.
   const [status, setStatus] = useState<'idle' | 'errado' | 'certo'>('idle')
+  const { pool, slots } = state
 
   const cheio = slots.every((s) => s !== null)
 
   const pegarDoPool = (id: number) => {
-    const vaga = slots.indexOf(null)
-    if (vaga === -1) return
-    setSlots((s) => s.map((v, i) => (i === vaga ? id : v)))
-    setPool((p) => p.filter((x) => x !== id))
+    setState((s) => {
+      const vaga = s.slots.indexOf(null)
+      if (vaga === -1) return s
+      return {
+        pool: s.pool.filter((x) => x !== id),
+        slots: s.slots.map((v, i) => (i === vaga ? id : v)),
+      }
+    })
     setStatus('idle')
   }
 
   const tirarDoSlot = (idx: number) => {
-    const id = slots[idx]
-    if (id === null || status === 'certo') return
-    setSlots((s) => s.map((v, i) => (i === idx ? null : v)))
-    setPool((p) => [...p, id])
+    if (status === 'certo') return
+    setState((s) => {
+      const id = s.slots[idx]
+      if (id === null) return s
+      return {
+        pool: [...s.pool, id],
+        slots: s.slots.map((v, i) => (i === idx ? null : v)),
+      }
+    })
     setStatus('idle')
   }
 
