@@ -634,6 +634,12 @@ button {
   flex-direction: column;
   gap: 10px;
 }
+.gap-report ul {
+  margin: 4px 0 0;
+  padding-left: 18px;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
 
 .chip.status-rusted {
   color: #ff9f47;

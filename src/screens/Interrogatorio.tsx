@@ -30,12 +30,13 @@ export function Interrogatorio({
   onFinish,
 }: {
   questions: InterrogationQuestion[]
-  onFinish: (scorePct: number) => void
+  onFinish: (scorePct: number, wrongQuestions: string[]) => void
 }) {
   const [deck] = useState(() => prepare(questions))
   const [i, setI] = useState(0)
   const [picked, setPicked] = useState<number | null>(null)
   const [correct, setCorrect] = useState(0)
+  const [wrong, setWrong] = useState<string[]>([])
 
   const q = deck[i]
   if (!q) return null
@@ -45,12 +46,13 @@ export function Interrogatorio({
     if (answered) return
     setPicked(opt)
     if (opt === q.correct) setCorrect((c) => c + 1)
+    else setWrong((w) => [...w, q.q])
   }
 
   function next() {
     const last = i === deck.length - 1
     if (last) {
-      onFinish(correct / deck.length)
+      onFinish(correct / deck.length, wrong)
       return
     }
     setI((n) => n + 1)

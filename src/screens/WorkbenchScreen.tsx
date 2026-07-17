@@ -57,7 +57,7 @@ export function WorkbenchScreen({
   const [interrogating, setInterrogating] = useState(false)
   const [kataPassed, setKataPassed] = useState(false)
   const [reward, setReward] = useState<{ earned: number; rep: number; rent: number } | null>(null)
-  const [failed, setFailed] = useState<{ correct: number; total: number } | null>(null)
+  const [failed, setFailed] = useState<{ correct: number; total: number; wrongQuestions: string[] } | null>(null)
   const [editorNonce, setEditorNonce] = useState(0) // bump → remonta o editor com o código novo
 
   const code = game.codeByContract[contract.id] ?? contract.starterCode
@@ -167,6 +167,16 @@ export function WorkbenchScreen({
               Você acertou <b>{failed.correct}/{failed.total}</b> no interrogatório — o cliente
               precisava de pelo menos <b>⅔</b>. Trabalho recusado, sem pagamento.
             </p>
+          )}
+          {failed && failed.wrongQuestions.length > 0 && (
+            <div className="gap-report">
+              <p className="muted">Perguntas que pegaram você de surpresa:</p>
+              <ul>
+                {failed.wrongQuestions.map((q, i) => (
+                  <li key={i}>{q}</li>
+                ))}
+              </ul>
+            </div>
           )}
           <p className="muted">
             Tente de novo em <b>{fmtCooldown(bossCooldownMsLeft(game, contract.id, nowMs()))}</b>.
@@ -339,7 +349,7 @@ export function WorkbenchScreen({
       {interrogating && (
         <Interrogatorio
           questions={contract.interrogation}
-          onFinish={(score) => {
+          onFinish={(score, wrongQuestions) => {
             if (interrogationPassed(score)) {
               finalize(score)
               return
@@ -350,6 +360,7 @@ export function WorkbenchScreen({
             setFailed({
               correct: Math.round(score * contract.interrogation.length),
               total: contract.interrogation.length,
+              wrongQuestions,
             })
           }}
         />
