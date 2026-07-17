@@ -5,3 +5,10 @@ dev-dist/
 .env
 .env.*
 !.env.example
+
+# Docs/ferramentas de dev locais — não precisam do app/repo funcionar, ficam só na máquina
+PLAN.md
+PROGRESS.md
+neural-empire-gdd.md
+.claude/
+scripts/gen-icons.mjs

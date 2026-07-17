@@ -1,11 +1,8 @@
 # Neural Empire
 
 Jogo mobile PWA para aprender machine learning escrevendo Python de verdade no celular.
-O design completo está em [`neural-empire-gdd.md`](./neural-empire-gdd.md).
 
-> 📍 **Estado atual e de onde continuar:** veja [`PROGRESS.md`](./PROGRESS.md).
-> Resumo: MVP do Capítulo 1 + economia do v0.2 (falência/agiota/ferrugem) completos;
-> no ar em https://lucasberns.github.io/neuralempire/. Próximo: Capítulo 2.
+No ar em https://lucasberns.github.io/neuralempire/.
 
 ## Como rodar
 
