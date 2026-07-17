@@ -21,9 +21,12 @@ type Pergunta =
   | { tipo: 'linha'; texto: string; respostaIdx: number }
   | { tipo: 'numero'; texto: string; resposta: number }
 
+const idxMaiorPreco = ESTOQUE.reduce((best, l, i) => (l.preco > ESTOQUE[best].preco ? i : best), 0)
+const idxMenorEstoque = ESTOQUE.reduce((best, l, i) => (l.estoque < ESTOQUE[best].estoque ? i : best), 0)
+
 const PERGUNTAS: readonly Pergunta[] = [
-  { tipo: 'linha', texto: 'Clique na linha do produto com o MAIOR preço.', respostaIdx: 7 },
-  { tipo: 'linha', texto: 'Clique na linha do produto com o MENOR estoque.', respostaIdx: 6 },
+  { tipo: 'linha', texto: 'Clique na linha do produto com o MAIOR preço.', respostaIdx: idxMaiorPreco },
+  { tipo: 'linha', texto: 'Clique na linha do produto com o MENOR estoque.', respostaIdx: idxMenorEstoque },
   {
     tipo: 'numero',
     texto: "Quantos produtos são da categoria 'Periférico'?",
@@ -45,7 +48,7 @@ export function RunaLerIntuicao({ onComplete }: { onComplete: () => void }) {
   }
 
   const responderLinha = (idx: number) => {
-    if (atual.tipo !== 'linha') return
+    if (!atual || atual.tipo !== 'linha') return
     if (idx === atual.respostaIdx) acertou()
     else setFeedback('errado')
   }
@@ -81,7 +84,10 @@ export function RunaLerIntuicao({ onComplete }: { onComplete: () => void }) {
               role={atual?.tipo === 'linha' ? 'button' : undefined}
               tabIndex={atual?.tipo === 'linha' ? 0 : undefined}
               onKeyDown={(e) => {
-                if (atual?.tipo === 'linha' && (e.key === 'Enter' || e.key === ' ')) responderLinha(i)
+                if (atual?.tipo === 'linha' && (e.key === 'Enter' || e.key === ' ')) {
+                  if (e.key === ' ') e.preventDefault()
+                  responderLinha(i)
+                }
               }}
             >
               <td>{l.produto}</td>
