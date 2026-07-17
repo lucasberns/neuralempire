@@ -829,11 +829,6 @@ button {
 .garage .tone-tower2 .f-t { fill: #1c2c30; }
 .garage .tone-tower2 .f-r { fill: #142226; }
 .garage .tone-tower2 .f-l { fill: #0e181b; }
-/* braços da cadeira — friso de acento */
-.garage .tone-chair-arm polygon { stroke: rgba(88, 214, 255, 0.5); }
-.garage .tone-chair-arm .f-t { fill: #1e2b28; }
-.garage .tone-chair-arm .f-r { fill: #17211e; }
-.garage .tone-chair-arm .f-l { fill: #101715; }
 /* personagem (hoodie escuro com aresta cyan + capuz + cabeça), digitando */
 .garage .tone-person polygon { stroke: rgba(88, 214, 255, 0.45); }
 .garage .tone-person .f-t { fill: #1d3540; }
@@ -847,11 +842,6 @@ button {
 .garage .dev-hood {
   fill: #16282f;
   stroke: rgba(88, 214, 255, 0.45);
-  stroke-width: 0.7;
-}
-.garage .dev-head {
-  fill: #d8b08c;
-  stroke: rgba(0, 0, 0, 0.45);
   stroke-width: 0.7;
 }
 @keyframes dev-bob {
@@ -908,30 +898,30 @@ button {
   fill: var(--cyan);
   filter: drop-shadow(0 0 4px var(--cyan));
 }
-/* portão de garagem seccional americana (hotspot dos contratos) —
-   painéis claros com relevo prensado (tons alternados), inspirado em referência real. */
+/* portão de garagem seccional americana (hotspot dos contratos) — modelo com painéis
+   em relevo (tons alternados), mas na paleta escura neon original do jogo. */
 .garage .gdoor {
   fill: none;
-  stroke: rgba(80, 92, 74, 0.75);
+  stroke: rgba(182, 241, 69, 0.5);
   stroke-width: 1.1;
 }
 .garage .gdoor-rail {
-  stroke: rgba(80, 92, 74, 0.6);
+  stroke: rgba(182, 241, 69, 0.4);
   stroke-width: 1;
 }
 .garage .gdoor-panel {
-  stroke: rgba(70, 82, 65, 0.5);
+  stroke: rgba(182, 241, 69, 0.22);
   stroke-width: 0.6;
 }
-.garage .gdoor-panel.a { fill: #dde4d8; }
-.garage .gdoor-panel.b { fill: #cad2c4; }
+.garage .gdoor-panel.a { fill: #17251e; }
+.garage .gdoor-panel.b { fill: #101c16; }
 .garage .gdoor-window {
-  fill: rgba(88, 214, 255, 0.32);
-  stroke: rgba(88, 214, 255, 0.6);
+  fill: rgba(88, 214, 255, 0.22);
+  stroke: rgba(88, 214, 255, 0.5);
   stroke-width: 0.5;
 }
 .garage .gdoor-handle {
-  fill: rgba(255, 191, 71, 0.8);
+  fill: rgba(255, 191, 71, 0.55);
   stroke: none;
 }
 /* notificação de cliente sobre a porta */

@@ -18,12 +18,12 @@ const iso = (x: number, y: number, z = 0): Pt => [
 const pts = (...ps: Pt[]) => ps.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' ')
 
 const COLS = 6
-const ROWS = 5
+const ROWS = 6
 const WH = 2.4 // altura das paredes (unidades)
 
-// viewBox justo nos limites do conteúdo (X 128–370, Y 13–225 + folga):
+// viewBox justo nos limites do conteúdo (sala 6×6 + folga):
 // em pé no celular, o quarto ocupa a largura toda em vez de boiar num mar preto.
-export const GARAGE_VIEWBOX = '114 4 262 236'
+export const GARAGE_VIEWBOX = '92 4 284 247'
 
 // Quadrilátero num plano de parede (y=0 → parede A; x=0 → parede B).
 const wallQuadA = (x1: number, x2: number, z1: number, z2: number) =>
@@ -134,7 +134,12 @@ export function GarageScene({
     [0.95, 1.4],
     [1.4, GD_Z],
   ]
-  const GD_WINDOWS = [0.83, 1.27, 1.71, 2.15, 2.59, 3.03]
+  // Metade das janelas de antes, redimensionadas p/ ocupar o mesmo espaço.
+  const GD_WINDOWS: [number, number][] = [
+    [0.83, 0.75],
+    [1.725, 0.75],
+    [2.62, 0.75],
+  ]
 
   // Quadro de skills (corkboard) na parede A (y=0)
   const board = wallQuadA(0.5, 2.0, 1.0, 2.0)
@@ -142,20 +147,24 @@ export function GarageScene({
   const rugOuter = pts(iso(2.1, 0.05), iso(5.4, 0.05), iso(5.4, 2.4), iso(2.1, 2.4))
   const rugInner = pts(iso(2.25, 0.2), iso(5.25, 0.2), iso(5.25, 2.25), iso(2.25, 2.25))
 
-  // Pôster de IA/ML (rede neural, eco do logo) na parede B — o centro (y=4.0) fica
-  // alinhado com a linha de grade do piso que sai da mesma coluna da parede.
+  // Pôster de IA/ML (rede neural, eco do logo) na parede B — centralizado no vão
+  // entre o fim do portão e o fim da parede (não num ponto fixo).
+  const POSTER_W = 0.9
+  const POSTER_CY = (GD_Y2 + ROWS) / 2
+  const POSTER_Y1 = POSTER_CY - POSTER_W / 2
+  const POSTER_Y2 = POSTER_CY + POSTER_W / 2
   const netLayers = [
     [
-      { y: 3.74, z: 1.52 },
-      { y: 3.74, z: 1.08 },
+      { y: POSTER_CY - 0.26, z: 1.52 },
+      { y: POSTER_CY - 0.26, z: 1.08 },
     ],
     [
-      { y: 4.0, z: 1.56 },
-      { y: 4.0, z: 1.04 },
+      { y: POSTER_CY, z: 1.56 },
+      { y: POSTER_CY, z: 1.04 },
     ],
     [
-      { y: 4.26, z: 1.52 },
-      { y: 4.26, z: 1.08 },
+      { y: POSTER_CY + 0.26, z: 1.52 },
+      { y: POSTER_CY + 0.26, z: 1.08 },
     ],
   ]
   const netEdges: [Pt, Pt][] = []
@@ -179,7 +188,7 @@ export function GarageScene({
 
       {/* pôster de IA/ML na parede B — rede neural (eco do logo) */}
       <g className="poster">
-        <polygon points={wallQuadB(3.55, 4.45, 0.75, 1.85)} />
+        <polygon points={wallQuadB(POSTER_Y1, POSTER_Y2, 0.75, 1.85)} />
         {netEdges.map(([a, b], i) => (
           <line key={i} className="pne" x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} />
         ))}
@@ -244,8 +253,8 @@ export function GarageScene({
           />
         ))}
         {/* fileira de janelas no painel superior */}
-        {GD_WINDOWS.map((y) => (
-          <polygon key={y} className="gdoor-window" points={wallQuadB(y, y + 0.34, 1.55, 1.9)} />
+        {GD_WINDOWS.map(([y, w]) => (
+          <polygon key={y} className="gdoor-window" points={wallQuadB(y, y + w, 1.55, 1.9)} />
         ))}
         {/* puxador central */}
         <polygon className="gdoor-handle" points={wallQuadB(2.0, 2.2, 0.22, 0.34)} />
@@ -357,27 +366,25 @@ export function GarageScene({
         </g>
       )}
 
-      {/* cadeira (parada, sem animação) */}
+      {/* cadeira (parada, sem animação) — sem braços: na projeção iso eles ficavam
+          atrás do torso e pareciam atravessados por ele. Pedestal + assento + encosto. */}
       <g className="chair">
         <Box x={3.3} y={1.2} z={0} w={0.3} d={0.25} h={0.34} tone="chair" />
         <Box x={3.15} y={1.05} z={0.34} w={0.6} d={0.55} h={0.11} tone="chair" />
-        <Box x={3.08} y={1.05} z={0.45} w={0.09} d={0.5} h={0.16} tone="chair-arm" />
-        <Box x={3.73} y={1.05} z={0.45} w={0.09} d={0.5} h={0.16} tone="chair-arm" />
-        <Box x={3.15} y={1.55} z={0.45} w={0.6} d={0.13} h={0.68} tone="chair" />
+        <Box x={3.15} y={1.62} z={0.45} w={0.6} d={0.13} h={0.68} tone="chair" />
       </g>
 
       {/* personagem (de costas, digitando — estilo GDT), com bob próprio */}
       <g className="dev">
         <Box x={3.24} y={1.08} z={0.45} w={0.44} d={0.36} h={0.6} tone="person" />
-        {/* capuz por cima e por trás — a cabeça só espia por baixo (nuca), sem atravessar */}
+        {/* capuz: uma única forma (sem cabeça separada) */}
         <circle className="dev-hood" cx={iso(3.46, 1.28, 1.24)[0]} cy={iso(3.46, 1.28, 1.24)[1]} r={7.2} />
-        <circle className="dev-head" cx={iso(3.46, 1.28, 1.1)[0]} cy={iso(3.46, 1.28, 1.1)[1]} r={4.6} />
       </g>
 
-      {/* caixotes / tralha da garagem — bagunça espalhada; encolhe com o hardware */}
-      <CratePile x={4.9} y={3.6} big={1.05} />
-      {level < 2 && <CratePile x={3.6} y={3.9} big={0.95} />}
-      {level < 1 && <CratePile x={4.15} y={4.15} big={0.85} />}
+      {/* caixotes / tralha da garagem — espalhados pelos 3 cantos livres; encolhe com o hardware */}
+      <CratePile x={4.7} y={2.4} big={1.05} />
+      {level < 2 && <CratePile x={4.0} y={5.0} big={0.95} />}
+      {level < 1 && <CratePile x={1.5} y={5.3} big={0.85} />}
     </svg>
   )
 }
