@@ -824,6 +824,11 @@ button {
   fill: rgba(10, 16, 12, 0.55);
   stroke: none;
 }
+.garage .crate-open {
+  fill: rgba(5, 8, 6, 0.75);
+  stroke: rgba(0, 0, 0, 0.3);
+  stroke-width: 0.5;
+}
 .garage .crate-arrow {
   fill: rgba(255, 191, 71, 0.4);
   stroke: none;
