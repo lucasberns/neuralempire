@@ -200,8 +200,7 @@ function CratePileArrow({ x, y, big = 1 }: { x: number; y: number; big?: number 
   )
 }
 
-// Modelo 4: caixa grande ABERTA (cavidade escura no topo, ainda sem etiqueta/fita —
-// acabou de ser rasgada) + uma caixa pequena fechada do lado, já com o acabamento padrão.
+// Modelo 4: caixa grande fechada (fita + etiqueta) + uma caixa pequena fechada do lado.
 function CratePileOpen({ x, y, big = 1 }: { x: number; y: number; big?: number }) {
   const wMain = 0.6 * big
   const dMain = 0.6 * big
@@ -211,16 +210,13 @@ function CratePileOpen({ x, y, big = 1 }: { x: number; y: number; big?: number }
   const hSide = 0.36 * big
   const xSide = x + wMain + 0.06 * big
   const ySide = y + dMain * 0.25
-  const cavity = pts(
-    iso(x + wMain * 0.15, y + dMain * 0.15, hMain),
-    iso(x + wMain * 0.85, y + dMain * 0.15, hMain),
-    iso(x + wMain * 0.85, y + dMain * 0.85, hMain),
-    iso(x + wMain * 0.15, y + dMain * 0.85, hMain),
-  )
+  const tapeA = iso(x + wMain * 0.18, y + dMain, hMain)
+  const tapeB = iso(x + wMain * 0.82, y, hMain)
   return (
     <g>
       <Box x={x} y={y} z={0} w={wMain} d={dMain} h={hMain} tone="crate" />
-      <polygon className="crate-open" points={cavity} />
+      <line className="crate-tape" x1={tapeA[0]} y1={tapeA[1]} x2={tapeB[0]} y2={tapeB[1]} />
+      {crateFace(x, y, dMain, wMain, hMain)}
       <Box x={xSide} y={ySide} z={0} w={wSide} d={dSide} h={hSide} tone="crate2" />
       {crateFace(xSide, ySide, dSide, wSide, hSide)}
     </g>
@@ -425,33 +421,34 @@ export function GarageScene({
         {/* pé/base do monitor — mais estreito que a carcaça, dá sensação de "pescoço" */}
         <Box x={3.3} y={0.36} z={0.82} w={0.3} d={0.08} h={0.06} tone="mon" />
         <Box x={3.0} y={0.34} z={0.88} w={0.95} d={0.12} h={level >= 1 ? 0.7 : 0.56} tone="mon" />
-        {/* tela: +1px direita / +2px cima em relação à leva anterior */}
+        {/* carcaça sempre um retângulo simples; tela centralizada nela (margem
+            igual nos 4 lados: 0.08 em x, 0.08 em z) — nada de deslocamento. */}
         <polygon
           className={`screen ${level >= 1 ? 'bright' : ''}`}
           points={pts(
-            iso(2.883, 0.34, 0.868),
-            iso(3.673, 0.34, 0.868),
-            iso(3.673, 0.34, level >= 1 ? 1.408 : 1.268),
-            iso(2.883, 0.34, level >= 1 ? 1.408 : 1.268),
+            iso(3.08, 0.34, 0.96),
+            iso(3.87, 0.34, 0.96),
+            iso(3.87, 0.34, level >= 1 ? 1.5 : 1.36),
+            iso(3.08, 0.34, level >= 1 ? 1.5 : 1.36),
           )}
         />
-        {/* linhas de código "digitando" na tela (acompanham o deslocamento da tela) */}
+        {/* linhas de código "digitando" na tela */}
         <line
           className="code-line"
-          x1={iso(2.954, 0.34, 1.208)[0]}
-          y1={iso(2.954, 0.34, 1.208)[1]}
-          x2={iso(3.424, 0.34, 1.208)[0]}
-          y2={iso(3.424, 0.34, 1.208)[1]}
+          x1={iso(3.15, 0.34, 1.3)[0]}
+          y1={iso(3.15, 0.34, 1.3)[1]}
+          x2={iso(3.62, 0.34, 1.3)[0]}
+          y2={iso(3.62, 0.34, 1.3)[1]}
         />
         <line
           className="code-line slow"
-          x1={iso(2.954, 0.34, 1.068)[0]}
-          y1={iso(2.954, 0.34, 1.068)[1]}
-          x2={iso(3.284, 0.34, 1.068)[0]}
-          y2={iso(3.284, 0.34, 1.068)[1]}
+          x1={iso(3.15, 0.34, 1.16)[0]}
+          y1={iso(3.15, 0.34, 1.16)[1]}
+          x2={iso(3.48, 0.34, 1.16)[0]}
+          y2={iso(3.48, 0.34, 1.16)[1]}
         />
-        {/* led de power — +2px pra direita (mesma altura em tela) */}
-        <circle className="led" cx={iso(3.729, 0.34, 0.873)[0]} cy={iso(3.729, 0.34, 0.873)[1]} r={1.3} />
+        {/* led de power na base do monitor */}
+        <circle className="led" cx={iso(3.82, 0.34, 0.9)[0]} cy={iso(3.82, 0.34, 0.9)[1]} r={1.3} />
         {/* segundo monitor a partir do nível 1 */}
         {level >= 1 && (
           <>
@@ -492,7 +489,7 @@ export function GarageScene({
 
       {/* cadeira (parada, sem animação) — voltou ao formato de antes da última leva */}
       <g className="chair">
-        <Box x={3.3} y={1.2} z={0} w={0.3} d={0.25} h={0.34} tone="chair" />
+        <Box x={3.3} y={1.2} z={0.49} w={0.3} d={0.25} h={0.34} tone="chair" />
         <Box x={3.15} y={1.05} z={0.34} w={0.6} d={0.55} h={0.11} tone="chair" />
         <Box x={3.15} y={1.62} z={0.45} w={0.6} d={0.13} h={0.68} tone="chair" />
       </g>
@@ -509,10 +506,13 @@ export function GarageScene({
       {/* caixotes / tralha da garagem — 3 modelos diferentes, espalhados pela garagem.
           A pilha do canto do rack (modelo seta) some no nível 1, deixando o canto livre
           até o rack de verdade aparecer no nível 2. */}
-      <CratePile x={4.7} y={2.4} big={1.05} />
+      {/* rotação de papéis: modelo 3 (seta) agora é o que nunca some; modelo 1
+          (clássica) some no estágio 3; modelo 2 (cluster) some no estágio 2,
+          no canto do rack — modelo 4 (fechado) continua sempre visível. */}
+      <CratePileArrow x={4.7} y={2.4} big={0.85} />
       <CratePileOpen x={1.773} y={3.664} big={0.85} />
-      {level < 2 && <CratePileCluster x={4.0} y={5.0} big={0.95} />}
-      {level < 1 && <CratePileArrow x={0.55} y={0.3} big={0.85} />}
+      {level < 2 && <CratePile x={4.0} y={5.0} big={1.05} />}
+      {level < 1 && <CratePileCluster x={0.94} y={0.3} big={0.95} />}
     </svg>
   )
 }
