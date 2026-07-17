@@ -81,8 +81,8 @@ export function RunaExplorarMatematica({ onComplete }: { onComplete: () => void 
     <div className="runa runa-explorar-matematica">
       <div className="rem-sigma" aria-hidden="true">Σ</div>
       <p className="rem-lead">
-        Antes de tirar conclusões, tem uma <span className="rem-em">ordem natural</span>{' '}
-        pra resumir uma tabela. Monte ela.
+        Antes de calcular qualquer coeficiente, tem uma <span className="rem-em">ordem natural</span>{' '}
+        pra medir como duas coisas se relacionam. Monte ela.
       </p>
 
       <ol className="rem-slots" aria-label="Passos na ordem que você montou">
@@ -121,15 +121,15 @@ export function RunaExplorarMatematica({ onComplete }: { onComplete: () => void 
 
       {status === 'errado' && (
         <p className="rem-feedback" role="status">
-          Ainda não. Pense: o que você precisa saber ANTES de calcular o resto?
+          Ainda não. Pense: o que vem primeiro — perceber a direção, ou já cravar o número?
         </p>
       )}
 
       {status === 'certo' ? (
         <div className="rem-sucesso">
           <p className="rem-sucesso-msg" role="status">
-            Contagem, máximo, mínimo e média: com esses 4 números você já entende o
-            formato geral de qualquer tabela.
+            Direção, sinal e alinhamento resumidos num único número entre −1 e 1: é
+            assim que a máquina chega no coeficiente de correlação.
           </p>
           <button type="button" className="runa-cta" onClick={onComplete}>
             Concluir runa
