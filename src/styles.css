@@ -756,15 +756,14 @@ button {
   stroke: rgba(182, 241, 69, 0.14);
   stroke-width: 0.5;
 }
-.garage .rug {
-  fill: rgba(88, 214, 255, 0.07);
-  stroke: rgba(88, 214, 255, 0.28);
+/* tapete: camada externa opaca (esconde a grade do piso por baixo) + interna clara */
+.garage .rug-outer {
+  fill: rgba(20, 45, 52, 0.88);
+  stroke: rgba(88, 214, 255, 0.35);
   stroke-width: 0.8;
 }
-.garage .door-mat {
-  fill: rgba(255, 191, 71, 0.08);
-  stroke: rgba(255, 191, 71, 0.3);
-  stroke-width: 0.6;
+.garage .rug-inner {
+  fill: rgba(88, 214, 255, 0.14);
 }
 
 /* pôster de IA/ML (rede neural, eco do logo) */
@@ -809,6 +808,14 @@ button {
 .garage .tone-crate .f-t { fill: #2c2519; }
 .garage .tone-crate .f-r { fill: #211b12; }
 .garage .tone-crate .f-l { fill: #16110b; }
+.garage .tone-crate2 .f-t { fill: #362d1e; }
+.garage .tone-crate2 .f-r { fill: #292115; }
+.garage .tone-crate2 .f-l { fill: #1c160d; }
+.garage .crate-tape {
+  stroke: rgba(255, 191, 71, 0.4);
+  stroke-width: 1.4;
+  stroke-linecap: round;
+}
 .garage .tone-rack polygon {
   stroke: rgba(88, 214, 255, 0.55);
 }
@@ -817,6 +824,16 @@ button {
 .garage .tone-rack .f-l { fill: #0b141a; }
 .garage .tone-mon polygon,
 .garage .tone-tower polygon { stroke: rgba(182, 241, 69, 0.5); }
+/* gabinete nível 1 — case melhor, tom mais frio/ciano */
+.garage .tone-tower2 polygon { stroke: rgba(88, 214, 255, 0.6); }
+.garage .tone-tower2 .f-t { fill: #1c2c30; }
+.garage .tone-tower2 .f-r { fill: #142226; }
+.garage .tone-tower2 .f-l { fill: #0e181b; }
+/* braços da cadeira — friso de acento */
+.garage .tone-chair-arm polygon { stroke: rgba(88, 214, 255, 0.5); }
+.garage .tone-chair-arm .f-t { fill: #1e2b28; }
+.garage .tone-chair-arm .f-r { fill: #17211e; }
+.garage .tone-chair-arm .f-l { fill: #101715; }
 /* personagem (hoodie escuro com aresta cyan + capuz + cabeça), digitando */
 .garage .tone-person polygon { stroke: rgba(88, 214, 255, 0.45); }
 .garage .tone-person .f-t { fill: #1d3540; }
@@ -891,27 +908,30 @@ button {
   fill: var(--cyan);
   filter: drop-shadow(0 0 4px var(--cyan));
 }
-/* portão de garagem seccional (hotspot dos contratos) */
+/* portão de garagem seccional americana (hotspot dos contratos) —
+   painéis claros com relevo prensado (tons alternados), inspirado em referência real. */
 .garage .gdoor {
-  fill: #14201a;
-  stroke: rgba(182, 241, 69, 0.5);
-  stroke-width: 1;
+  fill: none;
+  stroke: rgba(80, 92, 74, 0.75);
+  stroke-width: 1.1;
 }
 .garage .gdoor-rail {
-  stroke: rgba(182, 241, 69, 0.4);
+  stroke: rgba(80, 92, 74, 0.6);
   stroke-width: 1;
 }
-.garage .gdoor-seam {
-  stroke: rgba(182, 241, 69, 0.22);
-  stroke-width: 0.7;
+.garage .gdoor-panel {
+  stroke: rgba(70, 82, 65, 0.5);
+  stroke-width: 0.6;
 }
+.garage .gdoor-panel.a { fill: #dde4d8; }
+.garage .gdoor-panel.b { fill: #cad2c4; }
 .garage .gdoor-window {
-  fill: rgba(88, 214, 255, 0.22);
-  stroke: rgba(88, 214, 255, 0.5);
+  fill: rgba(88, 214, 255, 0.32);
+  stroke: rgba(88, 214, 255, 0.6);
   stroke-width: 0.5;
 }
 .garage .gdoor-handle {
-  fill: rgba(255, 191, 71, 0.55);
+  fill: rgba(255, 191, 71, 0.8);
   stroke: none;
 }
 /* notificação de cliente sobre a porta */
@@ -967,7 +987,7 @@ button {
 .garage .hot:hover .gdoor,
 .garage .hot:focus-visible .gdoor {
   stroke: var(--lime);
-  fill: #1c2e24;
+  stroke-width: 1.6;
 }
 .garage .hot:hover .panelboard,
 .garage .hot:focus-visible .panelboard {

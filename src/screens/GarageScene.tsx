@@ -81,6 +81,28 @@ function Leds({ x, y, z, n, cls }: { x: number; y: number; z: number; n: number;
   )
 }
 
+// Pilha de caixas "torta" (bagunça) — caixa maior embaixo, menor em cima e desalinhada,
+// com um traço de fita no topo. `big` varia o tamanho pra não ficarem todas iguais.
+function CratePile({ x, y, big = 1 }: { x: number; y: number; big?: number }) {
+  const w = 0.72 * big
+  const d = 0.72 * big
+  const h = 0.6 * big
+  const w2 = 0.48 * big
+  const d2 = 0.48 * big
+  const h2 = 0.4 * big
+  const dx2 = 0.1 * big
+  const dy2 = -0.06 * big
+  const tapeA = iso(x + w * 0.18, y + d, h)
+  const tapeB = iso(x + w * 0.82, y, h)
+  return (
+    <g>
+      <Box x={x} y={y} z={0} w={w} d={d} h={h} tone="crate" />
+      <line className="crate-tape" x1={tapeA[0]} y1={tapeA[1]} x2={tapeB[0]} y2={tapeB[1]} />
+      <Box x={x + dx2} y={y + dy2} z={h} w={w2} d={d2} h={h2} tone="crate2" />
+    </g>
+  )
+}
+
 export type Hotspot = 'pc' | 'door' | 'board'
 
 export function GarageScene({
@@ -102,29 +124,46 @@ export function GarageScene({
   const wallA = pts(iso(0, 0, 0), iso(COLS, 0, 0), iso(COLS, 0, WH), iso(0, 0, WH)) // direita-fundo (y=0)
   const wallB = pts(iso(0, 0, 0), iso(0, ROWS, 0), iso(0, ROWS, WH), iso(0, 0, WH)) // esquerda-fundo (x=0)
 
-  // Porta de garagem (seccional americana) na parede B (x=0)
-  const GD_Y1 = 0.85
-  const GD_Y2 = 3.15
+  // Porta de garagem (seccional americana, inspirada em foto de referência) na parede B
+  const GD_Y1 = 0.7
+  const GD_Y2 = 3.5
   const GD_Z = 2.05
+  const GD_BANDS: [number, number][] = [
+    [0, 0.5],
+    [0.5, 0.95],
+    [0.95, 1.4],
+    [1.4, GD_Z],
+  ]
+  const GD_WINDOWS = [0.83, 1.27, 1.71, 2.15, 2.59, 3.03]
+
   // Quadro de skills (corkboard) na parede A (y=0)
   const board = wallQuadA(0.5, 2.0, 1.0, 2.0)
-  // Tapete sob a mesa/cadeira
-  const rug = pts(iso(2.2, 0.1), iso(5.3, 0.1), iso(5.3, 2.3), iso(2.2, 2.3))
-  // Capacho na frente do portão (acompanha a largura da porta de garagem)
-  const mat = pts(iso(0.12, 1.1), iso(0.75, 1.1), iso(0.75, 2.9), iso(0.12, 2.9))
+  // Tapete sob a mesa/cadeira — camada externa opaca (esconde a grade do piso) + interna clara.
+  const rugOuter = pts(iso(2.1, 0.05), iso(5.4, 0.05), iso(5.4, 2.4), iso(2.1, 2.4))
+  const rugInner = pts(iso(2.25, 0.2), iso(5.25, 0.2), iso(5.25, 2.25), iso(2.25, 2.25))
 
-  // Pôster de IA/ML (rede neural, eco do logo) na parede B — camadas 2-2-2
+  // Pôster de IA/ML (rede neural, eco do logo) na parede B — o centro (y=4.0) fica
+  // alinhado com a linha de grade do piso que sai da mesma coluna da parede.
   const netLayers = [
-    [{ y: 3.52, z: 1.48 }, { y: 3.52, z: 1.14 }],
-    [{ y: 3.83, z: 1.56 }, { y: 3.83, z: 1.06 }],
-    [{ y: 4.13, z: 1.48 }, { y: 4.13, z: 1.14 }],
+    [
+      { y: 3.74, z: 1.52 },
+      { y: 3.74, z: 1.08 },
+    ],
+    [
+      { y: 4.0, z: 1.56 },
+      { y: 4.0, z: 1.04 },
+    ],
+    [
+      { y: 4.26, z: 1.52 },
+      { y: 4.26, z: 1.08 },
+    ],
   ]
   const netEdges: [Pt, Pt][] = []
   for (let l = 0; l < netLayers.length - 1; l++)
     for (const a of netLayers[l])
       for (const b of netLayers[l + 1]) netEdges.push([iso(0, a.y, a.z), iso(0, b.y, b.z)])
 
-  const [badgeX, badgeY] = iso(0, 1.95, 2.25) // logo acima do portão
+  const [badgeX, badgeY] = iso(0, 2.1, 2.25) // logo acima do portão
 
   return (
     <svg
@@ -140,7 +179,7 @@ export function GarageScene({
 
       {/* pôster de IA/ML na parede B — rede neural (eco do logo) */}
       <g className="poster">
-        <polygon points={wallQuadB(3.3, 4.35, 0.72, 1.92)} />
+        <polygon points={wallQuadB(3.55, 4.45, 0.75, 1.85)} />
         {netEdges.map(([a, b], i) => (
           <line key={i} className="pne" x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} />
         ))}
@@ -150,13 +189,14 @@ export function GarageScene({
         })}
       </g>
 
-      {/* piso + grade + luz */}
+      {/* piso + grade */}
       <polygon className="floor" points={floor} />
       {grid.map(([a, b], i) => (
         <line key={i} className="grid" x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} />
       ))}
-      <polygon className="rug" points={rug} />
-      <polygon className="door-mat" points={mat} />
+      {/* tapete: camada externa opaca (não deixa a grade "vazar") + interna clara */}
+      <polygon className="rug-outer" points={rugOuter} />
+      <polygon className="rug-inner" points={rugInner} />
 
       {/* quadro de skills (parede A) — corkboard com recados */}
       <g
@@ -184,7 +224,6 @@ export function GarageScene({
         aria-label={notify > 0 ? `Portão — ${notify} contrato(s) esperando` : 'Portão da garagem'}
         onKeyDown={(e) => e.key === 'Enter' && onSelect('door')}
       >
-        <polygon className="gdoor" points={wallQuadB(GD_Y1, GD_Y2, 0, GD_Z)} />
         {/* trilhos laterais */}
         {[GD_Y1, GD_Y2].map((y) => (
           <line
@@ -196,34 +235,22 @@ export function GarageScene({
             y2={iso(0, y, GD_Z)[1]}
           />
         ))}
-        {/* seções horizontais */}
-        {[0.5, 0.95, 1.4].map((z) => (
-          <line
-            key={z}
-            className="gdoor-seam"
-            x1={iso(0, GD_Y1, z)[0]}
-            y1={iso(0, GD_Y1, z)[1]}
-            x2={iso(0, GD_Y2, z)[0]}
-            y2={iso(0, GD_Y2, z)[1]}
+        {/* painéis horizontais (tons alternados = relevo prensado) */}
+        {GD_BANDS.map(([z1, z2], i) => (
+          <polygon
+            key={z1}
+            className={`gdoor-panel ${i % 2 === 0 ? 'a' : 'b'}`}
+            points={wallQuadB(GD_Y1, GD_Y2, z1, z2)}
           />
         ))}
-        {/* divisões dos painéis (abaixo das janelas) */}
-        {[1.42, 1.99, 2.56].map((y) => (
-          <line
-            key={y}
-            className="gdoor-seam"
-            x1={iso(0, y, 0)[0]}
-            y1={iso(0, y, 0)[1]}
-            x2={iso(0, y, 1.4)[0]}
-            y2={iso(0, y, 1.4)[1]}
-          />
-        ))}
-        {/* fileira de janelas na seção superior */}
-        {[1.0, 1.55, 2.1, 2.65].map((y) => (
-          <polygon key={y} className="gdoor-window" points={wallQuadB(y, y + 0.38, 1.55, 1.9)} />
+        {/* fileira de janelas no painel superior */}
+        {GD_WINDOWS.map((y) => (
+          <polygon key={y} className="gdoor-window" points={wallQuadB(y, y + 0.34, 1.55, 1.9)} />
         ))}
         {/* puxador central */}
-        <polygon className="gdoor-handle" points={wallQuadB(1.9, 2.1, 0.22, 0.34)} />
+        <polygon className="gdoor-handle" points={wallQuadB(2.0, 2.2, 0.22, 0.34)} />
+        {/* moldura por cima dos painéis — só o contorno, nítido */}
+        <polygon className="gdoor" points={wallQuadB(GD_Y1, GD_Y2, 0, GD_Z)} />
         {notify > 0 && (
           <g className="notify">
             <circle className="notify-dot" cx={badgeX} cy={badgeY} r={8.5} />
@@ -232,7 +259,7 @@ export function GarageScene({
             </text>
           </g>
         )}
-        <rect className="hit" x={166} y={30} width={62} height={116} />
+        <rect className="hit" x={157} y={30} width={70} height={117} />
       </g>
 
       {/* rack de GPUs (nível 2) — canto do fundo */}
@@ -250,8 +277,10 @@ export function GarageScene({
       <Box x={3.21} y={0.02} z={1.65} w={0.14} d={0.16} h={0.37} tone="book3" />
       <Box x={4.1} y={0.02} z={1.65} w={0.3} d={0.18} h={0.22} tone="crate" />
 
-      {/* mesa encostada na parede A */}
-      <Box x={2.4} y={0.15} z={0} w={2.6} d={0.78} h={0.82} tone="desk" />
+      {/* mesa encostada na parede A: tampo fino sobre duas pernas (vão visível embaixo) */}
+      <Box x={2.42} y={0.17} z={0} w={0.1} d={0.1} h={0.68} tone="desk" />
+      <Box x={4.85} y={0.17} z={0} w={0.1} d={0.1} h={0.68} tone="desk" />
+      <Box x={2.4} y={0.15} z={0.68} w={2.6} d={0.78} h={0.14} tone="desk" />
 
       {/* monitor principal (brilho cresce com o nível) */}
       <g
@@ -262,31 +291,35 @@ export function GarageScene({
         aria-label="Computador — abrir a bancada"
         onKeyDown={(e) => e.key === 'Enter' && onSelect('pc')}
       >
-        <Box x={3.0} y={0.34} z={0.82} w={0.95} d={0.12} h={level >= 1 ? 0.7 : 0.56} tone="mon" />
+        {/* pé/base do monitor — mais estreito que a carcaça, dá sensação de "pescoço" */}
+        <Box x={3.3} y={0.36} z={0.82} w={0.3} d={0.08} h={0.06} tone="mon" />
+        <Box x={3.0} y={0.34} z={0.88} w={0.95} d={0.12} h={level >= 1 ? 0.7 : 0.56} tone="mon" />
         <polygon
           className={`screen ${level >= 1 ? 'bright' : ''}`}
           points={pts(
-            iso(3.05, 0.34, 0.9),
-            iso(3.9, 0.34, 0.9),
-            iso(3.9, 0.34, level >= 1 ? 1.46 : 1.32),
-            iso(3.05, 0.34, level >= 1 ? 1.46 : 1.32),
+            iso(3.08, 0.34, 0.96),
+            iso(3.87, 0.34, 0.96),
+            iso(3.87, 0.34, level >= 1 ? 1.52 : 1.38),
+            iso(3.08, 0.34, level >= 1 ? 1.52 : 1.38),
           )}
         />
         {/* linhas de código "digitando" na tela */}
         <line
           className="code-line"
-          x1={iso(3.12, 0.34, 1.24)[0]}
-          y1={iso(3.12, 0.34, 1.24)[1]}
-          x2={iso(3.62, 0.34, 1.24)[0]}
-          y2={iso(3.62, 0.34, 1.24)[1]}
+          x1={iso(3.15, 0.34, 1.3)[0]}
+          y1={iso(3.15, 0.34, 1.3)[1]}
+          x2={iso(3.62, 0.34, 1.3)[0]}
+          y2={iso(3.62, 0.34, 1.3)[1]}
         />
         <line
           className="code-line slow"
-          x1={iso(3.12, 0.34, 1.1)[0]}
-          y1={iso(3.12, 0.34, 1.1)[1]}
-          x2={iso(3.48, 0.34, 1.1)[0]}
-          y2={iso(3.48, 0.34, 1.1)[1]}
+          x1={iso(3.15, 0.34, 1.16)[0]}
+          y1={iso(3.15, 0.34, 1.16)[1]}
+          x2={iso(3.48, 0.34, 1.16)[0]}
+          y2={iso(3.48, 0.34, 1.16)[1]}
         />
+        {/* led de power na base do monitor */}
+        <circle className="led" cx={iso(3.82, 0.34, 0.9)[0]} cy={iso(3.82, 0.34, 0.9)[1]} r={1.3} />
         {/* segundo monitor a partir do nível 1 */}
         {level >= 1 && (
           <>
@@ -297,30 +330,54 @@ export function GarageScene({
             />
           </>
         )}
-        {/* torre do PC ao lado da mesa (nível 0 e 1) */}
-        {level < 2 && (
-          <>
-            <Box x={2.5} y={0.95} z={0} w={0.38} d={0.4} h={0.78} tone="tower" />
-            <Leds x={2.55} y={0.95} z={0.2} n={level >= 1 ? 3 : 1} cls={`led ${level >= 1 ? 'cyan' : ''}`} />
-          </>
-        )}
         <rect className="hit" x={288} y={74} width={62} height={46} />
       </g>
 
-      {/* cadeira + personagem (de costas, digitando — estilo GDT) */}
-      <g className="dev">
-        <Box x={3.15} y={1.05} z={0} w={0.6} d={0.55} h={0.45} tone="chair" />
-        <Box x={3.24} y={1.08} z={0.45} w={0.44} d={0.36} h={0.6} tone="person" />
-        <Box x={3.15} y={1.6} z={0.45} w={0.6} d={0.14} h={0.7} tone="chair" />
-        {/* capuz atrás da cabeça */}
-        <circle className="dev-hood" cx={iso(3.46, 1.28, 1.24)[0]} cy={iso(3.46, 1.28, 1.24)[1]} r={6.6} />
-        <circle className="dev-head" cx={iso(3.46, 1.26, 1.28)[0]} cy={iso(3.46, 1.26, 1.28)[1]} r={5} />
+      {/* gabinete ao lado direito da mesa — evolui de torre simples p/ case melhor */}
+      {level < 2 && (
+        <g
+          className="hot"
+          onClick={() => onSelect('pc')}
+          role="button"
+          tabIndex={0}
+          aria-label="Gabinete do computador — abrir a bancada"
+          onKeyDown={(e) => e.key === 'Enter' && onSelect('pc')}
+        >
+          <Box
+            x={5.05}
+            y={0.3}
+            z={0}
+            w={0.4}
+            d={0.42}
+            h={level >= 1 ? 0.95 : 0.8}
+            tone={level >= 1 ? 'tower2' : 'tower'}
+          />
+          <Leds x={5.1} y={0.3} z={0.16} n={level >= 1 ? 3 : 1} cls={`led ${level >= 1 ? 'cyan' : ''}`} />
+          <rect className="hit" x={326} y={120} width={32} height={58} />
+        </g>
+      )}
+
+      {/* cadeira (parada, sem animação) */}
+      <g className="chair">
+        <Box x={3.3} y={1.2} z={0} w={0.3} d={0.25} h={0.34} tone="chair" />
+        <Box x={3.15} y={1.05} z={0.34} w={0.6} d={0.55} h={0.11} tone="chair" />
+        <Box x={3.08} y={1.05} z={0.45} w={0.09} d={0.5} h={0.16} tone="chair-arm" />
+        <Box x={3.73} y={1.05} z={0.45} w={0.09} d={0.5} h={0.16} tone="chair-arm" />
+        <Box x={3.15} y={1.55} z={0.45} w={0.6} d={0.13} h={0.68} tone="chair" />
       </g>
 
-      {/* caixotes / tralha da garagem */}
-      <Box x={4.7} y={3.3} z={0} w={0.75} d={0.75} h={0.75} tone="crate" />
-      <Box x={4.75} y={3.35} z={0.75} w={0.6} d={0.6} h={0.55} tone="crate" />
-      {level >= 1 && <Box x={0.5} y={3.6} z={0} w={0.7} d={0.7} h={0.7} tone="crate" />}
+      {/* personagem (de costas, digitando — estilo GDT), com bob próprio */}
+      <g className="dev">
+        <Box x={3.24} y={1.08} z={0.45} w={0.44} d={0.36} h={0.6} tone="person" />
+        {/* capuz por cima e por trás — a cabeça só espia por baixo (nuca), sem atravessar */}
+        <circle className="dev-hood" cx={iso(3.46, 1.28, 1.24)[0]} cy={iso(3.46, 1.28, 1.24)[1]} r={7.2} />
+        <circle className="dev-head" cx={iso(3.46, 1.28, 1.1)[0]} cy={iso(3.46, 1.28, 1.1)[1]} r={4.6} />
+      </g>
+
+      {/* caixotes / tralha da garagem — bagunça espalhada; encolhe com o hardware */}
+      <CratePile x={4.9} y={3.6} big={1.05} />
+      {level < 2 && <CratePile x={3.6} y={3.9} big={0.95} />}
+      {level < 1 && <CratePile x={4.15} y={4.15} big={0.85} />}
     </svg>
   )
 }

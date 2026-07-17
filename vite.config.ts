@@ -13,7 +13,7 @@ export default defineConfig({
       registerType: 'autoUpdate',
       manifest: {
         name: 'Neural Empire',
-        short_name: 'NeuralEmpire',
+        short_name: 'Neural Empire',
         description:
           'Construa o maior laboratório de IA do mundo aprendendo machine learning de verdade.',
         lang: 'pt-BR',
