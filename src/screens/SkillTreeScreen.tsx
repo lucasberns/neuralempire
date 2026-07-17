@@ -1,6 +1,19 @@
 import type { GameState } from '../persistence/saveGame'
 import type { RuneKind } from '../nav'
-import { SKILLS, isRusted, runesOf, skillStatus, todayISO, type SkillStatus } from '../game/content'
+import {
+  HARDWARE,
+  SKILLS,
+  bossCooldownMsLeft,
+  contractById,
+  fmtCooldown,
+  hardwareOk,
+  isRusted,
+  nowMs,
+  runesOf,
+  skillStatus,
+  todayISO,
+  type SkillStatus,
+} from '../game/content'
 
 const STATUS_META: Record<SkillStatus, { label: string; glyph: string }> = {
   dominada: { label: 'Dominada', glyph: '✓' },
@@ -23,6 +36,7 @@ export function SkillTreeScreen({
   onReview: (skillId: string) => void
 }) {
   const hoje = todayISO()
+  const now = nowMs()
   const dominadas = SKILLS.filter((s) => skillStatus(game, s) === 'dominada').length
 
   return (
@@ -98,14 +112,35 @@ export function SkillTreeScreen({
                     🔧 Revisar (tirar a ferrugem)
                   </button>
                 )}
-                {(bossReady || done) && (
+                {done && (
                   <button
                     className={`btn ${rusted ? 'btn-ghost' : 'btn-primary'} sm`}
                     onClick={() => onOpenBoss(s.contractId)}
                   >
-                    {done ? 'Revisar a Prova' : '⚔ Fazer a Prova de Domínio'}
+                    Revisar a Prova
                   </button>
                 )}
+                {bossReady &&
+                  (() => {
+                    const cd = bossCooldownMsLeft(game, s.contractId, now)
+                    const boss = contractById(s.contractId)
+                    const hwBlock = !!boss && !hardwareOk(game, boss)
+                    if (cd > 0)
+                      return (
+                        <p className="footnote left">⏳ Prova em cooldown — tente em {fmtCooldown(cd)}.</p>
+                      )
+                    if (hwBlock)
+                      return (
+                        <p className="footnote left">
+                          🖥 Requer {HARDWARE[boss?.minHardware ?? 0]?.nome}. Faça o upgrade na garagem.
+                        </p>
+                      )
+                    return (
+                      <button className="btn btn-primary sm" onClick={() => onOpenBoss(s.contractId)}>
+                        ⚔ Fazer a Prova de Domínio
+                      </button>
+                    )
+                  })()}
                 {status === 'runas' && (
                   <p className="footnote left">Complete as 2 runas para liberar a Prova.</p>
                 )}

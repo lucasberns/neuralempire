@@ -30,6 +30,10 @@ export interface GameState {
   lastBillDayISO: string | null // último dia em que a conta do lab foi cobrada
   // Ferrugem / repetição espaçada (GDD §5.3): por skill, quando foi revisada e o nível do intervalo
   skillReview: Record<string, { lastISO: string; level: number }>
+  // Economia com dente (Fase 2): dia em que cada contrato do bairro foi feito (teto de 1x/dia).
+  bairroLastDayISO: Record<string, string>
+  // Aprendizado obrigatório (Fase 1): cooldown do boss após reprovar/abandonar — cresce por tentativa.
+  bossCooldown: Record<string, { untilMs: number; attempts: number }>
 }
 
 const SAVE_KEY = 'save'
@@ -54,6 +58,23 @@ export function newGameState(): GameState {
     ngPlus: 0,
     lastBillDayISO: null,
     skillReview: {},
+    bairroLastDayISO: {},
+    bossCooldown: {},
+  }
+}
+
+// Adiciona tolerantemente os campos que chegaram depois do v3 (sem bump de versão).
+function normalize(raw: GameState): GameState {
+  const base = newGameState()
+  return {
+    ...raw,
+    achievements: raw.achievements ?? [],
+    debt: raw.debt ?? 0,
+    ngPlus: raw.ngPlus ?? 0,
+    lastBillDayISO: raw.lastBillDayISO ?? null,
+    skillReview: raw.skillReview ?? base.skillReview,
+    bairroLastDayISO: raw.bairroLastDayISO ?? {},
+    bossCooldown: raw.bossCooldown ?? {},
   }
 }
 
@@ -114,18 +135,7 @@ function migrateOld(v: unknown): GameState | null {
 export async function loadGame(): Promise<GameState | null> {
   try {
     const raw = await kvGet<unknown>(SAVE_KEY)
-    // campos que chegaram depois do v3; normaliza saves que não os têm.
-    if (isGameState(raw)) {
-      const base = newGameState()
-      return {
-        ...raw,
-        achievements: raw.achievements ?? [],
-        debt: raw.debt ?? 0,
-        ngPlus: raw.ngPlus ?? 0,
-        lastBillDayISO: raw.lastBillDayISO ?? null,
-        skillReview: raw.skillReview ?? base.skillReview,
-      }
-    }
+    if (isGameState(raw)) return normalize(raw)
     return migrateOld(raw)
   } catch {
     return null // IndexedDB indisponível (ex.: navegação privada) → começa do zero
@@ -154,7 +164,7 @@ export async function importSave(file: File): Promise<GameState> {
   } catch {
     throw new Error('O arquivo não é um JSON válido.')
   }
-  const state = isGameState(data) ? data : migrateOld(data)
+  const state = isGameState(data) ? normalize(data) : migrateOld(data)
   if (!state) throw new Error('Este arquivo não é um save do Neural Empire.')
   await saveGame(state)
   return state

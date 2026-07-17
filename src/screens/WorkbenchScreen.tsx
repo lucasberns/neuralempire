@@ -8,7 +8,22 @@ import { CodeEditor } from '../editor/CodeEditor'
 import { DataPreview } from '../components/DataPreview'
 import { TestResults } from '../components/TestResults'
 import { Interrogatorio } from './Interrogatorio'
-import { RENT_PER_TURN, completeContract, isDone, lessonFor } from '../game/content'
+import {
+  HARDWARE,
+  RELAMPAGO,
+  RENT_PER_TURN,
+  bossCooldownMsLeft,
+  bossOnCooldown,
+  completeContract,
+  failBoss,
+  fmtCooldown,
+  hardwareOk,
+  interrogationPassed,
+  isDone,
+  lessonFor,
+  nowMs,
+  skillOfContract,
+} from '../game/content'
 
 const money = (n: number) => `R$ ${n.toLocaleString('pt-BR')}`
 
@@ -42,12 +57,20 @@ export function WorkbenchScreen({
   const [interrogating, setInterrogating] = useState(false)
   const [kataPassed, setKataPassed] = useState(false)
   const [reward, setReward] = useState<{ earned: number; rep: number; rent: number } | null>(null)
+  const [failed, setFailed] = useState<{ correct: number; total: number } | null>(null)
   const [editorNonce, setEditorNonce] = useState(0) // bump → remonta o editor com o código novo
 
   const code = game.codeByContract[contract.id] ?? contract.starterCode
   const done = isDone(game, contract.id)
   const pyReady = pyState.phase === 'ready'
-  const lesson = lessonFor(contract.id)
+  // Prova de verdade = boss único (não kata, não bairro, não relâmpago). Só aqui vale a Fase 1.
+  const isProva = mode === 'boss' && !contract.repeatable && contract.id !== RELAMPAGO.id
+  // Fase 1: no boss NÃO tem aula/dica/solução — treino e prova ficam separados.
+  const lesson = isProva ? undefined : lessonFor(contract.id)
+  const skill = skillOfContract(contract.id)
+  const needsHardware = isProva && !done && !hardwareOk(game, contract)
+  const onCooldown = isProva && !done && bossOnCooldown(game, contract.id, nowMs())
+  const blocked = needsHardware || onCooldown
 
   useEffect(() => {
     fetch(contract.datasetUrl)
@@ -67,7 +90,7 @@ export function WorkbenchScreen({
   }
 
   async function run() {
-    if (!csv || running || !pyReady) return
+    if (!csv || running || !pyReady || blocked) return
     setRunning(true)
     setRunError(null)
     setOutcome(null)
@@ -122,6 +145,40 @@ export function WorkbenchScreen({
       <div className="panel briefing">
         <p>{contract.briefing}</p>
       </div>
+
+      {needsHardware && (
+        <div className="panel error-card block-card">
+          <h3 className="panel-title">🖥 Precisa de um PC melhor</h3>
+          <p>
+            Treinar isso de verdade não roda no {HARDWARE[game.hardwareLevel]?.nome}. Suba para{' '}
+            <b>{HARDWARE[contract.minHardware ?? 0]?.nome}</b> na garagem e volte.
+          </p>
+          <button className="btn btn-primary" onClick={() => onNavigate('lab')}>
+            Voltar à garagem →
+          </button>
+        </div>
+      )}
+
+      {onCooldown && (
+        <div className="panel error-card block-card">
+          <h3 className="panel-title">⏳ Prova em cooldown</h3>
+          {failed && (
+            <p>
+              Você acertou <b>{failed.correct}/{failed.total}</b> no interrogatório — o cliente
+              precisava de pelo menos <b>⅔</b>. Trabalho recusado, sem pagamento.
+            </p>
+          )}
+          <p className="muted">
+            Tente de novo em <b>{fmtCooldown(bossCooldownMsLeft(game, contract.id, nowMs()))}</b>.
+            {skill && (
+              <> Enquanto isso, refaça as runas de <b>{skill.nome}</b> (Intuição · Matemática · Código) no quadro.</>
+            )}
+          </p>
+          <button className="btn btn-primary" onClick={() => onNavigate('skills')}>
+            Ir para o quadro de skills →
+          </button>
+        </div>
+      )}
 
       {csvError && <div className="panel error-card">Erro ao carregar o dataset: {csvError}</div>}
       {csv && (
@@ -184,51 +241,59 @@ export function WorkbenchScreen({
         <button
           className="btn btn-primary"
           onClick={() => void run()}
-          disabled={!csv || running || !pyReady}
+          disabled={!csv || running || !pyReady || blocked}
         >
           {running ? 'Treinando o modelo…' : '▶ Rodar testes'}
         </button>
 
-        <div className="assist-row">
-          {contract.hints.length > 0 && (
-            <button
-              className="btn btn-ghost"
-              disabled={hintsOpen >= contract.hints.length}
-              onClick={() => setHintsOpen((n) => n + 1)}
-            >
-              💡 {hintsOpen === 0 ? 'Pedir dica' : `Mais uma dica (${hintsOpen}/${contract.hints.length})`}
-            </button>
-          )}
-          <button className="btn btn-ghost" onClick={() => setShowSolution((s) => !s)}>
-            {showSolution ? 'Esconder solução' : '👁 Ver solução'}
-          </button>
-        </div>
+        {isProva ? (
+          <p className="footnote left">
+            ⚔ Prova de Domínio — sem dica nem solução. Se precisar, treine no kata do quadro primeiro.
+          </p>
+        ) : (
+          <>
+            <div className="assist-row">
+              {contract.hints.length > 0 && (
+                <button
+                  className="btn btn-ghost"
+                  disabled={hintsOpen >= contract.hints.length}
+                  onClick={() => setHintsOpen((n) => n + 1)}
+                >
+                  💡 {hintsOpen === 0 ? 'Pedir dica' : `Mais uma dica (${hintsOpen}/${contract.hints.length})`}
+                </button>
+              )}
+              <button className="btn btn-ghost" onClick={() => setShowSolution((s) => !s)}>
+                {showSolution ? 'Esconder solução' : '👁 Ver solução'}
+              </button>
+            </div>
 
-        {hintsOpen > 0 && (
-          <ol className="hints">
-            {contract.hints.slice(0, hintsOpen).map((h, i) => (
-              <li key={i}>{h}</li>
-            ))}
-          </ol>
-        )}
+            {hintsOpen > 0 && (
+              <ol className="hints">
+                {contract.hints.slice(0, hintsOpen).map((h, i) => (
+                  <li key={i}>{h}</li>
+                ))}
+              </ol>
+            )}
 
-        {showSolution && (
-          <div className="solution">
-            <p className="muted">
-              Uma solução possível — leia, entenda, e depois escreva você mesmo. Aprender é o ativo.
-            </p>
-            <pre>{contract.solution}</pre>
-            <button
-              className="btn btn-ghost"
-              onClick={() => {
-                setCode(contract.solution)
-                setEditorNonce((n) => n + 1)
-                setShowSolution(false)
-              }}
-            >
-              Copiar para o editor
-            </button>
-          </div>
+            {showSolution && (
+              <div className="solution">
+                <p className="muted">
+                  Uma solução possível — leia, entenda, e depois escreva você mesmo. Aprender é o ativo.
+                </p>
+                <pre>{contract.solution}</pre>
+                <button
+                  className="btn btn-ghost"
+                  onClick={() => {
+                    setCode(contract.solution)
+                    setEditorNonce((n) => n + 1)
+                    setShowSolution(false)
+                  }}
+                >
+                  Copiar para o editor
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -272,7 +337,22 @@ export function WorkbenchScreen({
       {outcome && <TestResults outcome={outcome} />}
 
       {interrogating && (
-        <Interrogatorio questions={contract.interrogation} onFinish={(score) => finalize(score)} />
+        <Interrogatorio
+          questions={contract.interrogation}
+          onFinish={(score) => {
+            if (interrogationPassed(score)) {
+              finalize(score)
+              return
+            }
+            // Reprovação real (Fase 1): consome a tentativa, aplica cooldown, aponta o que refazer.
+            onGameChange(failBoss(game, contract.id, nowMs()))
+            setInterrogating(false)
+            setFailed({
+              correct: Math.round(score * contract.interrogation.length),
+              total: contract.interrogation.length,
+            })
+          }}
+        />
       )}
     </section>
   )

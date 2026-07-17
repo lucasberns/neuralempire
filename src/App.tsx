@@ -10,13 +10,18 @@ import { RunaScreen } from './screens/RunaScreen'
 import { Onboarding } from './screens/Onboarding'
 import {
   LOAN,
+  RELAMPAGO,
   agiotaAvailable,
   applyDailyBill,
+  bossOnCooldown,
   completeRune,
   contractById,
   declararFalencia,
+  failBoss,
   falenciaAvailable,
+  isDone,
   isKata,
+  nowMs,
   pendingAchievements,
   reviewSkill,
   skillById,
@@ -43,6 +48,7 @@ export default function App() {
   const [runa, setRuna] = useState<{ skillId: string; kind: RuneKind } | null>(null)
   const [cameFromDesk, setCameFromDesk] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
+  const [askLeave, setAskLeave] = useState(false)
   const clientRef = useRef<PyodideClient | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
@@ -74,6 +80,27 @@ export default function App() {
     setGame(next)
     setNotice(`🧾 Conta do laboratório: −R$ ${charged} (energia + aluguel)`)
   }, [game])
+
+  // Fase 1: avisa antes de fechar/recarregar no meio de uma Prova (a tentativa se perde).
+  useEffect(() => {
+    if (!game) return
+    const c = game.contracts.activeId ? contractById(game.contracts.activeId) : undefined
+    const inProgress =
+      view === 'workbench' &&
+      !!c &&
+      !c.repeatable &&
+      c.id !== RELAMPAGO.id &&
+      !isKata(c.id) &&
+      !isDone(game, c.id) &&
+      !bossOnCooldown(game, c.id, nowMs())
+    if (!inProgress) return
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault()
+      e.returnValue = ''
+    }
+    window.addEventListener('beforeunload', handler)
+    return () => window.removeEventListener('beforeunload', handler)
+  }, [game, view])
 
   async function onImportFile(file: File) {
     try {
@@ -142,13 +169,46 @@ export default function App() {
     setCameFromDesk(view === 'workbench')
     setView('lab')
   }
+  const bossInProgress =
+    view === 'workbench' &&
+    !!active &&
+    !active.repeatable &&
+    active.id !== RELAMPAGO.id &&
+    !isKata(active.id) &&
+    !isDone(game, active.id) &&
+    !bossOnCooldown(game, active.id, nowMs())
   const back = view === 'runa' ? () => setView('skills') : goLab
+  // Fase 1: sair do boss no meio consome a tentativa — pede confirmação antes.
+  const requestBack = () => (bossInProgress ? setAskLeave(true) : back())
+  const abandonBoss = () => {
+    if (active) setGame(failBoss(game, active.id, nowMs()))
+    setAskLeave(false)
+    goLab()
+  }
 
   return (
     <>
       {notice && (
         <div className="toast" onClick={() => setNotice(null)}>
           {notice} <span className="toast-x">✕</span>
+        </div>
+      )}
+
+      {askLeave && (
+        <div className="modal-back" role="dialog" aria-label="Sair da Prova">
+          <div className="modal">
+            <h2 className="modal-title">Sair da Prova de Domínio?</h2>
+            <p>
+              Se sair agora, você <b>perde a tentativa</b> e a Prova entra em cooldown antes de poder
+              repetir. Sair mesmo?
+            </p>
+            <button className="btn btn-ghost danger" onClick={abandonBoss}>
+              Sair e perder a tentativa
+            </button>
+            <button className="btn btn-primary" onClick={() => setAskLeave(false)}>
+              Continuar a Prova
+            </button>
+          </div>
         </div>
       )}
 
@@ -166,7 +226,7 @@ export default function App() {
         />
       ) : (
         <div className="app">
-          <TopBar game={game} onBack={back} />
+          <TopBar game={game} onBack={requestBack} />
           <main className="app-main">
             {view === 'contratos' && (
               <ContractsScreen game={game} onGameChange={setGame} onNavigate={setView} />

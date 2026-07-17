@@ -3,13 +3,25 @@
 import zlib from 'node:zlib'
 import { writeFileSync } from 'node:fs'
 
-const BG = [13, 17, 23]           // #0d1117
-const LIME = [182, 241, 69]       // #b6f145
-const CYAN = [88, 214, 255]       // #58d6ff
+const BG = [13, 17, 23] // #0d1117
+const LIME = [182, 241, 69] // #b6f145
 
-// Geometria no espaço 64x64 (idêntica ao favicon.svg).
-const A = [19, 20.5], B = [19, 43.5], C = [45, 32]
-const R_NODE = 5, R_OUT = 6.6, R_GLOW = 13, LW = 3.4 / 2
+// Rede neural de 6 nós no espaço 64x64 — espelha o logo do app (mantido em sincronia
+// com public/favicon.svg). Camadas: topo/entrada, meio, saída/base-direita.
+const TL = [20, 24]
+const TR = [33, 21]
+const ML = [21, 35]
+const C = [33, 31]
+const BC = [32, 40]
+const R = [44, 31]
+const NODES = [TL, TR, ML, C, BC, R]
+const EDGES = [
+  [TL, C], [TL, ML], [ML, C], [ML, BC],
+  [TR, C], [TR, R], [C, R], [BC, R], [C, BC],
+]
+const R_NODE = 4.2 // raio dos nós
+const LW = 1.5 // meia-espessura das arestas
+const R_GLOW = 9 // alcance do brilho neon
 
 const distSeg = (px, py, [ax, ay], [bx, by]) => {
   const dx = bx - ax, dy = by - ay
@@ -33,10 +45,13 @@ function sample(x, y, gscale, fullBg) {
   let col = [...BG]
   // glyph num espaço escalado (maskable encolhe p/ safe zone)
   const gx = (x - 32) / gscale + 32, gy = (y - 32) / gscale + 32
-  if (dist(gx, gy, C) <= R_GLOW) col = over(col, CYAN, 0.16)
-  if (distSeg(gx, gy, A, C) <= LW || distSeg(gx, gy, B, C) <= LW) col = LIME.slice()
-  if (dist(gx, gy, A) <= R_NODE || dist(gx, gy, B) <= R_NODE) col = LIME.slice()
-  if (dist(gx, gy, C) <= R_OUT) col = CYAN.slice()
+  // distância à "tinta" (nós + arestas) → brilho suave e núcleo sólido
+  let node = 1e9, edge = 1e9
+  for (const n of NODES) node = Math.min(node, dist(gx, gy, n))
+  for (const [a, b] of EDGES) edge = Math.min(edge, distSeg(gx, gy, a, b))
+  const d = Math.min(node, edge)
+  if (d <= R_GLOW) col = over(col, LIME, 0.42 * (1 - d / R_GLOW))
+  if (edge <= LW || node <= R_NODE) col = LIME.slice()
   return [col[0], col[1], col[2], 255]
 }
 

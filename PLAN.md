@@ -24,7 +24,11 @@ Severidade: 🔴 crítico · 🟡 médio · 🟢 polish.
 
 ---
 
-## Fase 1 — Fazer o aprendizado valer 🔴
+> **Fases 1, 2 e 3 — ✅ implementadas em 16/07/2026.** Detalhes de cada uma abaixo. Decisão da
+> Fase 2: escolhido **teto diário** (1x/dia por contrato do bairro, espelhando o relâmpago) em vez de
+> pagamento decrescente — reusa o mecanismo existente e alinha tudo ao loop diário.
+
+## Fase 1 — Fazer o aprendizado valer 🔴 ✅
 
 **Objetivo:** o boss volta a ser prova de verdade; treino e prova ficam separados.
 
@@ -39,7 +43,7 @@ Severidade: 🔴 crítico · 🟡 médio · 🟢 polish.
   em cooldown. Sair mesmo?") pra garantir que foi intencional. Vale para: botão voltar/TopBar, hotspot,
   e navegação do sistema quando possível.
 
-## Fase 2 — Economia com dente 🔴
+## Fase 2 — Economia com dente 🔴 ✅
 
 **Objetivo:** renda deixa de ser infinita; falência/agiota/ferrugem passam a acontecer jogando.
 
@@ -49,7 +53,7 @@ Severidade: 🔴 crítico · 🟡 médio · 🟢 polish.
 - **Rebalancear** conta diária/custos vs. renda limitada pra a tensão econômica ser real (não só quando
   o jogador para de jogar).
 
-## Fase 3 — Tempo correto 🟡 (barato)
+## Fase 3 — Tempo correto 🟡 (barato) ✅
 
 - `today()` em **horário local** (hoje usa UTC → o dia vira às 21h no Brasil).
 - **Streak quebra** em dia perdido (reset se gap > 1 dia); proteção de streak comprável (§8).
@@ -83,7 +87,7 @@ Severidade: 🔴 crítico · 🟡 médio · 🟢 polish.
   corrigir chave de `runes` na migração v2→v3; split de `content.ts` por capítulo; auditoria de
   acessibilidade (contraste, foco, leitor de tela na cena SVG).
 
-## Fase 7 — Melhorar o ícone do jogo 🟢
+## Fase 7 — Melhorar o ícone do jogo 🟢 ✅ (opção A)
 
 **Objetivo:** ícone minimalista que combine com o tema (terminal-punk neon), usando as cores mais
 presentes: fundo quase-preto `#0d1117`, **lime `#b6f145`** (primária), **ciano `#58d6ff`** (acento).
@@ -106,7 +110,12 @@ neural neon). Preciso manter os 3 PNGs (192/512/maskable) + favicon coerentes e 
 
 Decidir A ou B; se A, o usuário fornece o PNG e eu gero os tamanhos/maskable a partir dele.
 
-## Fase 8 — Melhorar a garagem visualmente 🟢
+## Fase 8 — Melhorar a garagem visualmente 🟢 ✅ (1ª leva — aguarda validação no celular)
+
+> Feito em 16/07/2026: porta comum → **porta de garagem seccional americana** (janelas + puxador);
+> **luz pendente removida** (lâmpada + fio + poça no piso); pôster de squares → **pôster de rede neural
+> (IA/ML)** que ecoa o logo; portão-lâmina redundante da parede A removido. Revisão de geometria (agente
+> B) OK. Verificação visual final = no celular (esta máquina não pinta a cena).
 
 **Objetivo:** manter a estética iso neon, mas corrigir os defeitos e refinar os elementos.
 

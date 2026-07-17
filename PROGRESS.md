@@ -3,7 +3,7 @@
 > Fonte de verdade do **design**: [`neural-empire-gdd.md`](neural-empire-gdd.md).
 > Este arquivo registra **o que já foi construído e de onde continuar**. Atualize ao fim de cada leva.
 
-**Última atualização:** 16/07/2026
+**Última atualização:** 16/07/2026 (fases 1-3: aprendizado obrigatório + economia com teto/hardware + tempo local; fase 7: ícone novo = logo de rede neural; fase 8: garagem — porta de garagem, sem luz pendente, pôster de IA/ML)
 **No ar:** https://lucasberns.github.io/neuralempire/ (deploy automático a cada push na `main`).
 
 ---
@@ -33,9 +33,12 @@
   - *Intuição:* regressão visual (arrasta a reta, vê o erro, "deixar o computador ajustar").
   - *Matemática:* montar a "receita do erro" (tap-to-place).
   - *Código:* **kata** de prática, com **aula "Como escrever esse código"** (ensino linha a linha).
-  - *Boss:* o contrato pago + **Interrogatório** (perguntas conceituais que escalam o pagamento). Só libera com as 3 runas.
+  - *Boss:* o contrato pago + **Interrogatório** (perguntas conceituais). Só libera com as 3 runas.
+- **Aprendizado obrigatório (Fase 1):** no boss **não há aula/dica/solução** (só no kata); o interrogatório é embaralhado e exige **≥⅔** — abaixo disso **reprova**, sem pagamento. Reprovar/abandonar consome a tentativa e aplica **cooldown crescente** (30 min → 2 h → 12 h) com relatório de qual skill refazer. Sair do boss no meio pede **confirmação** (+ aviso `beforeunload`).
 - **Currículo Tier 1 (§6):** 4 skills jogáveis — `ler`, `explorar`, `limpar`, `regressao`.
-- **Economia (§4):** caixa, reputação (0–100), streak, **hardware em 3 níveis**; **custo por entrega** (boss) + **conta diária do lab** (cresce com hardware); **contrato-relâmpago diário**; **contratos do bairro repetíveis** (renda contínua).
+- **Economia (§4):** caixa, reputação (0–100), streak, **hardware em 3 níveis**; **custo por entrega** (boss) + **conta diária do lab** (cresce com hardware); **contrato-relâmpago diário**.
+- **Economia com dente (Fase 2):** contratos do bairro têm **teto de 1x/dia** (mata a renda infinita, "volte amanhã"); **hardware ganha função** — a Prova de Regressão exige o PC Gamer (`minHardware` no contrato). Fica de knob p/ ajuste no device: `RENT_PER_TURN`, `dailyBill()`, payouts.
+- **Tempo correto (Fase 3):** `today()` em **horário local** (antes UTC → virava às 21h); **streak quebra** se pular um dia (reset se gap > 1).
 - **Falência + agiota (§4.4):** caixa negativo → agiota (empréstimo com juros 10%/dia); fundo do poço → **falência** (reseta lab, **nunca perde skills**, New Game+).
 - **Ferrugem / repetição espaçada (§5.3):** skill sem uso enferruja (SM-2 [3,7,21,60] dias); contrato do bairro dela paga 60%; trabalhar/revisar tira a ferrugem.
 - **Retenção (§8):** streak + relâmpago diário; **8 conquistas** com toast e painel.

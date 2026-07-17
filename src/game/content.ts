@@ -126,6 +126,24 @@ assert abs(_r - float(dados["vendas"].mean())) < 0.01
         ],
         correct: 1,
       },
+      {
+        q: 'Num dia de feira ele vendeu o triplo do normal. O que esse dia faz com a média?',
+        options: [
+          'Puxa a média pra cima — ela é sensível a valores extremos',
+          'Nada, a média ignora dias fora do padrão',
+          'Derruba a média pela metade',
+        ],
+        correct: 0,
+      },
+      {
+        q: 'Pra chegar nesse número, quantos dias do caderninho você usou?',
+        options: [
+          'Todos — média é a soma de tudo dividida pela quantidade',
+          'Só os 10 primeiros dias',
+          'Só os fins de semana',
+        ],
+        correct: 0,
+      },
     ],
   },
   {
@@ -198,6 +216,15 @@ _ne_result = {
         ],
         correct: 0,
       },
+      {
+        q: 'Correlação alta prova que o calor CAUSA as vendas?',
+        options: [
+          'Não — mostra que andam juntas, não que uma causa a outra',
+          'Sim, correlação é o mesmo que causa',
+          'Só se passar de 0,9',
+        ],
+        correct: 0,
+      },
     ],
   },
   {
@@ -262,6 +289,24 @@ _ne_result = {
         ],
         correct: 0,
       },
+      {
+        q: 'Contou as células vazias. Qual o passo seguinte antes de treinar um modelo?',
+        options: [
+          'Decidir o que fazer com elas (preencher ou remover)',
+          'Ignorar e treinar assim mesmo',
+          'Apagar a tabela e pedir outra',
+        ],
+        correct: 0,
+      },
+      {
+        q: 'Por que somar .isnull() duas vezes (.sum().sum())?',
+        options: [
+          'A 1ª soma conta por coluna; a 2ª junta as colunas no total da tabela',
+          'Pra garantir que o número dobra',
+          'Porque o pandas exige sempre dois .sum()',
+        ],
+        correct: 0,
+      },
     ],
   },
   {
@@ -278,6 +323,7 @@ _ne_result = {
     payout: 420,
     reputacao: 12,
     prereqContractIds: ['faxina-cadastro'],
+    minHardware: 1, // treinar regressão de verdade pede o PC Gamer (Fase 2: hardware com função)
     datasetUrl: DATASET('padaria.csv'),
     starterCode: `from sklearn.linear_model import LinearRegression
 
@@ -373,6 +419,15 @@ def prever_vendas(dados_treino, dados_novos):
           'Que erro, em média, uns 6 pães pra mais ou pra menos por dia',
           'Que acerto 6% das vezes',
           'Que vou perder 6 reais por dia',
+        ],
+        correct: 0,
+      },
+      {
+        q: 'O modelo acertou o treino em cheio, mas errou feio nos dias novos. O que houve?',
+        options: [
+          'Decorou o treino e não generaliza (overfitting)',
+          'Os dias novos vieram com dados errados',
+          'Regressão linear nunca erra',
         ],
         correct: 0,
       },
@@ -747,7 +802,13 @@ export function completeRune(
 export const currentHardware = (g: GameState) => HARDWARE[g.hardwareLevel] ?? HARDWARE[0]
 export const nextHardware = (g: GameState): Hardware | undefined => HARDWARE[g.hardwareLevel + 1]
 
-const today = () => new Date().toISOString().slice(0, 10)
+// Data em horário LOCAL (Fase 3): toISOString() é UTC → o dia virava às 21h no Brasil.
+const today = () => {
+  const d = new Date()
+  const p = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
+}
+export const nowMs = () => Date.now()
 
 /**
  * Aplica a entrega de um contrato: paga (proporcional ao acerto do interrogatório),
@@ -764,10 +825,14 @@ export function completeContract(
   if (isBoss && isDone(g, c.id)) return { next: g, earned: 0, rent: 0 }
 
   const streakDay = today()
+  // Fase 3: streak quebra em dia perdido. gap 0 = mesmo dia; 1 = consecutivo; >1 (ou nunca) = reset.
+  const gap = g.streak.lastDayISO ? daysBetween(g.streak.lastDayISO, streakDay) : Infinity
   const streak =
-    g.streak.lastDayISO === streakDay
+    gap === 0
       ? g.streak
-      : { count: g.streak.count + 1, lastDayISO: streakDay }
+      : gap === 1
+        ? { count: g.streak.count + 1, lastDayISO: streakDay }
+        : { count: 1, lastDayISO: streakDay }
 
   // pagamento penaliza erros no interrogatório (mín. 50%), arredondado
   let earned = Math.round(c.payout * (0.5 + 0.5 * interrogationScore))
@@ -791,6 +856,10 @@ export function completeContract(
     contracts: { ...g.contracts, doneIds },
     relampagoLastDayISO: isRelampago ? streakDay : g.relampagoLastDayISO,
     skillReview: reviewSkillId ? bumpReview(g.skillReview, reviewSkillId, streakDay) : g.skillReview,
+    // Teto diário do bairro (Fase 2): marca este contrato como feito hoje.
+    bairroLastDayISO: c.repeatable
+      ? { ...g.bairroLastDayISO, [c.id]: streakDay }
+      : g.bairroLastDayISO,
   }
   return { next, earned, rent }
 }
@@ -803,6 +872,44 @@ export function buyHardware(g: GameState): GameState | null {
 
 /** Relâmpago liberado uma vez por dia (GDD §8). */
 export const relampagoAvailable = (g: GameState) => g.relampagoLastDayISO !== today()
+
+// ---------------------------------------------------------------- Fase 2: economia com dente
+/** Contrato do bairro: 1x por dia (mata a renda infinita). Não-repetíveis sempre "disponíveis". */
+export const bairroAvailable = (g: GameState, c: Contract, todayISO: string) =>
+  !c.repeatable || (g.bairroLastDayISO[c.id] ?? null) !== todayISO
+
+/** Hardware dá função (Fase 2): alguns contratos exigem um PC melhor. */
+export const hardwareOk = (g: GameState, c: Contract) => (c.minHardware ?? 0) <= g.hardwareLevel
+
+// ---------------------------------------------------------------- Fase 1: aprendizado obrigatório
+/** Acerto mínimo no interrogatório pra entregar; abaixo disso, reprova (GDD §5.2). */
+export const INTERROGATION_PASS = 2 / 3
+export const interrogationPassed = (score: number) => score >= INTERROGATION_PASS - 1e-9
+
+// Cooldown crescente por tentativa perdida (reprovar OU abandonar o boss).
+const COOLDOWNS_MS = [30, 120, 720].map((min) => min * 60_000) // 30 min → 2 h → 12 h
+
+export const bossCooldownMsLeft = (g: GameState, contractId: string, now: number) =>
+  Math.max(0, (g.bossCooldown[contractId]?.untilMs ?? 0) - now)
+
+export const bossOnCooldown = (g: GameState, contractId: string, now: number) =>
+  bossCooldownMsLeft(g, contractId, now) > 0
+
+/** Consome uma tentativa: aplica cooldown (que cresce a cada falha) e incrementa o contador. */
+export function failBoss(g: GameState, contractId: string, now: number): GameState {
+  const attempts = (g.bossCooldown[contractId]?.attempts ?? 0) + 1
+  const dur = COOLDOWNS_MS[Math.min(attempts - 1, COOLDOWNS_MS.length - 1)]
+  return {
+    ...g,
+    bossCooldown: { ...g.bossCooldown, [contractId]: { untilMs: now + dur, attempts } },
+  }
+}
+
+/** "~2 h", "~28 min" — aproximação p/ o cartão do boss (sem countdown ao vivo). */
+export function fmtCooldown(ms: number): string {
+  const min = Math.ceil(ms / 60_000)
+  return min >= 60 ? `~${Math.ceil(min / 60)} h` : `~${min} min`
+}
 
 // ---------------------------------------------------------------- Economia de tensão (GDD §4.4)
 // Conta diária do laboratório (energia + aluguel) — cresce com o hardware.

@@ -37,6 +37,8 @@ export interface Contract {
   interrogation: InterrogationQuestion[]
   /** Contrato-padrão repetível (GDD §7.2): não conta como boss, pode refazer por renda. */
   repeatable?: boolean
+  /** Nível mínimo de hardware (índice em HARDWARE) para aceitar — dá função ao upgrade (Fase 2). */
+  minHardware?: number
 }
 
 export interface InterrogationQuestion {

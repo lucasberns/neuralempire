@@ -3,13 +3,20 @@ import type { View } from '../nav'
 import type { Contract } from '../engine/contracts'
 import {
   CONTRACTS,
+  HARDWARE,
   RELAMPAGO,
   REPEATABLE,
+  bairroAvailable,
+  bossCooldownMsLeft,
+  fmtCooldown,
+  hardwareOk,
   isAvailable,
   isDone,
+  nowMs,
   relampagoAvailable,
   skillOfContract,
   skillStatus,
+  todayISO,
 } from '../game/content'
 
 const money = (n: number) => `R$ ${n.toLocaleString('pt-BR')}`
@@ -27,11 +34,15 @@ type CardState = 'done' | 'boss' | 'runas' | 'bloqueada'
 function BossCard({
   c,
   state,
+  cooldownMsLeft,
+  hardwareBlocked,
   onAccept,
   onRunes,
 }: {
   c: Contract
   state: CardState
+  cooldownMsLeft: number
+  hardwareBlocked: boolean
   onAccept: () => void
   onRunes: () => void
 }) {
@@ -63,11 +74,18 @@ function BossCard({
         </div>
       </div>
 
-      {state === 'boss' && (
-        <button className="btn btn-primary" onClick={onAccept}>
-          ⚔ Fazer a Prova de Domínio →
-        </button>
-      )}
+      {state === 'boss' &&
+        (cooldownMsLeft > 0 ? (
+          <p className="cc-lock">⏳ Prova em cooldown — tente em {fmtCooldown(cooldownMsLeft)}.</p>
+        ) : hardwareBlocked ? (
+          <p className="cc-lock">
+            🖥 Requer {HARDWARE[c.minHardware ?? 0]?.nome}. Faça o upgrade na garagem.
+          </p>
+        ) : (
+          <button className="btn btn-primary" onClick={onAccept}>
+            ⚔ Fazer a Prova de Domínio →
+          </button>
+        ))}
       {state === 'runas' && (
         <button className="btn btn-ghost" onClick={onRunes}>
           Treine as 2 runas no quadro para liberar →
@@ -94,6 +112,8 @@ export function ContractsScreen({
   }
 
   const relampagoOn = relampagoAvailable(game)
+  const hoje = todayISO()
+  const now = nowMs()
 
   return (
     <section className="screen">
@@ -137,6 +157,8 @@ export function ContractsScreen({
             key={c.id}
             c={c}
             state={state}
+            cooldownMsLeft={bossCooldownMsLeft(game, c.id, now)}
+            hardwareBlocked={!hardwareOk(game, c)}
             onAccept={() => open(c)}
             onRunes={() => onNavigate('skills')}
           />
@@ -152,21 +174,28 @@ export function ContractsScreen({
               <h3 className="panel-title">Contratos do bairro</h3>
               <p className="muted">Serviços de rotina que pagam na hora e você pode refazer sempre.</p>
             </div>
-            {bairro.map((c) => (
-              <article key={c.id} className="contract-card is-available repeatable">
-                <header className="cc-head">
-                  <span className="cc-emoji">{c.emoji}</span>
-                  <div className="cc-titles">
-                    <h3 className="panel-title">{c.titulo}</h3>
-                    <span className="chip">Repetível · {money(c.payout)}</span>
-                  </div>
-                </header>
-                <p className="cc-brief">{c.briefing}</p>
-                <button className="btn btn-primary" onClick={() => open(c)}>
-                  Pegar serviço (+{money(c.payout)}) →
-                </button>
-              </article>
-            ))}
+            {bairro.map((c) => {
+              const on = bairroAvailable(game, c, hoje)
+              return (
+                <article key={c.id} className={`contract-card repeatable ${on ? 'is-available' : 'is-locked'}`}>
+                  <header className="cc-head">
+                    <span className="cc-emoji">{c.emoji}</span>
+                    <div className="cc-titles">
+                      <h3 className="panel-title">{c.titulo}</h3>
+                      <span className="chip">Repetível · {money(c.payout)} · 1x/dia</span>
+                    </div>
+                  </header>
+                  <p className="cc-brief">{c.briefing}</p>
+                  {on ? (
+                    <button className="btn btn-primary" onClick={() => open(c)}>
+                      Pegar serviço (+{money(c.payout)}) →
+                    </button>
+                  ) : (
+                    <p className="cc-lock ok">✓ Já feito hoje. Volte amanhã.</p>
+                  )}
+                </article>
+              )
+            })}
           </>
         )
       })()}

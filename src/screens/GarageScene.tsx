@@ -102,21 +102,29 @@ export function GarageScene({
   const wallA = pts(iso(0, 0, 0), iso(COLS, 0, 0), iso(COLS, 0, WH), iso(0, 0, WH)) // direita-fundo (y=0)
   const wallB = pts(iso(0, 0, 0), iso(0, ROWS, 0), iso(0, ROWS, WH), iso(0, 0, WH)) // esquerda-fundo (x=0)
 
-  // Porta na parede B (x=0), y 1.4..2.6
-  const door = wallQuadB(1.4, 2.6, 0, 1.9)
+  // Porta de garagem (seccional americana) na parede B (x=0)
+  const GD_Y1 = 0.85
+  const GD_Y2 = 3.15
+  const GD_Z = 2.05
   // Quadro de skills (corkboard) na parede A (y=0)
   const board = wallQuadA(0.5, 2.0, 1.0, 2.0)
   // Tapete sob a mesa/cadeira
   const rug = pts(iso(2.2, 0.1), iso(5.3, 0.1), iso(5.3, 2.3), iso(2.2, 2.3))
-  // Capacho na frente da porta
-  const mat = pts(iso(0.12, 1.55), iso(0.75, 1.55), iso(0.75, 2.45), iso(0.12, 2.45))
+  // Capacho na frente do portão (acompanha a largura da porta de garagem)
+  const mat = pts(iso(0.12, 1.1), iso(0.75, 1.1), iso(0.75, 2.9), iso(0.12, 2.9))
 
-  // Lâmpada pendente sobre a mesa (antes flutuava solta sobre o tapete)
-  const lamp = { x: 3.4, y: 1.2 }
-  const [bulbX, bulbY] = iso(lamp.x, lamp.y, 1.78)
-  const [poolX, poolY] = iso(lamp.x, lamp.y)
+  // Pôster de IA/ML (rede neural, eco do logo) na parede B — camadas 2-2-2
+  const netLayers = [
+    [{ y: 3.52, z: 1.48 }, { y: 3.52, z: 1.14 }],
+    [{ y: 3.83, z: 1.56 }, { y: 3.83, z: 1.06 }],
+    [{ y: 4.13, z: 1.48 }, { y: 4.13, z: 1.14 }],
+  ]
+  const netEdges: [Pt, Pt][] = []
+  for (let l = 0; l < netLayers.length - 1; l++)
+    for (const a of netLayers[l])
+      for (const b of netLayers[l + 1]) netEdges.push([iso(0, a.y, a.z), iso(0, b.y, b.z)])
 
-  const [badgeX, badgeY] = iso(0, 2.0, 2.2) // ancorado logo acima da porta
+  const [badgeX, badgeY] = iso(0, 1.95, 2.25) // logo acima do portão
 
   return (
     <svg
@@ -130,26 +138,16 @@ export function GarageScene({
       <polygon className="wall" points={wallA} />
       <polygon className="wall wall-b" points={wallB} />
 
-      {/* portão de garagem (lâminas) no trecho direito da parede A */}
-      <g className="roll-door">
-        <polygon points={wallQuadA(4.55, 5.85, 0, 2.0)} />
-        {[0.4, 0.8, 1.2, 1.6].map((z) => (
-          <line
-            key={z}
-            x1={iso(4.55, 0, z)[0]}
-            y1={iso(4.55, 0, z)[1]}
-            x2={iso(5.85, 0, z)[0]}
-            y2={iso(5.85, 0, z)[1]}
-          />
-        ))}
-      </g>
-
-      {/* pôster neon na parede B */}
+      {/* pôster de IA/ML na parede B — rede neural (eco do logo) */}
       <g className="poster">
-        <polygon points={wallQuadB(3.25, 4.2, 0.95, 1.85)} />
-        <polygon className="p-art a1" points={wallQuadB(3.45, 3.7, 1.45, 1.66)} />
-        <polygon className="p-art a2" points={wallQuadB(3.45, 4.0, 1.18, 1.36)} />
-        <polygon className="p-art a3" points={wallQuadB(3.78, 4.0, 1.45, 1.66)} />
+        <polygon points={wallQuadB(3.3, 4.35, 0.72, 1.92)} />
+        {netEdges.map(([a, b], i) => (
+          <line key={i} className="pne" x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} />
+        ))}
+        {netLayers.flat().map((n, i) => {
+          const [cx, cy] = iso(0, n.y, n.z)
+          return <circle key={i} className="pnn" cx={cx} cy={cy} r={2.2} />
+        })}
       </g>
 
       {/* piso + grade + luz */}
@@ -157,7 +155,6 @@ export function GarageScene({
       {grid.map(([a, b], i) => (
         <line key={i} className="grid" x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} />
       ))}
-      <ellipse className="light-pool" cx={poolX} cy={poolY} rx={62} ry={30} />
       <polygon className="rug" points={rug} />
       <polygon className="door-mat" points={mat} />
 
@@ -178,19 +175,55 @@ export function GarageScene({
         <rect className="hit" x={244} y={28} width={46} height={56} />
       </g>
 
-      {/* porta (parede B) */}
+      {/* porta de garagem seccional (parede B) — hotspot dos contratos */}
       <g
         className="hot"
         onClick={() => onSelect('door')}
         role="button"
         tabIndex={0}
-        aria-label={notify > 0 ? `Porta — ${notify} contrato(s) esperando` : 'Porta'}
+        aria-label={notify > 0 ? `Portão — ${notify} contrato(s) esperando` : 'Portão da garagem'}
         onKeyDown={(e) => e.key === 'Enter' && onSelect('door')}
       >
-        <polygon className="door" points={door} />
-        <polygon className="door-inset" points={wallQuadB(1.55, 2.45, 0.25, 1.05)} />
-        <polygon className="door-inset" points={wallQuadB(1.55, 2.45, 1.2, 1.72)} />
-        <circle className="door-knob" cx={iso(0, 1.58, 0.95)[0]} cy={iso(0, 1.58, 0.95)[1]} r={2} />
+        <polygon className="gdoor" points={wallQuadB(GD_Y1, GD_Y2, 0, GD_Z)} />
+        {/* trilhos laterais */}
+        {[GD_Y1, GD_Y2].map((y) => (
+          <line
+            key={y}
+            className="gdoor-rail"
+            x1={iso(0, y, 0)[0]}
+            y1={iso(0, y, 0)[1]}
+            x2={iso(0, y, GD_Z)[0]}
+            y2={iso(0, y, GD_Z)[1]}
+          />
+        ))}
+        {/* seções horizontais */}
+        {[0.5, 0.95, 1.4].map((z) => (
+          <line
+            key={z}
+            className="gdoor-seam"
+            x1={iso(0, GD_Y1, z)[0]}
+            y1={iso(0, GD_Y1, z)[1]}
+            x2={iso(0, GD_Y2, z)[0]}
+            y2={iso(0, GD_Y2, z)[1]}
+          />
+        ))}
+        {/* divisões dos painéis (abaixo das janelas) */}
+        {[1.42, 1.99, 2.56].map((y) => (
+          <line
+            key={y}
+            className="gdoor-seam"
+            x1={iso(0, y, 0)[0]}
+            y1={iso(0, y, 0)[1]}
+            x2={iso(0, y, 1.4)[0]}
+            y2={iso(0, y, 1.4)[1]}
+          />
+        ))}
+        {/* fileira de janelas na seção superior */}
+        {[1.0, 1.55, 2.1, 2.65].map((y) => (
+          <polygon key={y} className="gdoor-window" points={wallQuadB(y, y + 0.38, 1.55, 1.9)} />
+        ))}
+        {/* puxador central */}
+        <polygon className="gdoor-handle" points={wallQuadB(1.9, 2.1, 0.22, 0.34)} />
         {notify > 0 && (
           <g className="notify">
             <circle className="notify-dot" cx={badgeX} cy={badgeY} r={8.5} />
@@ -199,7 +232,7 @@ export function GarageScene({
             </text>
           </g>
         )}
-        <rect className="hit" x={174} y={40} width={42} height={100} />
+        <rect className="hit" x={166} y={30} width={62} height={116} />
       </g>
 
       {/* rack de GPUs (nível 2) — canto do fundo */}
@@ -288,16 +321,6 @@ export function GarageScene({
       <Box x={4.7} y={3.3} z={0} w={0.75} d={0.75} h={0.75} tone="crate" />
       <Box x={4.75} y={3.35} z={0.75} w={0.6} d={0.6} h={0.55} tone="crate" />
       {level >= 1 && <Box x={0.5} y={3.6} z={0} w={0.7} d={0.7} h={0.7} tone="crate" />}
-
-      {/* lâmpada pendente sobre a mesa */}
-      <line
-        className="lamp-wire"
-        x1={iso(lamp.x, lamp.y, WH)[0]}
-        y1={iso(lamp.x, lamp.y, WH)[1]}
-        x2={bulbX}
-        y2={bulbY - 4}
-      />
-      <circle className="bulb" cx={bulbX} cy={bulbY} r={4} />
     </svg>
   )
 }

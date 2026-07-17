@@ -600,6 +600,41 @@ button {
   color: var(--red);
 }
 
+/* Confirmação de abandono da Prova (Fase 1) */
+.modal-back {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(4, 6, 8, 0.72);
+  backdrop-filter: blur(2px);
+}
+.modal {
+  max-width: 40ch;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: linear-gradient(160deg, var(--panel-2), var(--panel));
+  border: 1px solid rgba(255, 159, 71, 0.5);
+  border-radius: 18px;
+  padding: 24px 20px;
+  box-shadow: 0 0 50px -18px rgba(255, 159, 71, 0.55);
+}
+.modal-title {
+  font-family: var(--mono);
+  color: var(--amber);
+  margin: 0;
+}
+.block-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 /* Ferrugem (skill enferrujada) */
 .skill-node.is-rusted .skill-orb {
   border-color: rgba(255, 159, 71, 0.55);
@@ -721,10 +756,6 @@ button {
   stroke: rgba(182, 241, 69, 0.14);
   stroke-width: 0.5;
 }
-.garage .light-pool {
-  fill: rgba(255, 191, 71, 0.07);
-  pointer-events: none;
-}
 .garage .rug {
   fill: rgba(88, 214, 255, 0.07);
   stroke: rgba(88, 214, 255, 0.28);
@@ -736,29 +767,20 @@ button {
   stroke-width: 0.6;
 }
 
-/* portão de garagem (lâminas) */
-.garage .roll-door polygon {
-  fill: #0f1b16;
-  stroke: rgba(182, 241, 69, 0.22);
-  stroke-width: 0.7;
-}
-.garage .roll-door line {
-  stroke: rgba(182, 241, 69, 0.18);
-  stroke-width: 0.7;
-}
-
-/* pôster neon */
+/* pôster de IA/ML (rede neural, eco do logo) */
 .garage .poster polygon:first-child {
   fill: #0c1713;
-  stroke: rgba(255, 191, 71, 0.45);
+  stroke: rgba(88, 214, 255, 0.4);
   stroke-width: 0.8;
 }
-.garage .p-art {
-  stroke: none;
+.garage .pne {
+  stroke: rgba(182, 241, 69, 0.5);
+  stroke-width: 0.7;
 }
-.garage .p-art.a1 { fill: rgba(182, 241, 69, 0.55); }
-.garage .p-art.a2 { fill: rgba(88, 214, 255, 0.45); }
-.garage .p-art.a3 { fill: rgba(255, 191, 71, 0.5); }
+.garage .pnn {
+  fill: var(--lime);
+  filter: drop-shadow(0 0 3px rgba(182, 241, 69, 0.85));
+}
 
 /* alvo de toque generoso (invisível) */
 .garage .hit {
@@ -869,30 +891,28 @@ button {
   fill: var(--cyan);
   filter: drop-shadow(0 0 4px var(--cyan));
 }
-.garage .bulb {
-  fill: var(--amber);
-  filter: drop-shadow(0 0 8px rgba(255, 191, 71, 0.9));
-  animation: bulb-pulse 5s ease-in-out infinite;
-}
-.garage .lamp-wire {
-  stroke: var(--line-bright);
-  stroke-width: 0.8;
-}
-
-/* porta e quadro (hotspots na parede) */
-.garage .door {
-  fill: #16241d;
-  stroke: rgba(182, 241, 69, 0.45);
+/* portão de garagem seccional (hotspot dos contratos) */
+.garage .gdoor {
+  fill: #14201a;
+  stroke: rgba(182, 241, 69, 0.5);
   stroke-width: 1;
 }
-.garage .door-inset {
-  fill: rgba(0, 0, 0, 0.28);
-  stroke: rgba(182, 241, 69, 0.2);
-  stroke-width: 0.6;
+.garage .gdoor-rail {
+  stroke: rgba(182, 241, 69, 0.4);
+  stroke-width: 1;
 }
-.garage .door-knob {
-  fill: var(--amber);
-  filter: drop-shadow(0 0 3px rgba(255, 191, 71, 0.7));
+.garage .gdoor-seam {
+  stroke: rgba(182, 241, 69, 0.22);
+  stroke-width: 0.7;
+}
+.garage .gdoor-window {
+  fill: rgba(88, 214, 255, 0.22);
+  stroke: rgba(88, 214, 255, 0.5);
+  stroke-width: 0.5;
+}
+.garage .gdoor-handle {
+  fill: rgba(255, 191, 71, 0.55);
+  stroke: none;
 }
 /* notificação de cliente sobre a porta */
 .garage .notify-dot {
@@ -944,8 +964,8 @@ button {
 .garage .hot:focus-visible {
   outline: none;
 }
-.garage .hot:hover .door,
-.garage .hot:focus-visible .door {
+.garage .hot:hover .gdoor,
+.garage .hot:focus-visible .gdoor {
   stroke: var(--lime);
   fill: #1c2e24;
 }
@@ -957,9 +977,6 @@ button {
   48% { opacity: 1; }
   50% { opacity: 0.82; }
   52% { opacity: 1; }
-}
-@keyframes bulb-pulse {
-  50% { opacity: 0.7; }
 }
 @keyframes blink {
   50% {
