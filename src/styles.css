@@ -824,6 +824,10 @@ button {
   fill: rgba(10, 16, 12, 0.55);
   stroke: none;
 }
+.garage .crate-arrow {
+  fill: rgba(255, 191, 71, 0.4);
+  stroke: none;
+}
 .garage .tone-rack polygon {
   stroke: rgba(88, 214, 255, 0.55);
 }

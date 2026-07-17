@@ -137,6 +137,76 @@ function CratePile({ x, y, big = 1 }: { x: number; y: number; big?: number }) {
   )
 }
 
+// Modelo 2: cluster de 3 caixas apoiadas (não empilhadas retas) — uma central, uma
+// menor encostada à esquerda-atrás, uma menor ainda encostada à frente-direita.
+// Ordem de pintura por profundidade (x+y): esquerda primeiro, central, frente por último.
+function CratePileCluster({ x, y, big = 1 }: { x: number; y: number; big?: number }) {
+  const wA = 0.6 * big
+  const dA = 0.6 * big
+  const hA = 0.66 * big
+  const wB = 0.44 * big
+  const dB = 0.44 * big
+  const hB = 0.4 * big
+  const wC = 0.38 * big
+  const dC = 0.38 * big
+  const hC = 0.3 * big
+  const xB = x - wB - 0.04 * big
+  const yB = y + 0.04 * big
+  const xC = x + wA * 0.55
+  const yC = y + dA * 0.85
+  const tapeA = iso(x + wA * 0.18, y + dA, hA)
+  const tapeB = iso(x + wA * 0.82, y, hA)
+  return (
+    <g>
+      <Box x={xB} y={yB} z={0} w={wB} d={dB} h={hB} tone="crate2" />
+      {crateFace(xB, yB, dB, wB, hB)}
+      <Box x={x} y={y} z={0} w={wA} d={dA} h={hA} tone="crate" />
+      <line className="crate-tape" x1={tapeA[0]} y1={tapeA[1]} x2={tapeB[0]} y2={tapeB[1]} />
+      {crateFace(x, y, dA, wA, hA)}
+      <Box x={xC} y={yC} z={0} w={wC} d={dC} h={hC} tone="crate2" />
+      {crateFace(xC, yC, dC, wC, hC)}
+    </g>
+  )
+}
+
+// Modelo 3: caixa grande lisa (só a seta "pra cima") + uma pilha pequena decorada
+// encostada do lado — como uma entrega recém-chegada ainda não desempacotada.
+function CratePileArrow({ x, y, big = 1 }: { x: number; y: number; big?: number }) {
+  const wBig = 0.66 * big
+  const dBig = 0.66 * big
+  const hBig = 0.62 * big
+  const wS1 = 0.4 * big
+  const dS1 = 0.4 * big
+  const hS1 = 0.32 * big
+  const wS2 = 0.3 * big
+  const dS2 = 0.3 * big
+  const hS2 = 0.24 * big
+  const xSmall = x + wBig + 0.06 * big
+  const ySmall = y + dBig * 0.3
+  const dxTop = 0.05 * big
+  const dyTop = -0.03 * big
+  const arrowPts: [number, number][] = [
+    [0.5, 0.72],
+    [0.62, 0.52],
+    [0.565, 0.52],
+    [0.565, 0.28],
+    [0.435, 0.28],
+    [0.435, 0.52],
+    [0.38, 0.52],
+  ]
+  const arrow = pts(...arrowPts.map(([fx, fz]) => iso(x + wBig * fx, y + dBig, hBig * fz)))
+  return (
+    <g>
+      <Box x={x} y={y} z={0} w={wBig} d={dBig} h={hBig} tone="crate" />
+      <polygon className="crate-arrow" points={arrow} />
+      <Box x={xSmall} y={ySmall} z={0} w={wS1} d={dS1} h={hS1} tone="crate2" />
+      {crateFace(xSmall, ySmall, dS1, wS1, hS1)}
+      <Box x={xSmall + dxTop} y={ySmall + dyTop} z={hS1} w={wS2} d={dS2} h={hS2} tone="crate" />
+      {crateFace(xSmall + dxTop, ySmall + dyTop, dS2, wS2, hS2)}
+    </g>
+  )
+}
+
 export type Hotspot = 'pc' | 'door' | 'board'
 
 export function GarageScene({
@@ -335,30 +405,30 @@ export function GarageScene({
         {/* pé/base do monitor — mais estreito que a carcaça, dá sensação de "pescoço" */}
         <Box x={3.3} y={0.36} z={0.82} w={0.3} d={0.08} h={0.06} tone="mon" />
         <Box x={3.0} y={0.34} z={0.88} w={0.95} d={0.12} h={level >= 1 ? 0.7 : 0.56} tone="mon" />
-        {/* bezel simétrico: 0.08 de margem nos 4 lados, dos dois níveis */}
+        {/* tela deslocada pra esquerda dentro da carcaça (bezel maior à direita) */}
         <polygon
           className={`screen ${level >= 1 ? 'bright' : ''}`}
           points={pts(
-            iso(3.08, 0.34, 0.96),
-            iso(3.87, 0.34, 0.96),
-            iso(3.87, 0.34, level >= 1 ? 1.5 : 1.36),
-            iso(3.08, 0.34, level >= 1 ? 1.5 : 1.36),
+            iso(3.02, 0.34, 0.96),
+            iso(3.81, 0.34, 0.96),
+            iso(3.81, 0.34, level >= 1 ? 1.5 : 1.36),
+            iso(3.02, 0.34, level >= 1 ? 1.5 : 1.36),
           )}
         />
         {/* linhas de código "digitando" na tela */}
         <line
           className="code-line"
-          x1={iso(3.15, 0.34, 1.3)[0]}
-          y1={iso(3.15, 0.34, 1.3)[1]}
-          x2={iso(3.62, 0.34, 1.3)[0]}
-          y2={iso(3.62, 0.34, 1.3)[1]}
+          x1={iso(3.09, 0.34, 1.3)[0]}
+          y1={iso(3.09, 0.34, 1.3)[1]}
+          x2={iso(3.56, 0.34, 1.3)[0]}
+          y2={iso(3.56, 0.34, 1.3)[1]}
         />
         <line
           className="code-line slow"
-          x1={iso(3.15, 0.34, 1.16)[0]}
-          y1={iso(3.15, 0.34, 1.16)[1]}
-          x2={iso(3.48, 0.34, 1.16)[0]}
-          y2={iso(3.48, 0.34, 1.16)[1]}
+          x1={iso(3.09, 0.34, 1.16)[0]}
+          y1={iso(3.09, 0.34, 1.16)[1]}
+          x2={iso(3.42, 0.34, 1.16)[0]}
+          y2={iso(3.42, 0.34, 1.16)[1]}
         />
         {/* led de power na base do monitor */}
         <circle className="led" cx={iso(3.82, 0.34, 0.9)[0]} cy={iso(3.82, 0.34, 0.9)[1]} r={1.3} />
@@ -394,24 +464,18 @@ export function GarageScene({
             h={level >= 1 ? 0.95 : 0.8}
             tone={level >= 1 ? 'tower2' : 'tower'}
           />
-          {/* luz no canto superior do gabinete (antes ficava embaixo) */}
-          <Leds
-            x={5.37}
-            y={0.33}
-            z={(level >= 1 ? 0.95 : 0.8) - 0.06 - (level >= 1 ? 2 : 0) * 0.22}
-            n={level >= 1 ? 3 : 1}
-            cls={`led ${level >= 1 ? 'cyan' : ''}`}
-          />
+          {/* luz no centro-baixo da face frontal do gabinete (face frontal = y+d, não y) */}
+          <Leds x={5.25} y={0.7} z={0.1} n={level >= 1 ? 3 : 1} cls={`led ${level >= 1 ? 'cyan' : ''}`} />
           <rect className="hit" x={326} y={120} width={32} height={58} />
         </g>
       )}
 
-      {/* cadeira (parada, sem animação) — sem braços: na projeção iso eles ficavam
-          atrás do torso e pareciam atravessados por ele. Pedestal + assento + encosto. */}
+      {/* cadeira (parada, sem animação) — encosto regenerado bem mais largo e alto
+          que o torso, pra emoldurar o personagem por trás em vez de sumir atrás dele. */}
       <g className="chair">
         <Box x={3.3} y={1.2} z={0} w={0.3} d={0.25} h={0.34} tone="chair" />
         <Box x={3.15} y={1.05} z={0.34} w={0.6} d={0.55} h={0.11} tone="chair" />
-        <Box x={3.15} y={1.62} z={0.45} w={0.6} d={0.13} h={0.68} tone="chair" />
+        <Box x={3.05} y={1.5} z={0.45} w={1.28} d={0.13} h={0.85} tone="chair" />
       </g>
 
       {/* personagem (de costas, digitando — estilo GDT), com bob próprio.
@@ -423,10 +487,12 @@ export function GarageScene({
         <circle className="dev-hood" cx={iso(3.46, 1.28, 1.27)[0]} cy={iso(3.46, 1.28, 1.27)[1]} r={7.2} />
       </g>
 
-      {/* caixotes / tralha da garagem — espalhados pelos 3 cantos livres; encolhe com o hardware */}
+      {/* caixotes / tralha da garagem — 3 modelos diferentes, espalhados pela garagem.
+          A pilha do canto do rack (modelo seta) some no nível 1, deixando o canto livre
+          até o rack de verdade aparecer no nível 2. */}
       <CratePile x={4.7} y={2.4} big={1.05} />
-      {level < 2 && <CratePile x={4.0} y={5.0} big={0.95} />}
-      {level < 1 && <CratePile x={1.5} y={5.3} big={0.85} />}
+      {level < 2 && <CratePileCluster x={4.0} y={5.0} big={0.95} />}
+      {level < 1 && <CratePileArrow x={0.55} y={0.3} big={0.85} />}
     </svg>
   )
 }
