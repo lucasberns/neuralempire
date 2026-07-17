@@ -673,6 +673,28 @@ export function pendingAchievements(g: GameState): Achievement[] {
   return ACHIEVEMENTS.filter((a) => a.test(g) && !g.achievements.includes(a.id))
 }
 
+/** Currículo em texto puro (Configurações): skills dominadas + conquistas, pra exportar. */
+export function curriculoText(g: GameState): string {
+  const hw = currentHardware(g)
+  const dominadas = SKILLS.filter((s) => skillStatus(g, s) === 'dominada')
+  const linhas = [
+    'NEURAL EMPIRE — CURRÍCULO',
+    `Gerado em ${new Date().toLocaleDateString('pt-BR')}`,
+    '',
+    `Reputação: ${g.reputation}/100`,
+    `Streak atual: ${g.streak.count} dia(s)`,
+    `Hardware: ${hw.nome}`,
+  ]
+  if (g.ngPlus > 0) linhas.push(`Falências superadas (New Game+): ${g.ngPlus}`)
+  linhas.push('', `SKILLS DOMINADAS (${dominadas.length}/${SKILLS.length})`)
+  linhas.push(...dominadas.map((s) => `  · ${s.nome} — ${s.desc}`))
+  linhas.push('', `CONQUISTAS (${g.achievements.length}/${ACHIEVEMENTS.length})`)
+  linhas.push(
+    ...ACHIEVEMENTS.filter((a) => g.achievements.includes(a.id)).map((a) => `  🏆 ${a.nome} — ${a.desc}`),
+  )
+  return linhas.join('\n')
+}
+
 // ---------------------------------------------------------------- Aulas de código (ensino)
 // GDD §3/§12: ensina o Python de verdade — "qual código colocar", linha a linha.
 // Mapa por id do contrato (evita editar cada objeto). Aberta por padrão na Runa do Código.

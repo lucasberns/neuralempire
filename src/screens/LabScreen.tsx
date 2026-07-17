@@ -9,6 +9,7 @@ import {
   SKILLS,
   buyHardware,
   currentHardware,
+  curriculoText,
   dailyBill,
   nextHardware,
   payAgiota,
@@ -183,6 +184,43 @@ export function LabScreen({
                 )
               })}
             </ul>
+
+            <h3 className="panel-title cfg-sec">
+              Currículo · {SKILLS.filter((s) => skillStatus(game, s) === 'dominada').length}/{SKILLS.length}
+            </h3>
+            <ul className="conquistas">
+              {SKILLS.filter((s) => skillStatus(game, s) === 'dominada').map((s) => (
+                <li key={s.id} className="got">
+                  <span>
+                    <b>{s.nome}</b>
+                    <small>{s.desc}</small>
+                  </span>
+                </li>
+              ))}
+              {SKILLS.every((s) => skillStatus(game, s) !== 'dominada') && (
+                <li className="locked">
+                  <span>
+                    <b>Nenhuma skill dominada ainda</b>
+                  </span>
+                </li>
+              )}
+            </ul>
+            <div className="assist-row">
+              <button
+                className="btn btn-ghost"
+                onClick={() => {
+                  const blob = new Blob([curriculoText(game)], { type: 'text/plain;charset=utf-8' })
+                  const url = URL.createObjectURL(blob)
+                  const a = document.createElement('a')
+                  a.href = url
+                  a.download = `neural-empire-curriculo-${new Date().toISOString().slice(0, 10)}.txt`
+                  a.click()
+                  URL.revokeObjectURL(url)
+                }}
+              >
+                📄 Exportar currículo
+              </button>
+            </div>
 
             <p className="footnote left">build {__BUILD_ID__}</p>
             <button className="btn btn-primary" onClick={() => setSettingsOpen(false)}>
