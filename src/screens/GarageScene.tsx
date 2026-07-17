@@ -425,33 +425,33 @@ export function GarageScene({
         {/* pé/base do monitor — mais estreito que a carcaça, dá sensação de "pescoço" */}
         <Box x={3.3} y={0.36} z={0.82} w={0.3} d={0.08} h={0.06} tone="mon" />
         <Box x={3.0} y={0.34} z={0.88} w={0.95} d={0.12} h={level >= 1 ? 0.7 : 0.56} tone="mon" />
-        {/* tela deslocada +4px esquerda/+4px baixo em tela (pedido explícito) */}
+        {/* tela: +1px direita / +2px cima em relação à leva anterior */}
         <polygon
           className={`screen ${level >= 1 ? 'bright' : ''}`}
           points={pts(
-            iso(2.838, 0.34, 0.802),
-            iso(3.628, 0.34, 0.802),
-            iso(3.628, 0.34, level >= 1 ? 1.342 : 1.202),
-            iso(2.838, 0.34, level >= 1 ? 1.342 : 1.202),
+            iso(2.883, 0.34, 0.868),
+            iso(3.673, 0.34, 0.868),
+            iso(3.673, 0.34, level >= 1 ? 1.408 : 1.268),
+            iso(2.883, 0.34, level >= 1 ? 1.408 : 1.268),
           )}
         />
         {/* linhas de código "digitando" na tela (acompanham o deslocamento da tela) */}
         <line
           className="code-line"
-          x1={iso(2.908, 0.34, 1.142)[0]}
-          y1={iso(2.908, 0.34, 1.142)[1]}
-          x2={iso(3.378, 0.34, 1.142)[0]}
-          y2={iso(3.378, 0.34, 1.142)[1]}
+          x1={iso(2.954, 0.34, 1.208)[0]}
+          y1={iso(2.954, 0.34, 1.208)[1]}
+          x2={iso(3.424, 0.34, 1.208)[0]}
+          y2={iso(3.424, 0.34, 1.208)[1]}
         />
         <line
           className="code-line slow"
-          x1={iso(2.908, 0.34, 1.002)[0]}
-          y1={iso(2.908, 0.34, 1.002)[1]}
-          x2={iso(3.238, 0.34, 1.002)[0]}
-          y2={iso(3.238, 0.34, 1.002)[1]}
+          x1={iso(2.954, 0.34, 1.068)[0]}
+          y1={iso(2.954, 0.34, 1.068)[1]}
+          x2={iso(3.284, 0.34, 1.068)[0]}
+          y2={iso(3.284, 0.34, 1.068)[1]}
         />
-        {/* led de power — deslocado +4px pra esquerda (mesma altura em tela) */}
-        <circle className="led" cx={iso(3.638, 0.34, 0.847)[0]} cy={iso(3.638, 0.34, 0.847)[1]} r={1.3} />
+        {/* led de power — +2px pra direita (mesma altura em tela) */}
+        <circle className="led" cx={iso(3.729, 0.34, 0.873)[0]} cy={iso(3.729, 0.34, 0.873)[1]} r={1.3} />
         {/* segundo monitor a partir do nível 1 */}
         {level >= 1 && (
           <>
@@ -510,7 +510,7 @@ export function GarageScene({
           A pilha do canto do rack (modelo seta) some no nível 1, deixando o canto livre
           até o rack de verdade aparecer no nível 2. */}
       <CratePile x={4.7} y={2.4} big={1.05} />
-      <CratePileOpen x={2.0} y={3.8} big={0.85} />
+      <CratePileOpen x={1.773} y={3.664} big={0.85} />
       {level < 2 && <CratePileCluster x={4.0} y={5.0} big={0.95} />}
       {level < 1 && <CratePileArrow x={0.55} y={0.3} big={0.85} />}
     </svg>
