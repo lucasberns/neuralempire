@@ -71,7 +71,7 @@ export function RunaExplorarIntuicao({ onComplete }: { onComplete: () => void })
             onClick={() => responder(g.id)}
             aria-label={`Gráfico ${g.nome}`}
           >
-            <svg viewBox={`0 0 ${VB} ${VB}`} role="img" aria-label={`Dispersão do gráfico ${g.nome}`}>
+            <svg viewBox={`0 0 ${VB} ${VB}`} aria-hidden="true">
               {g.pontos.map(([x, y], i) => (
                 <circle key={i} cx={sx(x)} cy={sy(y)} r={2.4} className="rei-dot" />
               ))}
