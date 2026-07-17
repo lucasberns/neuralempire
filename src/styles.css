@@ -635,16 +635,6 @@ button {
   gap: 10px;
 }
 
-/* Ferrugem (skill enferrujada) */
-.skill-node.is-rusted .skill-orb {
-  border-color: rgba(255, 159, 71, 0.55);
-  color: #ff9f47;
-  box-shadow: none;
-  filter: saturate(0.7);
-}
-.skill-node.is-rusted .skill-orb .skill-glyph {
-  animation: none;
-}
 .chip.status-rusted {
   color: #ff9f47;
   border-color: rgba(255, 159, 71, 0.5);
@@ -1252,72 +1242,96 @@ button {
 }
 
 /* ------------------------------------------------------------------ ÁRVORE DE SKILLS */
-.skill-tree {
+.skill-graph-toolbar {
   display: flex;
-  flex-direction: column;
-  gap: 0;
-  padding-left: 6px;
-}
-.skill-node {
-  position: relative;
-  display: grid;
-  grid-template-columns: 54px 1fr;
-  gap: 12px;
-  padding-bottom: 18px;
-}
-.skill-link {
-  position: absolute;
-  left: 26px;
-  top: -18px;
-  height: 18px;
-  width: 2px;
-  background: linear-gradient(var(--lime-2), var(--lime));
-  box-shadow: 0 0 8px rgba(182, 241, 69, 0.6);
-}
-.skill-link.dim {
-  background: var(--line-bright);
-  box-shadow: none;
-}
-.skill-orb {
-  width: 54px;
-  height: 54px;
-  border-radius: 14px;
-  display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  border: 1px solid var(--line-bright);
-  background: linear-gradient(160deg, var(--panel-2), var(--panel));
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.skill-zoom-pct {
   font-family: var(--mono);
-}
-.skill-tier {
-  font-size: 0.5rem;
+  font-size: 0.7rem;
   color: var(--dim);
-  letter-spacing: 0.05em;
+  min-width: 3em;
+  text-align: center;
 }
-.skill-glyph {
-  font-size: 1.2rem;
-  line-height: 1;
+.skill-graph-viewport {
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--panel);
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y;
 }
-.skill-node.is-dominada .skill-orb {
-  border-color: var(--lime);
-  color: var(--lime);
-  box-shadow: var(--glow-lime);
+.skill-graph {
+  display: block;
 }
-.skill-node.is-dominada .skill-glyph {
+.skill-edge {
+  stroke: var(--lime);
+  stroke-width: 2;
+  opacity: 0.6;
+}
+.skill-edge.dim {
+  stroke: var(--line-bright);
+  opacity: 0.4;
+}
+.skill-node-g {
+  cursor: pointer;
+}
+.skill-node-g:focus-visible .skill-node-rect {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+}
+.skill-node-rect {
+  fill: var(--panel-2);
+  stroke: var(--line-bright);
+  stroke-width: 1;
+}
+.skill-node-glyph {
+  fill: var(--dim);
+  font-family: var(--mono);
+  font-size: 20px;
+}
+.skill-node-nome {
+  fill: var(--muted);
+  font-family: var(--sans);
+  font-size: 11px;
+}
+.skill-node-g.is-dominada .skill-node-rect {
+  stroke: var(--lime);
+  filter: drop-shadow(0 0 6px rgba(182, 241, 69, 0.5));
+}
+.skill-node-g.is-dominada .skill-node-glyph {
+  fill: var(--lime);
   animation: orb-pulse 2.4s ease-in-out infinite;
 }
-.skill-node.is-disponivel .skill-orb {
-  border-color: var(--cyan);
-  color: var(--cyan);
-  box-shadow: 0 0 20px -6px rgba(88, 214, 255, 0.7);
+.skill-node-g.is-boss .skill-node-rect {
+  stroke: var(--cyan);
 }
-.skill-node.is-bloqueada,
-.skill-node.is-em-breve {
+.skill-node-g.is-boss .skill-node-glyph {
+  fill: var(--cyan);
+}
+.skill-node-g.is-bloqueada {
   opacity: 0.55;
 }
-.skill-body {
-  min-width: 0;
+.skill-node-g.is-rusted .skill-node-rect {
+  stroke: rgba(255, 159, 71, 0.55);
+  filter: saturate(0.7);
+}
+.skill-node-g.is-rusted .skill-node-glyph {
+  fill: #ff9f47;
+  animation: none;
+}
+.skill-node-g.is-selected .skill-node-rect {
+  stroke-width: 2;
+  stroke: var(--text);
+}
+.skill-detail {
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--panel);
 }
 .skill-top {
   display: flex;
