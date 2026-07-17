@@ -334,7 +334,12 @@ export function GarageScene({
         role="button"
         tabIndex={0}
         aria-label="Quadro de skills"
-        onKeyDown={(e) => e.key === 'Enter' && onSelect('board')}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            onSelect('board')
+          }
+        }}
       >
         <polygon className="panelboard" points={board} />
         <polygon className="note n1" points={wallQuadA(0.68, 0.98, 1.55, 1.82)} />
@@ -351,7 +356,12 @@ export function GarageScene({
         role="button"
         tabIndex={0}
         aria-label={notify > 0 ? `Portão — ${notify} contrato(s) esperando` : 'Portão da garagem'}
-        onKeyDown={(e) => e.key === 'Enter' && onSelect('door')}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            onSelect('door')
+          }
+        }}
       >
         {/* trilhos laterais */}
         {[GD_Y1, GD_Y2].map((y) => (
@@ -416,7 +426,12 @@ export function GarageScene({
         role="button"
         tabIndex={0}
         aria-label="Computador — abrir a bancada"
-        onKeyDown={(e) => e.key === 'Enter' && onSelect('pc')}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            onSelect('pc')
+          }
+        }}
       >
         {/* pé/base do monitor — mais estreito que a carcaça, dá sensação de "pescoço" */}
         <Box x={3.3} y={0.36} z={0.82} w={0.3} d={0.08} h={0.06} tone="mon" />
@@ -470,7 +485,12 @@ export function GarageScene({
           role="button"
           tabIndex={0}
           aria-label="Gabinete do computador — abrir a bancada"
-          onKeyDown={(e) => e.key === 'Enter' && onSelect('pc')}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              onSelect('pc')
+            }
+          }}
         >
           <Box
             x={5.05}
