@@ -47,7 +47,10 @@ export default function App() {
   const [view, setView] = useState<View>('lab')
   const [runa, setRuna] = useState<{ skillId: string; kind: RuneKind } | null>(null)
   const [cameFromDesk, setCameFromDesk] = useState(false)
-  const [notice, setNotice] = useState<string | null>(null)
+  const [notices, setNotices] = useState<string[]>([])
+  const pushNotice = (msg: string) => setNotices((n) => [...n, msg])
+  const pushNotices = (msgs: string[]) => setNotices((n) => [...n, ...msgs])
+  const dismissNotice = () => setNotices((n) => n.slice(1))
   const [askLeave, setAskLeave] = useState(false)
   const clientRef = useRef<PyodideClient | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -63,22 +66,29 @@ export default function App() {
     return () => clearTimeout(t)
   }, [game])
 
-  // Conquistas: destrava as satisfeitas pelo estado atual e avisa (GDD §8).
+  // Conquistas (GDD §8) + conta diária do lab (GDD §4.1): unificadas num só efeito.
+  // Antes, cada uma calculava a partir do MESMO `game` obsoleto e chamava `setGame`
+  // separado — quem rodasse por último sobrescrevia o `game` do outro por completo
+  // (não só o toast). Agora computam em sequência sobre o mesmo `next` e só há 1 setGame.
   useEffect(() => {
     if (!game) return
-    const novas = pendingAchievements(game)
-    if (novas.length === 0) return
-    setGame({ ...game, achievements: [...game.achievements, ...novas.map((a) => a.id)] })
-    setNotice(`🏆 Conquista: ${novas.map((a) => a.nome).join(' · ')}`)
-  }, [game])
+    let next = game
+    const msgs: string[] = []
 
-  // Conta diária do lab (GDD §4.1): cobra uma vez por dia. Idempotente → não faz loop.
-  useEffect(() => {
-    if (!game) return
-    const { next, charged } = applyDailyBill(game, todayISO())
-    if (charged <= 0) return
-    setGame(next)
-    setNotice(`🧾 Conta do laboratório: −R$ ${charged} (energia + aluguel)`)
+    const novas = pendingAchievements(next)
+    if (novas.length > 0) {
+      next = { ...next, achievements: [...next.achievements, ...novas.map((a) => a.id)] }
+      msgs.push(`🏆 Conquista: ${novas.map((a) => a.nome).join(' · ')}`)
+    }
+
+    const bill = applyDailyBill(next, todayISO())
+    if (bill.charged > 0) {
+      next = bill.next
+      msgs.push(`🧾 Conta do laboratório: −R$ ${bill.charged} (energia + aluguel)`)
+    }
+
+    if (next !== game) setGame(next)
+    if (msgs.length > 0) pushNotices(msgs)
   }, [game])
 
   // Fase 1: avisa antes de fechar/recarregar no meio de uma Prova (a tentativa se perde).
@@ -105,9 +115,9 @@ export default function App() {
   async function onImportFile(file: File) {
     try {
       setGame(await importSave(file))
-      setNotice('Save importado com sucesso. ✅')
+      pushNotice('Save importado com sucesso. ✅')
     } catch (e) {
-      setNotice(e instanceof Error ? e.message : 'Falha ao importar o save.')
+      pushNotice(e instanceof Error ? e.message : 'Falha ao importar o save.')
     }
   }
 
@@ -150,7 +160,7 @@ export default function App() {
               className="btn btn-ghost danger"
               onClick={() => {
                 setGame(declararFalencia(game))
-                setNotice('💥 Falência. Perdeu o lab — mas o conhecimento é seu. New Game+.')
+                pushNotice('💥 Falência. Perdeu o lab — mas o conhecimento é seu. New Game+.')
               }}
             >
               Declarar falência (recomeça a garagem, skills mantidas)
@@ -188,9 +198,9 @@ export default function App() {
 
   return (
     <>
-      {notice && (
-        <div className="toast" onClick={() => setNotice(null)}>
-          {notice} <span className="toast-x">✕</span>
+      {notices[0] && (
+        <div className="toast" onClick={dismissNotice}>
+          {notices[0]} <span className="toast-x">✕</span>
         </div>
       )}
 
@@ -250,7 +260,7 @@ export default function App() {
                 }}
                 onReview={(skillId) => {
                   setGame(reviewSkill(game, skillId))
-                  setNotice('✨ Ferrugem removida. A skill voltou a brilhar.')
+                  pushNotice('✨ Ferrugem removida. A skill voltou a brilhar.')
                 }}
               />
             )}
