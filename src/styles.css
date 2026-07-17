@@ -816,6 +816,14 @@ button {
   stroke-width: 1.4;
   stroke-linecap: round;
 }
+.garage .crate-label {
+  fill: rgba(210, 220, 232, 0.32);
+  stroke: none;
+}
+.garage .crate-mark {
+  fill: rgba(10, 16, 12, 0.55);
+  stroke: none;
+}
 .garage .tone-rack polygon {
   stroke: rgba(88, 214, 255, 0.55);
 }
@@ -829,11 +837,17 @@ button {
 .garage .tone-tower2 .f-t { fill: #1c2c30; }
 .garage .tone-tower2 .f-r { fill: #142226; }
 .garage .tone-tower2 .f-l { fill: #0e181b; }
-/* personagem (hoodie escuro com aresta cyan + capuz + cabeça), digitando */
+/* personagem (hoodie escuro com aresta cyan + capuz), digitando */
 .garage .tone-person polygon { stroke: rgba(88, 214, 255, 0.45); }
 .garage .tone-person .f-t { fill: #1d3540; }
 .garage .tone-person .f-r { fill: #16282f; }
 .garage .tone-person .f-l { fill: #101d23; }
+/* cadeira — tom âmbar/neutro propositalmente diferente do azul do personagem,
+   pra fronteira entre corpo e cadeira ficar óbvia mesmo numa tela pequena. */
+.garage .tone-chair polygon { stroke: rgba(255, 191, 71, 0.35); }
+.garage .tone-chair .f-t { fill: #3a342c; }
+.garage .tone-chair .f-r { fill: #2b261f; }
+.garage .tone-chair .f-l { fill: #1d1a15; }
 .garage .dev {
   animation: dev-bob 2.6s ease-in-out infinite;
   transform-box: fill-box;
@@ -919,10 +933,6 @@ button {
   fill: rgba(88, 214, 255, 0.22);
   stroke: rgba(88, 214, 255, 0.5);
   stroke-width: 0.5;
-}
-.garage .gdoor-handle {
-  fill: rgba(255, 191, 71, 0.55);
-  stroke: none;
 }
 /* notificação de cliente sobre a porta */
 .garage .notify-dot {

@@ -81,8 +81,36 @@ function Leds({ x, y, z, n, cls }: { x: number; y: number; z: number; n: number;
   )
 }
 
+// Decoração da face frontal de uma caixa (etiqueta clara + 3 marcas escuras),
+// como caixas de papelão de verdade — desenhada no mesmo plano da face "f-l" do Box.
+function crateFace(x: number, y: number, d: number, w: number, h: number) {
+  const label = pts(
+    iso(x + w * 0.14, y + d, h * 0.56),
+    iso(x + w * 0.48, y + d, h * 0.56),
+    iso(x + w * 0.48, y + d, h * 0.76),
+    iso(x + w * 0.14, y + d, h * 0.76),
+  )
+  const marks = [0.14, 0.27, 0.4].map((f) =>
+    pts(
+      iso(x + w * f, y + d, h * 0.28),
+      iso(x + w * (f + 0.09), y + d, h * 0.28),
+      iso(x + w * (f + 0.09), y + d, h * 0.38),
+      iso(x + w * f, y + d, h * 0.38),
+    ),
+  )
+  return (
+    <>
+      <polygon className="crate-label" points={label} />
+      {marks.map((m, i) => (
+        <polygon key={i} className="crate-mark" points={m} />
+      ))}
+    </>
+  )
+}
+
 // Pilha de caixas "torta" (bagunça) — caixa maior embaixo, menor em cima e desalinhada,
-// com um traço de fita no topo. `big` varia o tamanho pra não ficarem todas iguais.
+// com fita cruzando topo+frente e o mesmo acabamento (etiqueta+marcas) de uma caixa real.
+// `big` varia o tamanho pra não ficarem todas iguais.
 function CratePile({ x, y, big = 1 }: { x: number; y: number; big?: number }) {
   const w = 0.72 * big
   const d = 0.72 * big
@@ -92,13 +120,19 @@ function CratePile({ x, y, big = 1 }: { x: number; y: number; big?: number }) {
   const h2 = 0.4 * big
   const dx2 = 0.1 * big
   const dy2 = -0.06 * big
-  const tapeA = iso(x + w * 0.18, y + d, h)
-  const tapeB = iso(x + w * 0.82, y, h)
+  const tapeMidX = x + w * 0.5
+  const tapeTopA = iso(x + w * 0.18, y + d, h)
+  const tapeTopB = iso(x + w * 0.82, y, h)
+  const tapeFlapTop = iso(tapeMidX, y + d, h)
+  const tapeFlapBot = iso(tapeMidX, y + d, h * 0.8)
   return (
     <g>
       <Box x={x} y={y} z={0} w={w} d={d} h={h} tone="crate" />
-      <line className="crate-tape" x1={tapeA[0]} y1={tapeA[1]} x2={tapeB[0]} y2={tapeB[1]} />
+      <line className="crate-tape" x1={tapeTopA[0]} y1={tapeTopA[1]} x2={tapeTopB[0]} y2={tapeTopB[1]} />
+      <line className="crate-tape" x1={tapeFlapTop[0]} y1={tapeFlapTop[1]} x2={tapeFlapBot[0]} y2={tapeFlapBot[1]} />
+      {crateFace(x, y, d, w, h)}
       <Box x={x + dx2} y={y + dy2} z={h} w={w2} d={d2} h={h2} tone="crate2" />
+      {crateFace(x + dx2, y + dy2, d2, w2, h2)}
     </g>
   )
 }
@@ -256,8 +290,6 @@ export function GarageScene({
         {GD_WINDOWS.map(([y, w]) => (
           <polygon key={y} className="gdoor-window" points={wallQuadB(y, y + w, 1.55, 1.9)} />
         ))}
-        {/* puxador central */}
-        <polygon className="gdoor-handle" points={wallQuadB(2.0, 2.2, 0.22, 0.34)} />
         {/* moldura por cima dos painéis — só o contorno, nítido */}
         <polygon className="gdoor" points={wallQuadB(GD_Y1, GD_Y2, 0, GD_Z)} />
         {notify > 0 && (
@@ -303,13 +335,14 @@ export function GarageScene({
         {/* pé/base do monitor — mais estreito que a carcaça, dá sensação de "pescoço" */}
         <Box x={3.3} y={0.36} z={0.82} w={0.3} d={0.08} h={0.06} tone="mon" />
         <Box x={3.0} y={0.34} z={0.88} w={0.95} d={0.12} h={level >= 1 ? 0.7 : 0.56} tone="mon" />
+        {/* bezel simétrico: 0.08 de margem nos 4 lados, dos dois níveis */}
         <polygon
           className={`screen ${level >= 1 ? 'bright' : ''}`}
           points={pts(
             iso(3.08, 0.34, 0.96),
             iso(3.87, 0.34, 0.96),
-            iso(3.87, 0.34, level >= 1 ? 1.52 : 1.38),
-            iso(3.08, 0.34, level >= 1 ? 1.52 : 1.38),
+            iso(3.87, 0.34, level >= 1 ? 1.5 : 1.36),
+            iso(3.08, 0.34, level >= 1 ? 1.5 : 1.36),
           )}
         />
         {/* linhas de código "digitando" na tela */}
@@ -361,7 +394,14 @@ export function GarageScene({
             h={level >= 1 ? 0.95 : 0.8}
             tone={level >= 1 ? 'tower2' : 'tower'}
           />
-          <Leds x={5.1} y={0.3} z={0.16} n={level >= 1 ? 3 : 1} cls={`led ${level >= 1 ? 'cyan' : ''}`} />
+          {/* luz no canto superior do gabinete (antes ficava embaixo) */}
+          <Leds
+            x={5.37}
+            y={0.33}
+            z={(level >= 1 ? 0.95 : 0.8) - 0.06 - (level >= 1 ? 2 : 0) * 0.22}
+            n={level >= 1 ? 3 : 1}
+            cls={`led ${level >= 1 ? 'cyan' : ''}`}
+          />
           <rect className="hit" x={326} y={120} width={32} height={58} />
         </g>
       )}
@@ -374,11 +414,13 @@ export function GarageScene({
         <Box x={3.15} y={1.62} z={0.45} w={0.6} d={0.13} h={0.68} tone="chair" />
       </g>
 
-      {/* personagem (de costas, digitando — estilo GDT), com bob próprio */}
+      {/* personagem (de costas, digitando — estilo GDT), com bob próprio.
+          z começa um pouco acima do assento (0.48 vs assento em 0.45) — gap visível
+          de propósito, pra não parecer que o corpo se funde/atravessa a cadeira. */}
       <g className="dev">
-        <Box x={3.24} y={1.08} z={0.45} w={0.44} d={0.36} h={0.6} tone="person" />
+        <Box x={3.24} y={1.08} z={0.48} w={0.44} d={0.36} h={0.6} tone="person" />
         {/* capuz: uma única forma (sem cabeça separada) */}
-        <circle className="dev-hood" cx={iso(3.46, 1.28, 1.24)[0]} cy={iso(3.46, 1.28, 1.24)[1]} r={7.2} />
+        <circle className="dev-hood" cx={iso(3.46, 1.28, 1.27)[0]} cy={iso(3.46, 1.28, 1.27)[1]} r={7.2} />
       </g>
 
       {/* caixotes / tralha da garagem — espalhados pelos 3 cantos livres; encolhe com o hardware */}
