@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { GameState } from '../persistence/saveGame'
 import type { View } from '../nav'
+import type { ClientState } from '../pyodide/client'
 import { GarageScene, type Hotspot } from './GarageScene'
 import {
   ACHIEVEMENTS,
@@ -26,6 +27,7 @@ export function LabScreen({
   onExport,
   onImport,
   arriveFromDesk = false,
+  pyState,
 }: {
   game: GameState
   onGameChange: (g: GameState) => void
@@ -34,6 +36,7 @@ export function LabScreen({
   onImport: () => void
   /** Voltando da bancada: entra com a câmera na mesa e afasta (zoom reverso). */
   arriveFromDesk?: boolean
+  pyState: ClientState
 }) {
   const [zooming, setZooming] = useState(arriveFromDesk)
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -93,6 +96,11 @@ export function LabScreen({
         {game.debt > 0 && (
           <span className="ov-stat red" title="Dívida com o agiota">
             ⚠ {money(game.debt)}
+          </span>
+        )}
+        {pyState.phase === 'loading' && (
+          <span className="ov-stat cyan" title="Motor Python carregando (~60 MB na primeira vez)">
+            🐍 {Math.round((pyState.progress.loaded / pyState.progress.total) * 100)}%
           </span>
         )}
       </div>

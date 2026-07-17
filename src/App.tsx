@@ -233,6 +233,7 @@ export default function App() {
           onExport={() => exportSave(game)}
           onImport={() => fileRef.current?.click()}
           arriveFromDesk={cameFromDesk}
+          pyState={pyState}
         />
       ) : (
         <div className="app">
