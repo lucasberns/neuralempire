@@ -256,6 +256,7 @@ export default function App() {
             )}
             {view === 'runa' && runa && (
               <RunaScreen
+                skillId={runa.skillId}
                 kind={runa.kind}
                 skillNome={skillById(runa.skillId)?.nome ?? ''}
                 onComplete={() => {
