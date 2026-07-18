@@ -1,0 +1,85 @@
+/* src/screens/RunaSvmIntuicao.css */
+.runa-svm-intuicao {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.rsi-lead {
+  font-family: var(--sans);
+  color: var(--muted);
+  line-height: 1.5;
+}
+.rsi-em {
+  color: var(--lime);
+  font-weight: 700;
+}
+.rsi-plot {
+  width: 100%;
+  max-width: 320px;
+  margin: 0 auto;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+}
+.rsi-dot {
+  stroke: var(--panel);
+  stroke-width: 1;
+}
+.rsi-dot.is-ok {
+  fill: var(--lime);
+}
+.rsi-dot.is-defeituosa {
+  fill: var(--red);
+}
+.rsi-dot.is-vetor {
+  stroke: var(--cyan);
+  stroke-width: 2.5;
+}
+.rsi-fronteira {
+  stroke: var(--cyan);
+  stroke-width: 2;
+}
+.rsi-fronteira.is-good {
+  stroke: var(--lime);
+}
+.rsi-margem {
+  stroke: var(--dim);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+.rsi-slider {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.rsi-slider-top {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.rsi-val {
+  color: var(--text);
+}
+.rsi-meter {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.rsi-meter-top {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--mono);
+  font-size: 0.85rem;
+}
+.rsi-margem-v {
+  color: var(--dim);
+}
+.rsi-margem-v.is-good {
+  color: var(--lime);
+}
+.rsi-meter-hint {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
