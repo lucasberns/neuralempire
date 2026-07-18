@@ -8,6 +8,7 @@ import {
   INTERN_COST,
   RELAMPAGO,
   REPEATABLE,
+  SPECIAL,
   bairroAvailable,
   bossCooldownMsLeft,
   fmtCooldown,
@@ -75,6 +76,8 @@ function BossCard({
         <div className="cc-titles">
           <h3 className="panel-title">{c.titulo}</h3>
           <span className="chip chip-cyan">{SECTOR_LABEL[c.setor]}</span>
+          {c.disputado && <span className="chip chip-cyan">⚔ Disputado</span>}
+          {c.crise && <span className="chip chip-fire">🔥 Crise</span>}
         </div>
         {state === 'done' && <span className="cc-stamp">ENTREGUE</span>}
       </header>
@@ -267,6 +270,33 @@ export function ContractsScreen({
                     </>
                   )}
                 </article>
+              )
+            })}
+          </>
+        )
+      })()}
+
+      {(() => {
+        const desafios = SPECIAL.filter((c) => isAvailable(game, c) || isDone(game, c.id))
+        if (desafios.length === 0) return null
+        return (
+          <>
+            <div className="screen-head bairro-head">
+              <h3 className="panel-title">Desafios</h3>
+              <p className="muted">Contratos únicos pra skills já dominadas: duelos e crises de manutenção.</p>
+            </div>
+            {desafios.map((c) => {
+              const state: CardState = isDone(game, c.id) ? 'done' : 'boss'
+              return (
+                <BossCard
+                  key={c.id}
+                  c={c}
+                  state={state}
+                  cooldownMsLeft={bossCooldownMsLeft(game, c.id, now)}
+                  hardwareBlocked={!hardwareOk(game, c)}
+                  onAccept={() => open(c)}
+                  onRunes={() => onNavigate('skills')}
+                />
               )
             })}
           </>
