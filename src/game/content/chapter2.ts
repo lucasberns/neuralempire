@@ -131,7 +131,7 @@ assert set(np.unique(_res)).issubset({0, 1}), "As previsões deveriam ser só 0 
         hidden: true,
         code: `import numpy as np
 _res = np.asarray(prever_cancelamento(dados_treino, dados_novos)).ravel()
-assert len(set(_res)) > 0
+assert len(set(_res)) > 1
 `,
       },
       {
