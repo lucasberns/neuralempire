@@ -331,6 +331,130 @@ def avaliar_diagnostico(dados_treino, dados_teste):
       },
     ],
   },
+  {
+    id: 'controle-qualidade-pecas',
+    emoji: '⚙️',
+    titulo: 'Fábrica Peça Certa',
+    setor: 'industria',
+    skillId: 'svm',
+    briefing:
+      'A fábrica faz controle de qualidade e quer a fronteira MAIS ROBUSTA possível entre peça ' +
+      'OK e defeituosa — a partir de espessura e peso — pra minimizar o risco de deixar passar ' +
+      'uma peça ruim por causa de ruído na medição.',
+    metaLabel: 'Acurácia ≥ 75% nas 12 peças de entrega',
+    payout: 520,
+    reputacao: 16,
+    prereqContractIds: ['devolucoes-suspeitas'],
+    datasetUrl: DATASET('pecas.csv'),
+    starterCode: `from sklearn.svm import SVC
+
+def classificar_peca(dados_treino, dados_novos):
+    # dados_treino: tabela com espessura_mm, peso_g e defeituosa (0 ou 1)
+    # dados_novos:  mesma tabela, MENOS a coluna defeituosa
+    #
+    # 1. Separe X (colunas de entrada) e y (defeituosa) de dados_treino
+    # 2. Treine um SVC(kernel="linear") — a fronteira de margem máxima
+    # 3. Devolva as previsões do modelo para dados_novos
+    ...
+`,
+    setupCode: SETUP_PECAS,
+    tests: [
+      {
+        name: 'classificar_peca(...) devolve um resultado',
+        hidden: false,
+        code: `_res = classificar_peca(dados_treino, dados_novos)
+assert _res is not None, "A função retornou None — faltou o return?"
+`,
+      },
+      {
+        name: 'Uma previsão por peça nova',
+        hidden: false,
+        code: `import numpy as np
+_res = np.asarray(classificar_peca(dados_treino, dados_novos)).ravel()
+assert len(_res) == len(dados_novos), f"Esperava {len(dados_novos)} previsões, recebi {len(_res)}"
+`,
+      },
+      {
+        name: 'As previsões são 0 ou 1',
+        hidden: false,
+        code: `import numpy as np
+_res = np.asarray(classificar_peca(dados_treino, dados_novos)).ravel()
+assert set(np.unique(_res)).issubset({0, 1}), "As previsões deveriam ser só 0 (ok) ou 1 (defeituosa)"
+`,
+      },
+      {
+        name: 'Teste oculto: o modelo realmente reage aos dados',
+        hidden: true,
+        code: `import numpy as np
+_res = np.asarray(classificar_peca(dados_treino, dados_novos)).ravel()
+assert len(set(_res)) > 1, "O modelo previu sempre a mesma classe — não olhou pros dados"
+`,
+      },
+      {
+        name: 'Teste oculto: entrega dentro da meta (acurácia ≥ 75%)',
+        hidden: true,
+        code: `import numpy as np
+_pred = np.asarray(classificar_peca(dados_treino, dados_novos)).ravel()
+_acc = float((_pred == _ne_holdout["defeituosa"].to_numpy()).mean())
+assert _acc >= 0.75, f"acurácia = {_acc}"
+`,
+      },
+    ],
+    metricsCode: `import numpy as np
+_pred = np.asarray(classificar_peca(dados_treino, dados_novos)).ravel()
+_acc = float((_pred == _ne_holdout["defeituosa"].to_numpy()).mean())
+_ne_result = {
+    "Acurácia na entrega": f"{round(_acc * 100)}%",
+    "Meta do contrato": "≥ 75%",
+    "Peças defeituosas detectadas": int(_pred.sum()),
+}
+`,
+    hints: [
+      'As colunas de entrada são espessura_mm e peso_g. O alvo é defeituosa.',
+      'X = dados_treino[["espessura_mm", "peso_g"]] e y = dados_treino["defeituosa"].',
+      'modelo = SVC(kernel="linear"); modelo.fit(X, y); return modelo.predict(dados_novos[colunas]).',
+    ],
+    solution: `from sklearn.svm import SVC
+
+def classificar_peca(dados_treino, dados_novos):
+    colunas = ["espessura_mm", "peso_g"]
+    X = dados_treino[colunas]
+    y = dados_treino["defeituosa"]
+    modelo = SVC(kernel="linear")
+    modelo.fit(X, y)
+    return modelo.predict(dados_novos[colunas])
+`,
+    interrogation: [
+      {
+        q: 'O que o SVM tenta maximizar entre as duas classes?',
+        options: [
+          'A margem — a distância entre a fronteira e os pontos mais próximos de cada classe',
+          'O número de pontos usados no treino',
+          'A velocidade de treino',
+        ],
+        correct: 0,
+      },
+      {
+        q: 'O que são os "vetores de suporte"?',
+        options: [
+          'Os pontos mais próximos da fronteira — só eles decidem onde ela fica',
+          'Todos os pontos do dataset, sem exceção',
+          'As colunas de entrada do modelo',
+        ],
+        correct: 0,
+      },
+      {
+        q: 'Por que uma margem maior deixa o modelo mais robusto a ruído em medições novas?',
+        options: [
+          'Uma peça nova com uma medição um pouco diferente do esperado ainda cai do lado certo, ' +
+            'longe da linha de corte',
+          'Margem maior sempre significa mais peças no dataset',
+          'Não faz diferença nenhuma pra robustez',
+        ],
+        correct: 0,
+      },
+    ],
+  },
 ]
 
 // ---------------------------------------------------------------- Runa do Código (katas)
@@ -421,6 +545,47 @@ def avaliar(dados_treino, dados_teste):
 `,
     interrogation: [],
   },
+  {
+    id: 'kata-svm',
+    emoji: '🔓',
+    titulo: 'Kata · SVM',
+    setor: 'industria',
+    skillId: 'svm',
+    briefing: 'Aquecimento antes da Prova: treine um SVC linear e devolva as previsões para as peças novas. Aqui não cobramos a meta — só fazer o modelo prever.',
+    metaLabel: 'Devolver uma previsão (0 ou 1) por peça nova',
+    payout: 0,
+    reputacao: 0,
+    prereqContractIds: [],
+    datasetUrl: DATASET('pecas.csv'),
+    starterCode: `from sklearn.svm import SVC
+
+def classificar(dados_treino, dados_novos):
+    # 1. X = colunas de entrada, y = defeituosa (de dados_treino)
+    # 2. modelo = SVC(kernel="linear").fit(X, y)
+    # 3. devolva modelo.predict(dados_novos)
+    ...
+`,
+    setupCode: SETUP_PECAS,
+    tests: [
+      { name: 'Uma previsão por peça nova', hidden: false, code: `import numpy as np\n_r = np.asarray(classificar(dados_treino, dados_novos)).ravel()\nassert len(_r) == len(dados_novos)\n` },
+      { name: 'As previsões são 0 ou 1', hidden: true, code: `import numpy as np\n_r = np.asarray(classificar(dados_treino, dados_novos)).ravel()\nassert set(np.unique(_r)).issubset({0, 1})\n` },
+    ],
+    metricsCode: `import numpy as np\n_r = np.asarray(classificar(dados_treino, dados_novos)).ravel()\n_ne_result = {"Previsões feitas": int(len(_r))}\n`,
+    hints: [
+      'Colunas de entrada: ["espessura_mm", "peso_g"]. Alvo: "defeituosa".',
+      'X = dados_treino[colunas]; y = dados_treino["defeituosa"].',
+      'modelo = SVC(kernel="linear"); modelo.fit(X, y); return modelo.predict(dados_novos[colunas]).',
+    ],
+    solution: `from sklearn.svm import SVC
+
+def classificar(dados_treino, dados_novos):
+    colunas = ["espessura_mm", "peso_g"]
+    modelo = SVC(kernel="linear")
+    modelo.fit(dados_treino[colunas], dados_treino["defeituosa"])
+    return modelo.predict(dados_novos[colunas])
+`,
+    interrogation: [],
+  },
 ]
 
 // ---------------------------------------------------------------- Aulas de código (ensino)
@@ -478,6 +643,30 @@ export const LESSONS_CH3: Record<string, Lesson> = {
       { code: '    recall = recall_score(real, pred, zero_division=0)', explica: 'Dos que eram risco de verdade, quantos você pegou.' },
       { code: '    f1 = f1_score(real, pred, zero_division=0)', explica: 'Combina os dois numa nota só.' },
       { code: '    return precisao, recall, f1', explica: 'Devolve os três.' },
+    ],
+  },
+  'kata-svm': {
+    intro: 'SVM não "aprende" uma fórmula fechada — ele procura a reta que separa as duas classes com a maior margem possível.',
+    passos: [
+      { code: 'from sklearn.svm import SVC', explica: 'Importa o classificador de margem máxima.' },
+      { code: 'def classificar(dados_treino, dados_novos):', explica: 'Recebe treino e as peças novas.' },
+      { code: '    colunas = ["espessura_mm", "peso_g"]', explica: 'Entradas do modelo.' },
+      { code: '    modelo = SVC(kernel="linear")', explica: 'Cria o modelo com fronteira reta (kernel linear).' },
+      { code: '    modelo.fit(dados_treino[colunas], dados_treino["defeituosa"])', explica: 'Treina buscando a margem máxima.' },
+      { code: '    return modelo.predict(dados_novos[colunas])', explica: 'Classifica as peças novas.' },
+    ],
+  },
+  'controle-qualidade-pecas': {
+    intro: 'Mesmo ritual da runa, agora valendo: escolher colunas, criar, treinar e prever.',
+    passos: [
+      { code: 'from sklearn.svm import SVC', explica: 'Importa o modelo.' },
+      { code: 'def classificar_peca(dados_treino, dados_novos):', explica: 'Recebe treino e as peças a classificar.' },
+      { code: '    colunas = ["espessura_mm", "peso_g"]', explica: 'Entradas do modelo.' },
+      { code: '    X = dados_treino[colunas]', explica: 'X = as colunas de entrada.' },
+      { code: '    y = dados_treino["defeituosa"]', explica: 'y = o que queremos prever.' },
+      { code: '    modelo = SVC(kernel="linear")', explica: 'Cria o modelo.' },
+      { code: '    modelo.fit(X, y)', explica: 'Treina buscando a margem máxima.' },
+      { code: '    return modelo.predict(dados_novos[colunas])', explica: 'Classifica as peças novas.' },
     ],
   },
 }
