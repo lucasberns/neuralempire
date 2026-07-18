@@ -57,6 +57,8 @@ export function WorkbenchScreen({
   const [interrogating, setInterrogating] = useState(false)
   const [kataPassed, setKataPassed] = useState(false)
   const [reward, setReward] = useState<{ earned: number; rep: number; rent: number } | null>(null)
+  const [duelo, setDuelo] = useState<{ venceu: boolean; jogador: number; npc: number } | null>(null)
+  const [pendingMultiplier, setPendingMultiplier] = useState(1)
   const [failed, setFailed] = useState<{ correct: number; total: number; wrongQuestions: string[] } | null>(null)
   const [editorNonce, setEditorNonce] = useState(0) // bump → remonta o editor com o código novo
 
@@ -82,8 +84,8 @@ export function WorkbenchScreen({
     onGameChange({ ...game, codeByContract: { ...game.codeByContract, [contract.id]: next } })
   }
 
-  function finalize(interrogationScore: number) {
-    const { next, earned, rent } = completeContract(game, contract, interrogationScore)
+  function finalize(interrogationScore: number, payoutMultiplier = 1) {
+    const { next, earned, rent } = completeContract(game, contract, interrogationScore, payoutMultiplier)
     // Contratos repetíveis (bairro): reseta o código ao entregar, senão o jogador só
     // reabre o mesmo contrato amanhã e re-roda a solução já pronta sem reescrever nada.
     let finalState = next
@@ -113,11 +115,19 @@ export function WorkbenchScreen({
         metrics: contract.metricsCode,
       })
       setOutcome(result)
+      let payoutMultiplier = 1
+      if (result.ok && contract.disputado) {
+        const jogador = Number(result.metrics?.[contract.disputado.scoreKey])
+        const venceu = jogador >= contract.disputado.npcScore
+        setDuelo({ venceu, jogador, npc: contract.disputado.npcScore })
+        payoutMultiplier = venceu ? 1.2 : 0.6
+      }
+      setPendingMultiplier(payoutMultiplier)
       if (result.ok) {
         if (mode === 'kata') setKataPassed(true) // runa do código: sem pagamento/interrogatório
         else if (!done) {
           if (contract.interrogation.length > 0) setInterrogating(true) // boss → interrogatório
-          else finalize(1) // relâmpago / sem perguntas
+          else finalize(1, payoutMultiplier) // relâmpago / sem perguntas
         }
       }
     } catch (e) {
@@ -132,6 +142,7 @@ export function WorkbenchScreen({
       <div className="screen-head">
         <h2 className="screen-title">
           {contract.emoji} {contract.titulo}
+          {contract.crise && <span className="chip chip-fire">🔥 Crise</span>}
         </h2>
         <p className="muted">
           {mode === 'kata' ? (
@@ -355,12 +366,29 @@ export function WorkbenchScreen({
 
       {outcome && <TestResults outcome={outcome} />}
 
+      {duelo && contract.disputado && (
+        <div className={`panel duelo-panel ${duelo.venceu ? 'is-vitoria' : 'is-derrota'}`}>
+          <h3 className="panel-title">
+            {duelo.venceu ? '🏆 Você venceu o duelo!' : '😬 O concorrente levou o cliente'}
+          </h3>
+          <p>
+            Sua entrega: <b>{Math.round(duelo.jogador * 100)}%</b> · {contract.disputado.npcLabel}:{' '}
+            <b>{Math.round(duelo.npc * 100)}%</b>
+          </p>
+          <p className="muted">
+            {duelo.venceu
+              ? 'Pagamento com bônus por vencer o duelo.'
+              : 'O trabalho ainda conta como entregue e aprovado — só o cliente foi pro concorrente. Pagamento reduzido.'}
+          </p>
+        </div>
+      )}
+
       {interrogating && (
         <Interrogatorio
           questions={contract.interrogation}
           onFinish={(score, wrongQuestions) => {
             if (interrogationPassed(score)) {
-              finalize(score)
+              finalize(score, pendingMultiplier)
               return
             }
             // Reprovação real (Fase 1): consome a tentativa, aplica cooldown, aponta o que refazer.

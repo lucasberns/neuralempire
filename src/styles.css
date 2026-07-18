@@ -291,6 +291,19 @@ p {
   border-color: rgba(88, 214, 255, 0.4);
   background: rgba(88, 214, 255, 0.07);
 }
+.chip-fire {
+  color: var(--amber);
+  border-color: rgba(255, 191, 71, 0.4);
+  background: rgba(255, 191, 71, 0.07);
+  margin-left: 8px;
+}
+
+.duelo-panel.is-vitoria {
+  border-color: rgba(182, 241, 69, 0.4);
+}
+.duelo-panel.is-derrota {
+  border-color: rgba(255, 191, 71, 0.4);
+}
 
 /* ------------------------------------------------------------------ buttons */
 .btn,
