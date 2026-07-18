@@ -1,10 +1,10 @@
 import type { SkillDef } from './content'
 
-export const NODE_W = 140
-export const NODE_H = 64
-const COL_GAP = 36
-const ROW_GAP = 64
-const PAD = 32
+export const NODE_R = 30
+const SLOT_W = 112
+const ROW_H = 118
+const LABEL_H = 34
+const PAD = 44
 
 export interface GraphNode {
   id: string
@@ -49,6 +49,9 @@ function computeTiers(skills: readonly SkillDef[]): Map<string, number> {
   return tierOf
 }
 
+// `x`/`y` de cada nó são o CENTRO do círculo (não canto). A árvore cresce pra
+// baixo (tier 0 no topo, y crescendo por tier) — decisão deliberada a manter
+// nas próximas fases/capítulos (GDD §6, até 24 skills / 6 tiers).
 export function layoutSkillGraph(skills: readonly SkillDef[]): SkillGraphLayout {
   const tierOf = computeTiers(skills)
   const maxTier = Math.max(0, ...tierOf.values())
@@ -64,13 +67,13 @@ export function layoutSkillGraph(skills: readonly SkillDef[]): SkillGraphLayout 
   let maxRowWidth = 0
   for (let t = 0; t <= maxTier; t++) {
     const row = byTier.get(t) ?? []
-    const rowWidth = row.length * NODE_W + Math.max(0, row.length - 1) * COL_GAP
+    const rowWidth = row.length * SLOT_W
     maxRowWidth = Math.max(maxRowWidth, rowWidth)
     row.forEach((s, i) => {
       nodes.push({
         id: s.id,
-        x: i * (NODE_W + COL_GAP) - rowWidth / 2,
-        y: t * (NODE_H + ROW_GAP),
+        x: i * SLOT_W - rowWidth / 2 + SLOT_W / 2,
+        y: t * ROW_H,
       })
     })
   }
@@ -82,7 +85,7 @@ export function layoutSkillGraph(skills: readonly SkillDef[]): SkillGraphLayout 
 
   const byId = new Map(nodes.map((n) => [n.id, n]))
   const w = maxRowWidth + PAD * 2
-  const h = (maxTier + 1) * NODE_H + maxTier * ROW_GAP + PAD * 2
+  const h = maxTier * ROW_H + NODE_R * 2 + LABEL_H + PAD * 2
 
-  return { nodes, edges, byId, bounds: { x: -w / 2, y: -PAD, w, h } }
+  return { nodes, edges, byId, bounds: { x: -w / 2, y: -PAD - NODE_R, w, h } }
 }

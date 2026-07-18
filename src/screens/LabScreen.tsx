@@ -41,6 +41,7 @@ export function LabScreen({
 }) {
   const [zooming, setZooming] = useState(arriveFromDesk)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [achievementsOpen, setAchievementsOpen] = useState(false)
 
   useEffect(() => {
     if (!arriveFromDesk) return
@@ -126,6 +127,13 @@ export function LabScreen({
           ))}
       </div>
 
+      <button
+        className="ov ov-br ov-br2"
+        aria-label="Conquistas"
+        onClick={() => setAchievementsOpen(true)}
+      >
+        🏆
+      </button>
       <button className="ov ov-br" aria-label="Configurações" onClick={() => setSettingsOpen(true)}>
         ⚙
       </button>
@@ -167,7 +175,63 @@ export function LabScreen({
                 ↳ Importar save
               </button>
             </div>
-            <h3 className="panel-title cfg-sec">
+            <details className="cfg-curriculo">
+              <summary className="panel-title cfg-sec">
+                Currículo · {SKILLS.filter((s) => skillStatus(game, s) === 'dominada').length}/{SKILLS.length}
+              </summary>
+              <ul className="conquistas">
+                {SKILLS.filter((s) => skillStatus(game, s) === 'dominada').map((s) => (
+                  <li key={s.id} className="got">
+                    <span>
+                      <b>{s.nome}</b>
+                      <small>{s.desc}</small>
+                    </span>
+                  </li>
+                ))}
+                {SKILLS.every((s) => skillStatus(game, s) !== 'dominada') && (
+                  <li className="locked">
+                    <span>
+                      <b>Nenhuma skill dominada ainda</b>
+                    </span>
+                  </li>
+                )}
+              </ul>
+              <div className="assist-row">
+                <button
+                  className="btn btn-ghost"
+                  onClick={() => {
+                    const blob = new Blob([curriculoText(game)], { type: 'text/plain;charset=utf-8' })
+                    const url = URL.createObjectURL(blob)
+                    const a = document.createElement('a')
+                    a.href = url
+                    a.download = `neural-empire-curriculo-${new Date().toISOString().slice(0, 10)}.txt`
+                    a.click()
+                    URL.revokeObjectURL(url)
+                  }}
+                >
+                  📄 Exportar currículo
+                </button>
+              </div>
+            </details>
+
+            <p className="footnote left">build {__BUILD_ID__}</p>
+            <button className="btn btn-primary" onClick={() => setSettingsOpen(false)}>
+              Fechar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Conquistas: separada de Configurações pra não sobrecarregar a sheet principal */}
+      {achievementsOpen && (
+        <div className="sheet-back" onClick={() => setAchievementsOpen(false)}>
+          <div
+            className="sheet"
+            role="dialog"
+            aria-label="Conquistas"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="panel-title">
               Conquistas · {game.achievements.length}/{ACHIEVEMENTS.length}
             </h3>
             <ul className="conquistas">
@@ -184,46 +248,7 @@ export function LabScreen({
                 )
               })}
             </ul>
-
-            <h3 className="panel-title cfg-sec">
-              Currículo · {SKILLS.filter((s) => skillStatus(game, s) === 'dominada').length}/{SKILLS.length}
-            </h3>
-            <ul className="conquistas">
-              {SKILLS.filter((s) => skillStatus(game, s) === 'dominada').map((s) => (
-                <li key={s.id} className="got">
-                  <span>
-                    <b>{s.nome}</b>
-                    <small>{s.desc}</small>
-                  </span>
-                </li>
-              ))}
-              {SKILLS.every((s) => skillStatus(game, s) !== 'dominada') && (
-                <li className="locked">
-                  <span>
-                    <b>Nenhuma skill dominada ainda</b>
-                  </span>
-                </li>
-              )}
-            </ul>
-            <div className="assist-row">
-              <button
-                className="btn btn-ghost"
-                onClick={() => {
-                  const blob = new Blob([curriculoText(game)], { type: 'text/plain;charset=utf-8' })
-                  const url = URL.createObjectURL(blob)
-                  const a = document.createElement('a')
-                  a.href = url
-                  a.download = `neural-empire-curriculo-${new Date().toISOString().slice(0, 10)}.txt`
-                  a.click()
-                  URL.revokeObjectURL(url)
-                }}
-              >
-                📄 Exportar currículo
-              </button>
-            </div>
-
-            <p className="footnote left">build {__BUILD_ID__}</p>
-            <button className="btn btn-primary" onClick={() => setSettingsOpen(false)}>
+            <button className="btn btn-primary" onClick={() => setAchievementsOpen(false)}>
               Fechar
             </button>
           </div>
