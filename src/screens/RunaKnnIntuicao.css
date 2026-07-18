@@ -1,0 +1,82 @@
+/* src/screens/RunaKnnIntuicao.css */
+.runa-knn-intuicao {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.rki-lead {
+  font-family: var(--sans);
+  color: var(--muted);
+  line-height: 1.5;
+}
+.rki-em {
+  color: var(--lime);
+}
+.rki-plot {
+  width: 100%;
+  aspect-ratio: 1;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+}
+.rki-dot {
+  stroke: var(--panel);
+  stroke-width: 1;
+  transition: r 0.15s ease;
+}
+.rki-dot.is-popular {
+  fill: var(--cyan);
+}
+.rki-dot.is-alto {
+  fill: var(--amber);
+}
+.rki-dot.is-vizinho {
+  stroke: var(--text);
+  stroke-width: 2;
+}
+.rki-linha {
+  stroke: var(--line-bright);
+  stroke-width: 1;
+  stroke-dasharray: 3 2;
+}
+.rki-consulta {
+  fill: var(--lime);
+  font-size: 14px;
+}
+.rki-slider {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.rki-slider-top {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.rki-val {
+  color: var(--text);
+}
+.rki-meter {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.rki-previsao {
+  font-family: var(--sans);
+  color: var(--muted);
+}
+.rki-classe {
+  font-family: var(--mono);
+}
+.rki-classe.is-popular {
+  color: var(--cyan);
+}
+.rki-classe.is-alto {
+  color: var(--amber);
+}
+.rki-meter-hint {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
