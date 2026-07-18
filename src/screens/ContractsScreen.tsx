@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { GameState } from '../persistence/saveGame'
 import type { View } from '../nav'
 import type { Contract } from '../engine/contracts'
@@ -30,6 +31,24 @@ const SECTOR_LABEL: Record<Contract['setor'], string> = {
 }
 
 type CardState = 'done' | 'boss' | 'runas' | 'bloqueada'
+
+type TabId = 'disponiveis' | 'em-treino' | 'bloqueadas' | 'entregues'
+
+const TAB_ORDER: TabId[] = ['disponiveis', 'em-treino', 'bloqueadas', 'entregues']
+
+const TAB_META: Record<TabId, { label: string; glyph: string; colorClass: string }> = {
+  disponiveis: { label: 'Disponíveis', glyph: '⚔', colorClass: 'tab-lime' },
+  'em-treino': { label: 'Em treino', glyph: '▸', colorClass: 'tab-cyan' },
+  bloqueadas: { label: 'Bloqueadas', glyph: '🔒', colorClass: 'tab-dim' },
+  entregues: { label: 'Entregues', glyph: '✓', colorClass: 'tab-dim' },
+}
+
+const stateToTab: Record<CardState, TabId> = {
+  boss: 'disponiveis',
+  runas: 'em-treino',
+  bloqueada: 'bloqueadas',
+  done: 'entregues',
+}
 
 function BossCard({
   c,
@@ -115,11 +134,48 @@ export function ContractsScreen({
   const hoje = todayISO()
   const now = nowMs()
 
+  const bosses = CONTRACTS.map((c) => {
+    const skill = skillOfContract(c.id)
+    const st = skill ? skillStatus(game, skill) : 'boss'
+    const state: CardState = isDone(game, c.id)
+      ? 'done'
+      : st === 'boss'
+        ? 'boss'
+        : st === 'runas'
+          ? 'runas'
+          : 'bloqueada'
+    return { c, state }
+  })
+
+  const tabCounts: Record<TabId, number> = { disponiveis: 0, 'em-treino': 0, bloqueadas: 0, entregues: 0 }
+  for (const { state } of bosses) tabCounts[stateToTab[state]] += 1
+
+  const [tab, setTab] = useState<TabId>(
+    () => TAB_ORDER.find((t) => tabCounts[t] > 0) ?? 'disponiveis',
+  )
+  const visibleBosses = bosses.filter(({ state }) => stateToTab[state] === tab)
+
   return (
     <section className="screen">
       <div className="screen-head">
         <h2 className="screen-title">Mesa de Contratos</h2>
         <p className="muted">Traduza o problema do cliente em código. O holdout é secreto.</p>
+      </div>
+
+      <div className="contracts-tabbar" role="tablist">
+        {TAB_ORDER.map((t) => (
+          <button
+            key={t}
+            type="button"
+            role="tab"
+            aria-selected={tab === t}
+            className={`contracts-tab ${TAB_META[t].colorClass}${tab === t ? ' is-active' : ''}`}
+            onClick={() => setTab(t)}
+          >
+            <span aria-hidden>{TAB_META[t].glyph}</span> {TAB_META[t].label}{' '}
+            <span className="ct-n">{tabCounts[t]}</span>
+          </button>
+        ))}
       </div>
 
       <article className={`contract-card relampago-card${relampagoOn ? '' : ' is-locked'}`}>
@@ -142,28 +198,17 @@ export function ContractsScreen({
         )}
       </article>
 
-      {CONTRACTS.map((c) => {
-        const skill = skillOfContract(c.id)
-        const st = skill ? skillStatus(game, skill) : 'boss'
-        const state: CardState = isDone(game, c.id)
-          ? 'done'
-          : st === 'boss'
-            ? 'boss'
-            : st === 'runas'
-              ? 'runas'
-              : 'bloqueada'
-        return (
-          <BossCard
-            key={c.id}
-            c={c}
-            state={state}
-            cooldownMsLeft={bossCooldownMsLeft(game, c.id, now)}
-            hardwareBlocked={!hardwareOk(game, c)}
-            onAccept={() => open(c)}
-            onRunes={() => onNavigate('skills')}
-          />
-        )
-      })}
+      {visibleBosses.map(({ c, state }) => (
+        <BossCard
+          key={c.id}
+          c={c}
+          state={state}
+          cooldownMsLeft={bossCooldownMsLeft(game, c.id, now)}
+          hardwareBlocked={!hardwareOk(game, c)}
+          onAccept={() => open(c)}
+          onRunes={() => onNavigate('skills')}
+        />
+      ))}
 
       {(() => {
         const bairro = REPEATABLE.filter((c) => isAvailable(game, c))

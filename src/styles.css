@@ -670,6 +670,45 @@ button {
   border-color: rgba(88, 214, 255, 0.35);
 }
 
+/* Mesa de Contratos: abas por status (Disponíveis/Em treino/Bloqueadas/Entregues) */
+.contracts-tabbar {
+  display: flex;
+  gap: 6px;
+  margin: 10px 2px 4px;
+  flex-wrap: wrap;
+}
+.contracts-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--line-bright);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--dim);
+  background: var(--panel);
+}
+.contracts-tab .ct-n {
+  font-size: 0.65rem;
+  opacity: 0.8;
+}
+.contracts-tab.tab-lime.is-active {
+  color: var(--lime);
+  border-color: rgba(182, 241, 69, 0.55);
+  background: rgba(182, 241, 69, 0.08);
+  box-shadow: 0 0 14px -6px rgba(182, 241, 69, 0.6);
+}
+.contracts-tab.tab-cyan.is-active {
+  color: var(--cyan);
+  border-color: rgba(88, 214, 255, 0.5);
+  background: rgba(88, 214, 255, 0.07);
+}
+.contracts-tab.tab-dim.is-active {
+  color: var(--muted);
+  border-color: var(--line-bright);
+}
+
 /* conquistas (sheet de configurações) */
 .cfg-sec {
   margin-top: 16px;
