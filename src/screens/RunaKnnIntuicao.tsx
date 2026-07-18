@@ -30,7 +30,7 @@ function distancia(a: { x: number; y: number }, b: { x: number; y: number }) {
 }
 
 export function RunaKnnIntuicao({ onComplete }: { onComplete: () => void }) {
-  const [k, setK] = useState(3)
+  const [k, setK] = useState(1)
   const [solved, setSolved] = useState(false)
 
   const { vizinhos, previsao } = useMemo(() => {
