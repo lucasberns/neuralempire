@@ -1,0 +1,86 @@
+/* src/screens/RunaValidacaoIntuicao.css */
+.runa-validacao-intuicao {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.rvi-lead {
+  font-family: var(--sans);
+  color: var(--muted);
+  line-height: 1.5;
+}
+.rvi-em-treino {
+  color: var(--cyan);
+}
+.rvi-em-teste {
+  color: var(--amber);
+}
+.rvi-plot {
+  width: 100%;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+}
+.rvi-axis {
+  stroke: var(--line-bright);
+  stroke-width: 1;
+}
+.rvi-axis-label {
+  fill: var(--dim);
+  font-family: var(--mono);
+  font-size: 9px;
+}
+.rvi-linha-treino {
+  fill: none;
+  stroke: var(--cyan);
+  stroke-width: 2;
+}
+.rvi-linha-teste {
+  fill: none;
+  stroke: var(--amber);
+  stroke-width: 2;
+}
+.rvi-cursor {
+  stroke: var(--line-bright);
+  stroke-width: 2;
+  stroke-dasharray: 3 2;
+}
+.rvi-cursor.is-good {
+  stroke: var(--lime);
+}
+.rvi-slider {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.rvi-slider-top {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.rvi-val {
+  color: var(--text);
+}
+.rvi-meter {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.rvi-erros {
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.rvi-diagnostico {
+  font-size: 0.85rem;
+  font-family: var(--sans);
+}
+.rvi-diagnostico.is-subajuste,
+.rvi-diagnostico.is-sobreajuste {
+  color: var(--amber);
+}
+.rvi-diagnostico.is-bom {
+  color: var(--lime);
+}
