@@ -39,6 +39,14 @@ export interface Contract {
   repeatable?: boolean
   /** Nível mínimo de hardware (índice em HARDWARE) para aceitar — dá função ao upgrade (Fase 2). */
   minHardware?: number
+  /** Contrato disputado (GDD §7.2, Cap. 3+): concorrente NPC com esta métrica; melhor leva o
+   *  cliente (afeta só pagamento/reputação, nunca o desbloqueio da skill). `scoreKey` aponta pra
+   *  uma chave numérica crua em `_ne_result` (convenção: chaves com `_` na frente não aparecem
+   *  pro jogador — ver `TestResults.tsx`). */
+  disputado?: { npcScore: number; scoreKey: string; npcLabel: string }
+  /** Contrato de crise (GDD §7.2): o modelo de um contrato antigo começou a errar (drift) — só
+   *  pra UI (badge "🔥 Crise" no card e na bancada), nenhuma lógica de jogo nova. */
+  crise?: { originalContractId: string }
 }
 
 export interface InterrogationQuestion {

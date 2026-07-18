@@ -43,12 +43,14 @@ export function TestResults({ outcome }: { outcome: RunOutcome }) {
             <div className="metrics">
               <h4>📊 Resultado da entrega</h4>
               <dl>
-                {Object.entries(outcome.metrics).map(([k, v]) => (
-                  <div key={k}>
-                    <dt>{k}</dt>
-                    <dd>{Array.isArray(v) ? v.join(', ') : String(v)}</dd>
-                  </div>
-                ))}
+                {Object.entries(outcome.metrics)
+                  .filter(([k]) => !k.startsWith('_'))
+                  .map(([k, v]) => (
+                    <div key={k}>
+                      <dt>{k}</dt>
+                      <dd>{Array.isArray(v) ? v.join(', ') : String(v)}</dd>
+                    </div>
+                  ))}
               </dl>
             </div>
           )}
