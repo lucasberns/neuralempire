@@ -61,7 +61,7 @@ export function SkillTreeScreen({
       <div className="screen-head">
         <h2 className="screen-title">Árvore de Skills</h2>
         <p className="muted">
-          Tier 1 · Fundamentos — {dominadas}/{SKILLS.length} dominadas. Toque um nó pra ver os detalhes.
+          {dominadas}/{SKILLS.length} skills dominadas. Toque um nó pra ver os detalhes.
         </p>
       </div>
 
