@@ -84,7 +84,16 @@ export function WorkbenchScreen({
 
   function finalize(interrogationScore: number) {
     const { next, earned, rent } = completeContract(game, contract, interrogationScore)
-    onGameChange(next)
+    // Contratos repetíveis (bairro): reseta o código ao entregar, senão o jogador só
+    // reabre o mesmo contrato amanhã e re-roda a solução já pronta sem reescrever nada.
+    let finalState = next
+    if (contract.repeatable) {
+      const codeByContract = { ...next.codeByContract }
+      delete codeByContract[contract.id]
+      finalState = { ...next, codeByContract }
+      setEditorNonce((n) => n + 1)
+    }
+    onGameChange(finalState)
     setReward({ earned, rep: contract.reputacao, rent })
     setInterrogating(false)
   }
