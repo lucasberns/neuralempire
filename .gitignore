@@ -12,5 +12,6 @@ PROGRESS.md
 neural-empire-gdd.md
 .claude/
 docs/
+.superpowers/
 scripts/gen-icons.mjs
 icon-source.png
