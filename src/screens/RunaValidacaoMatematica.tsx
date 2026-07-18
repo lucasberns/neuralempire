@@ -25,7 +25,7 @@ const PASSOS: readonly Passo[] = [
   {
     titulo: 'Treino baixo mas fatia alto = o modelo decorou',
     dica: 'sobreajuste — foi bem no que já viu, mal no que é novo',
-    porque: 'É o sinal claro de que o modelo memorizou em vez de generalizar.',
+    porque: 'Diferente do caso anterior (que ia mal nos dois), aqui ele foi bem no treino — só isso já muda o diagnóstico.',
   },
 ]
 
