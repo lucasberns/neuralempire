@@ -189,6 +189,7 @@ export function completeContract(
   g: GameState,
   c: Contract,
   interrogationScore = 1,
+  payoutMultiplier = 1,
 ): { next: GameState; earned: number; rent: number } {
   const isRelampago = c.id === RELAMPAGO.id
   const isBoss = !c.repeatable && !isRelampago // boss = prova única (avança o "mês" e cobra aluguel)
@@ -204,8 +205,10 @@ export function completeContract(
         ? { count: g.streak.count + 1, lastDayISO: streakDay }
         : { count: 1, lastDayISO: streakDay }
 
-  // pagamento penaliza erros no interrogatório (mín. 50%), arredondado
-  let earned = Math.round(c.payout * (0.5 + 0.5 * interrogationScore))
+  // pagamento penaliza erros no interrogatório (mín. 50%), arredondado; contratos disputados
+  // (GDD §7.2) multiplicam por cima (vitória ×1.2, derrota ×0.6 — nunca some, o trabalho foi
+  // entregue e aprovado, só perdeu o cliente pro concorrente).
+  let earned = Math.round(c.payout * (0.5 + 0.5 * interrogationScore) * payoutMultiplier)
   // Ferrugem (GDD §5.3): contrato do bairro de uma skill enferrujada paga menos.
   const rusty = c.repeatable && isRusted(g, c.skillId, streakDay)
   if (rusty) earned = Math.round(earned * 0.6)
