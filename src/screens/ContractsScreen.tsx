@@ -5,12 +5,15 @@ import type { Contract } from '../engine/contracts'
 import {
   CONTRACTS,
   HARDWARE,
+  INTERN_COST,
   RELAMPAGO,
   REPEATABLE,
   bairroAvailable,
   bossCooldownMsLeft,
   fmtCooldown,
   hardwareOk,
+  hireIntern,
+  internHireable,
   isAvailable,
   isDone,
   nowMs,
@@ -221,6 +224,7 @@ export function ContractsScreen({
             </div>
             {bairro.map((c) => {
               const on = bairroAvailable(game, c, hoje)
+              const automated = game.interns.includes(c.skillId)
               return (
                 <article key={c.id} className={`contract-card repeatable ${on ? 'is-available' : 'is-locked'}`}>
                   <header className="cc-head">
@@ -231,12 +235,36 @@ export function ContractsScreen({
                     </div>
                   </header>
                   <p className="cc-brief">{c.briefing}</p>
-                  {on ? (
-                    <button className="btn btn-primary" onClick={() => open(c)}>
-                      Pegar serviço (+{money(c.payout)}) →
-                    </button>
+                  {automated ? (
+                    <p className="cc-lock ok">
+                      🧑‍💻 Automatizado pelo estagiário — some 1x/dia sem precisar abrir a bancada.
+                    </p>
                   ) : (
-                    <p className="cc-lock ok">✓ Já feito hoje. Volte amanhã.</p>
+                    <>
+                      {on ? (
+                        <button className="btn btn-primary" onClick={() => open(c)}>
+                          Pegar serviço (+{money(c.payout)}) →
+                        </button>
+                      ) : (
+                        <p className="cc-lock ok">✓ Já feito hoje. Volte amanhã.</p>
+                      )}
+                      {internHireable(game, c.skillId) &&
+                        (game.money >= INTERN_COST ? (
+                          <button
+                            className="btn btn-ghost sm"
+                            onClick={() => {
+                              const g = hireIntern(game, c.skillId)
+                              if (g) onGameChange(g)
+                            }}
+                          >
+                            🧑‍💻 Contratar estagiário ({money(INTERN_COST)})
+                          </button>
+                        ) : (
+                          <button className="btn btn-ghost sm" disabled>
+                            🧑‍💻 Estagiário: falta {money(INTERN_COST - game.money)}
+                          </button>
+                        ))}
+                    </>
                   )}
                 </article>
               )
