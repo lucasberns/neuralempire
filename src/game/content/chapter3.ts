@@ -206,6 +206,131 @@ def classificar_devolucao(dados_treino, dados_novos):
       },
     ],
   },
+  {
+    id: 'diagnostico-risco-raro',
+    emoji: '🩺',
+    titulo: 'Clínica Vida Plena',
+    setor: 'saude',
+    skillId: 'metricas-avancadas',
+    briefing:
+      'A clínica quer sinalizar pacientes em risco de uma complicação rara (só ~13% dos casos). ' +
+      'Um modelo que "acerta 87% das vezes" prevendo sempre que ninguém está em risco pareceria ' +
+      'ótimo e seria inútil. Meça o desempenho de verdade: precisão, recall e F1 — não só acurácia.',
+    metaLabel: 'Recall ≥ 40% E precisão ≥ 40% no teste',
+    payout: 540,
+    reputacao: 17,
+    prereqContractIds: ['devolucoes-suspeitas'],
+    datasetUrl: DATASET('diagnostico.csv'),
+    starterCode: `from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import precision_score, recall_score, f1_score
+
+def avaliar_diagnostico(dados_treino, dados_teste):
+    # dados_treino / dados_teste: mesmas colunas (idade, glicose, risco)
+    #
+    # 1. Treine um LogisticRegression() usando SÓ dados_treino
+    # 2. Preveja em dados_teste
+    # 3. Calcule precisao, recall e f1 comparando a previsão com dados_teste["risco"]
+    # 4. Devolva os três números: (precisao, recall, f1)
+    ...
+`,
+    setupCode: SETUP_DIAGNOSTICO,
+    tests: [
+      {
+        name: 'avaliar_diagnostico(...) devolve três valores',
+        hidden: false,
+        code: `_res = avaliar_diagnostico(dados_treino, dados_teste)
+assert len(_res) == 3, "Esperava (precisao, recall, f1)"
+`,
+      },
+      {
+        name: 'Os três valores são proporções válidas (entre 0 e 1)',
+        hidden: false,
+        code: `_p, _r, _f = avaliar_diagnostico(dados_treino, dados_teste)
+assert all(0.0 <= float(v) <= 1.0 for v in (_p, _r, _f)), "Precisão/recall/F1 devem estar entre 0 e 1"
+`,
+      },
+      {
+        name: 'Teste oculto: recall real (não "prever sempre não")',
+        hidden: true,
+        code: `_p, _r, _f = avaliar_diagnostico(dados_treino, dados_teste)
+assert float(_r) >= 0.4, f"recall = {_r} — parece que o modelo nunca sinaliza risco"
+`,
+      },
+      {
+        name: 'Teste oculto: precisão real (não "prever sempre sim")',
+        hidden: true,
+        code: `_p, _r, _f = avaliar_diagnostico(dados_treino, dados_teste)
+assert float(_p) >= 0.4, f"precisão = {_p} — parece que o modelo sinaliza risco demais"
+`,
+      },
+      {
+        name: 'Teste oculto: F1 bate com a fórmula de precisão/recall',
+        hidden: true,
+        code: `_p, _r, _f = avaliar_diagnostico(dados_treino, dados_teste)
+_p, _r = float(_p), float(_r)
+_esperado = 0.0 if (_p + _r) == 0 else 2 * _p * _r / (_p + _r)
+assert abs(float(_f) - _esperado) < 1e-6, f"F1 não bate com 2*P*R/(P+R): {_f} vs {_esperado}"
+`,
+      },
+    ],
+    metricsCode: `_p, _r, _f = avaliar_diagnostico(dados_treino, dados_teste)
+_ne_result = {
+    "Precisão": f"{round(float(_p) * 100)}%",
+    "Recall": f"{round(float(_r) * 100)}%",
+    "F1": round(float(_f), 2),
+}
+`,
+    hints: [
+      'colunas = ["idade", "glicose"]; alvo = "risco".',
+      'modelo = LogisticRegression(); modelo.fit(dados_treino[colunas], dados_treino["risco"]).',
+      'pred = modelo.predict(dados_teste[colunas]); depois use precision_score/recall_score/f1_score(dados_teste["risco"], pred).',
+    ],
+    solution: `from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import precision_score, recall_score, f1_score
+
+def avaliar_diagnostico(dados_treino, dados_teste):
+    colunas = ["idade", "glicose"]
+    modelo = LogisticRegression()
+    modelo.fit(dados_treino[colunas], dados_treino["risco"])
+    pred = modelo.predict(dados_teste[colunas])
+    real = dados_teste["risco"]
+    precisao = precision_score(real, pred, zero_division=0)
+    recall = recall_score(real, pred, zero_division=0)
+    f1 = f1_score(real, pred, zero_division=0)
+    return precisao, recall, f1
+`,
+    interrogation: [
+      {
+        q: 'Por que "acurácia de 87%" pode ser enganoso nesse caso?',
+        options: [
+          'Só 13% dos pacientes têm risco real — um modelo que nunca sinaliza nada já acerta 87% ' +
+            'sem servir pra nada',
+          'Acurácia é sempre a métrica certa, não importa o contexto',
+          '87% é baixo demais pra qualquer aplicação',
+        ],
+        correct: 0,
+      },
+      {
+        q: 'O que recall baixo significaria aqui, na prática?',
+        options: [
+          'O modelo está deixando passar pacientes que realmente estão em risco (falsos negativos)',
+          'O modelo está sinalizando risco demais, gerando alarme falso',
+          'Recall não tem relação com pacientes de risco',
+        ],
+        correct: 0,
+      },
+      {
+        q: 'Por que reportar precisão E recall, em vez de só um dos dois?',
+        options: [
+          'Cada um sozinho esconde um jeito de "trapacear" (só recall: sinalizar todo mundo; só ' +
+            'precisão: quase nunca sinalizar) — juntos, a história fica completa',
+          'Precisão e recall são sempre iguais na prática',
+          'Reportar os dois é só uma formalidade sem efeito prático',
+        ],
+        correct: 0,
+      },
+    ],
+  },
 ]
 
 // ---------------------------------------------------------------- Runa do Código (katas)
@@ -251,6 +376,51 @@ def prever(dados_treino, dados_novos):
 `,
     interrogation: [],
   },
+  {
+    id: 'kata-metricas-avancadas',
+    emoji: '🔓',
+    titulo: 'Kata · Métricas Avançadas',
+    setor: 'saude',
+    skillId: 'metricas-avancadas',
+    briefing: 'Aquecimento antes da Prova: calcule precisão, recall e F1 de um modelo já treinado. Aqui não cobramos a meta — só calcular certo.',
+    metaLabel: 'Devolver (precisao, recall, f1)',
+    payout: 0,
+    reputacao: 0,
+    prereqContractIds: [],
+    datasetUrl: DATASET('diagnostico.csv'),
+    starterCode: `from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import precision_score, recall_score, f1_score
+
+def avaliar(dados_treino, dados_teste):
+    # 1. modelo = LogisticRegression().fit(X, y) com X/y de dados_treino
+    # 2. pred = modelo.predict(X_teste)
+    # 3. devolva (precision_score(...), recall_score(...), f1_score(...))
+    ...
+`,
+    setupCode: SETUP_DIAGNOSTICO,
+    tests: [
+      { name: 'Devolve 3 valores entre 0 e 1', hidden: false, code: `_p, _r, _f = avaliar(dados_treino, dados_teste)\nassert all(0.0 <= float(v) <= 1.0 for v in (_p, _r, _f))\n` },
+      { name: 'F1 bate com a fórmula', hidden: true, code: `_p, _r, _f = avaliar(dados_treino, dados_teste)\n_p, _r = float(_p), float(_r)\n_esp = 0.0 if (_p+_r)==0 else 2*_p*_r/(_p+_r)\nassert abs(float(_f) - _esp) < 1e-6\n` },
+    ],
+    metricsCode: `_p, _r, _f = avaliar(dados_treino, dados_teste)\n_ne_result = {"Precisão": f"{round(float(_p)*100)}%", "Recall": f"{round(float(_r)*100)}%"}\n`,
+    hints: [
+      'colunas = ["idade", "glicose"]; alvo = "risco".',
+      'modelo = LogisticRegression(); modelo.fit(dados_treino[colunas], dados_treino["risco"]).',
+      'from sklearn.metrics import precision_score, recall_score, f1_score — chame os três com (real, previsto).',
+    ],
+    solution: `from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import precision_score, recall_score, f1_score
+
+def avaliar(dados_treino, dados_teste):
+    colunas = ["idade", "glicose"]
+    modelo = LogisticRegression()
+    modelo.fit(dados_treino[colunas], dados_treino["risco"])
+    pred = modelo.predict(dados_teste[colunas])
+    real = dados_teste["risco"]
+    return precision_score(real, pred, zero_division=0), recall_score(real, pred, zero_division=0), f1_score(real, pred, zero_division=0)
+`,
+    interrogation: [],
+  },
 ]
 
 // ---------------------------------------------------------------- Aulas de código (ensino)
@@ -277,6 +447,37 @@ export const LESSONS_CH3: Record<string, Lesson> = {
       { code: '    modelo = DecisionTreeClassifier(max_depth=3)', explica: 'Cria o modelo com profundidade limitada.' },
       { code: '    modelo.fit(X, y)', explica: 'Treina com X e y.' },
       { code: '    return modelo.predict(dados_novos[colunas])', explica: 'Prevê fraude nos pedidos novos.' },
+    ],
+  },
+  'kata-metricas-avancadas': {
+    intro: 'Acurácia sozinha mente quando uma classe é rara. Precisão e recall contam a história completa.',
+    passos: [
+      { code: 'from sklearn.linear_model import LogisticRegression', explica: 'Modelo de classificação.' },
+      { code: 'from sklearn.metrics import precision_score, recall_score, f1_score', explica: 'As 3 métricas que vamos calcular.' },
+      { code: 'def avaliar(dados_treino, dados_teste):', explica: 'Recebe treino e teste.' },
+      { code: '    colunas = ["idade", "glicose"]', explica: 'Entradas do modelo.' },
+      { code: '    modelo = LogisticRegression()', explica: 'Cria o modelo.' },
+      { code: '    modelo.fit(dados_treino[colunas], dados_treino["risco"])', explica: 'Treina só com dados_treino.' },
+      { code: '    pred = modelo.predict(dados_teste[colunas])', explica: 'Prevê no teste.' },
+      { code: '    real = dados_teste["risco"]', explica: 'O gabarito real do teste.' },
+      { code: '    return precision_score(real, pred, zero_division=0), recall_score(real, pred, zero_division=0), f1_score(real, pred, zero_division=0)', explica: 'Calcula e devolve as 3 métricas.' },
+    ],
+  },
+  'diagnostico-risco-raro': {
+    intro: 'Mesmo ritual da runa, agora valendo: treinar, prever, e medir com as 3 métricas certas.',
+    passos: [
+      { code: 'from sklearn.linear_model import LogisticRegression', explica: 'Importa o modelo.' },
+      { code: 'from sklearn.metrics import precision_score, recall_score, f1_score', explica: 'Importa as métricas.' },
+      { code: 'def avaliar_diagnostico(dados_treino, dados_teste):', explica: 'Recebe treino e teste.' },
+      { code: '    colunas = ["idade", "glicose"]', explica: 'Entradas do modelo.' },
+      { code: '    modelo = LogisticRegression()', explica: 'Cria o modelo.' },
+      { code: '    modelo.fit(dados_treino[colunas], dados_treino["risco"])', explica: 'Treina só no treino.' },
+      { code: '    pred = modelo.predict(dados_teste[colunas])', explica: 'Prevê no teste.' },
+      { code: '    real = dados_teste["risco"]', explica: 'Gabarito real.' },
+      { code: '    precisao = precision_score(real, pred, zero_division=0)', explica: 'Dos que você marcou como risco, quantos eram mesmo.' },
+      { code: '    recall = recall_score(real, pred, zero_division=0)', explica: 'Dos que eram risco de verdade, quantos você pegou.' },
+      { code: '    f1 = f1_score(real, pred, zero_division=0)', explica: 'Combina os dois numa nota só.' },
+      { code: '    return precisao, recall, f1', explica: 'Devolve os três.' },
     ],
   },
 }
