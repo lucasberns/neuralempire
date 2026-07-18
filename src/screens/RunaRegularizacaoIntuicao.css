@@ -1,0 +1,83 @@
+/* src/screens/RunaRegularizacaoIntuicao.css */
+.runa-regularizacao-intuicao {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.rri-lead {
+  font-family: var(--sans);
+  color: var(--muted);
+  line-height: 1.5;
+}
+.rri-barras {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+}
+.rri-linha {
+  display: grid;
+  grid-template-columns: 108px 1fr 52px;
+  align-items: center;
+  gap: 8px;
+}
+.rri-label {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+.rri-trilha {
+  height: 12px;
+  background: var(--panel);
+  border: 1px solid var(--line-bright);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.rri-barra {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.15s ease;
+}
+.rri-barra.is-relevante {
+  background: linear-gradient(90deg, var(--cyan), var(--lime));
+}
+.rri-barra.is-ruido {
+  background: var(--dim);
+}
+.rri-barra.is-zerado {
+  width: 0 !important;
+}
+.rri-pct {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+  text-align: right;
+}
+.rri-slider {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.rri-slider-top {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.rri-val {
+  color: var(--text);
+}
+.rri-meter {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.rri-meter-hint {
+  color: var(--muted);
+  font-size: 0.8rem;
+  margin: 0;
+}
