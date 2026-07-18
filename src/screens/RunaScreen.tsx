@@ -8,6 +8,14 @@ import { RunaLimparIntuicao } from './RunaLimparIntuicao'
 import { RunaLimparMatematica } from './RunaLimparMatematica'
 import { RunaRegressaoIntuicao } from './RunaRegressaoIntuicao'
 import { RunaRegressaoMatematica } from './RunaRegressaoMatematica'
+import { RunaRegressaoLogisticaIntuicao } from './RunaRegressaoLogisticaIntuicao'
+import { RunaRegressaoLogisticaMatematica } from './RunaRegressaoLogisticaMatematica'
+import { RunaKnnIntuicao } from './RunaKnnIntuicao'
+import { RunaKnnMatematica } from './RunaKnnMatematica'
+import { RunaValidacaoIntuicao } from './RunaValidacaoIntuicao'
+import { RunaValidacaoMatematica } from './RunaValidacaoMatematica'
+import { RunaFeatureEngineeringIntuicao } from './RunaFeatureEngineeringIntuicao'
+import { RunaFeatureEngineeringMatematica } from './RunaFeatureEngineeringMatematica'
 
 const TITLE: Record<RuneKind, { emoji: string; nome: string; sub: string }> = {
   intuicao: { emoji: '◆', nome: 'Runa da Intuição', sub: 'Sinta o que o algoritmo faz — sem fórmula.' },
@@ -21,6 +29,10 @@ const RUNAS: Record<string, Partial<Record<RuneKind, RunaComponent>>> = {
   explorar: { intuicao: RunaExplorarIntuicao, matematica: RunaExplorarMatematica },
   limpar: { intuicao: RunaLimparIntuicao, matematica: RunaLimparMatematica },
   regressao: { intuicao: RunaRegressaoIntuicao, matematica: RunaRegressaoMatematica },
+  'regressao-logistica': { intuicao: RunaRegressaoLogisticaIntuicao, matematica: RunaRegressaoLogisticaMatematica },
+  knn: { intuicao: RunaKnnIntuicao, matematica: RunaKnnMatematica },
+  validacao: { intuicao: RunaValidacaoIntuicao, matematica: RunaValidacaoMatematica },
+  'feature-engineering': { intuicao: RunaFeatureEngineeringIntuicao, matematica: RunaFeatureEngineeringMatematica },
 }
 
 export function RunaScreen({
