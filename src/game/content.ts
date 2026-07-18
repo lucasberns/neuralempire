@@ -73,6 +73,14 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: 'rack', nome: 'Sala-cofre', desc: 'Monte o rack de GPUs.', test: (g) => g.hardwareLevel >= 2 },
   { id: 'ritmo', nome: 'No embalo', desc: 'Chegue a um streak de 3.', test: (g) => g.streak.count >= 3 },
   { id: 'faxineiro', nome: 'Dados limpos', desc: 'Domine Limpar Dados.', test: (g) => g.contracts.doneIds.includes('faxina-cadastro') },
+  { id: 'tier2-completo', nome: 'Classificação dominada', desc: 'Domine as 4 skills do Tier 2.', test: (g) => SKILLS_CH2.every((s) => isDone(g, s.contractId)) },
+  { id: 'tier3-completo', nome: 'Andar de cima', desc: 'Domine as 4 skills do Tier 3.', test: (g) => SKILLS_CH3.every((s) => isDone(g, s.contractId)) },
+  { id: 'primeiro-overfitting', nome: 'Primeiro overfitting', desc: 'Domine Validação e nomeie o que você já sentiu.', test: (g) => isDone(g, 'diagnostico-inadimplencia') },
+  { id: 'estagiario-contratado', nome: 'Chefe', desc: 'Contrate seu primeiro estagiário.', test: (g) => g.interns.length >= 1 },
+  { id: 'sobreviveu-agiota', nome: 'Sobreviveu ao agiota', desc: 'Supere uma falência (New Game+).', test: (g) => g.ngPlus >= 1 },
+  { id: 'streak-7', nome: 'Uma semana de estudo', desc: 'Chegue a um streak de 7 dias.', test: (g) => g.streak.count >= 7 },
+  { id: 'streak-30', nome: 'Um mês de estudo', desc: 'Chegue a um streak de 30 dias.', test: (g) => g.streak.count >= 30 },
+  { id: 'streak-100', nome: 'Cem dias', desc: 'Chegue a um streak de 100 dias.', test: (g) => g.streak.count >= 100 },
 ]
 
 /** Conquistas satisfeitas pelo estado mas ainda não registradas. */
