@@ -16,6 +16,14 @@ import { RunaValidacaoIntuicao } from './RunaValidacaoIntuicao'
 import { RunaValidacaoMatematica } from './RunaValidacaoMatematica'
 import { RunaFeatureEngineeringIntuicao } from './RunaFeatureEngineeringIntuicao'
 import { RunaFeatureEngineeringMatematica } from './RunaFeatureEngineeringMatematica'
+import { RunaArvoresDecisaoIntuicao } from './RunaArvoresDecisaoIntuicao'
+import { RunaArvoresDecisaoMatematica } from './RunaArvoresDecisaoMatematica'
+import { RunaMetricasAvancadasIntuicao } from './RunaMetricasAvancadasIntuicao'
+import { RunaMetricasAvancadasMatematica } from './RunaMetricasAvancadasMatematica'
+import { RunaSvmIntuicao } from './RunaSvmIntuicao'
+import { RunaSvmMatematica } from './RunaSvmMatematica'
+import { RunaRegularizacaoIntuicao } from './RunaRegularizacaoIntuicao'
+import { RunaRegularizacaoMatematica } from './RunaRegularizacaoMatematica'
 
 const TITLE: Record<RuneKind, { emoji: string; nome: string; sub: string }> = {
   intuicao: { emoji: '◆', nome: 'Runa da Intuição', sub: 'Sinta o que o algoritmo faz — sem fórmula.' },
@@ -33,6 +41,10 @@ const RUNAS: Record<string, Partial<Record<RuneKind, RunaComponent>>> = {
   knn: { intuicao: RunaKnnIntuicao, matematica: RunaKnnMatematica },
   validacao: { intuicao: RunaValidacaoIntuicao, matematica: RunaValidacaoMatematica },
   'feature-engineering': { intuicao: RunaFeatureEngineeringIntuicao, matematica: RunaFeatureEngineeringMatematica },
+  'arvores-decisao': { intuicao: RunaArvoresDecisaoIntuicao, matematica: RunaArvoresDecisaoMatematica },
+  'metricas-avancadas': { intuicao: RunaMetricasAvancadasIntuicao, matematica: RunaMetricasAvancadasMatematica },
+  svm: { intuicao: RunaSvmIntuicao, matematica: RunaSvmMatematica },
+  regularizacao: { intuicao: RunaRegularizacaoIntuicao, matematica: RunaRegularizacaoMatematica },
 }
 
 export function RunaScreen({
