@@ -312,6 +312,227 @@ def classificar_imovel(dados_treino, dados_novos):
       },
     ],
   },
+  {
+    id: 'diagnostico-inadimplencia',
+    emoji: '🔍',
+    titulo: 'Fintech CréditoJá',
+    setor: 'financas',
+    skillId: 'validacao',
+    briefing:
+      'A CréditoJá tem um modelo de risco de crédito que "funcionava perfeitamente" nos testes ' +
+      'internos, mas está errando feio com clientes reais. Antes de confiarem nele de novo, o ' +
+      'cliente quer um diagnóstico: meça o desempenho do modelo tanto nos dados de treino quanto ' +
+      'em dados que ele nunca viu, e mostre a diferença.',
+    metaLabel: 'Medir corretamente a acurácia de treino e de teste (sem vazar dados)',
+    payout: 500,
+    reputacao: 15,
+    prereqContractIds: ['previsao-cancelamento', 'classificacao-imoveis'],
+    datasetUrl: DATASET('financas.csv'),
+    starterCode: `from sklearn.tree import DecisionTreeClassifier
+
+def avaliar_modelo(dados_treino, dados_teste):
+    # dados_treino / dados_teste: mesmas colunas (renda, divida, score_credito, inadimplente)
+    #
+    # 1. Treine um DecisionTreeClassifier() usando SÓ dados_treino
+    # 2. Calcule a acurácia do modelo em dados_treino (modelo.score(...))
+    # 3. Calcule a acurácia do modelo em dados_teste (modelo.score(...))
+    # 4. Devolva os dois números: (acuracia_treino, acuracia_teste)
+    ...
+`,
+    setupCode: SETUP_VALIDACAO,
+    tests: [
+      {
+        name: 'avaliar_modelo(...) devolve dois valores',
+        hidden: false,
+        code: `_res = avaliar_modelo(dados_treino, dados_teste)
+assert len(_res) == 2, "Esperava (acuracia_treino, acuracia_teste)"
+`,
+      },
+      {
+        name: 'Os dois valores são proporções válidas (entre 0 e 1)',
+        hidden: false,
+        code: `_a, _b = avaliar_modelo(dados_treino, dados_teste)
+assert 0.0 <= float(_a) <= 1.0 and 0.0 <= float(_b) <= 1.0, "Acurácia deve estar entre 0 e 1"
+`,
+      },
+      {
+        name: 'Teste oculto: a acurácia de treino bate certo (o modelo decorou)',
+        hidden: true,
+        code: `_a, _b = avaliar_modelo(dados_treino, dados_teste)
+assert float(_a) >= 0.9, f"acurácia de treino = {_a} — parece que não treinou em dados_treino"
+`,
+      },
+      {
+        name: 'Teste oculto: o gap treino-teste mostra o overfitting real',
+        hidden: true,
+        code: `_a, _b = avaliar_modelo(dados_treino, dados_teste)
+_gap = float(_a) - float(_b)
+assert _gap >= 0.15, f"gap = {_gap} — parece que dados_teste não foi avaliado de verdade (ou houve vazamento)"
+`,
+      },
+    ],
+    metricsCode: `_a, _b = avaliar_modelo(dados_treino, dados_teste)
+_ne_result = {
+    "Acurácia no treino": f"{round(float(_a) * 100)}%",
+    "Acurácia no teste": f"{round(float(_b) * 100)}%",
+    "Diagnóstico": "Overfitting" if float(_a) - float(_b) >= 0.15 else "Generalização razoável",
+}
+`,
+    hints: [
+      'colunas = ["renda", "divida", "score_credito"]; alvo = "inadimplente".',
+      'modelo = DecisionTreeClassifier(); modelo.fit(dados_treino[colunas], dados_treino["inadimplente"]).',
+      'modelo.score(X, y) já devolve a acurácia direto — chame uma vez com dados_treino e outra com dados_teste.',
+    ],
+    solution: `from sklearn.tree import DecisionTreeClassifier
+
+def avaliar_modelo(dados_treino, dados_teste):
+    colunas = ["renda", "divida", "score_credito"]
+    modelo = DecisionTreeClassifier(random_state=0)
+    modelo.fit(dados_treino[colunas], dados_treino["inadimplente"])
+    acc_treino = modelo.score(dados_treino[colunas], dados_treino["inadimplente"])
+    acc_teste = modelo.score(dados_teste[colunas], dados_teste["inadimplente"])
+    return acc_treino, acc_teste
+`,
+    interrogation: [
+      {
+        q: 'Por que a acurácia no treino sozinha não prova que o modelo é bom?',
+        options: [
+          'O modelo pode ter só decorado os exemplos de treino, sem aprender o padrão de verdade',
+          'Acurácia de treino é sempre a métrica mais confiável',
+          'Não existe diferença entre acurácia de treino e de teste',
+        ],
+        correct: 0,
+      },
+      {
+        q: 'O que overfitting significa na prática?',
+        options: [
+          'O modelo vai bem nos dados que já viu, mas vai mal em dados novos',
+          'O modelo é rápido demais',
+          'O modelo usa poucas colunas',
+        ],
+        correct: 0,
+      },
+      {
+        q: 'Por que medir em dados_teste (que o modelo nunca viu no fit) e não só em dados_treino de novo?',
+        options: [
+          'Porque só assim descobrimos se o modelo generaliza pra clientes reais, não só pros que ele decorou',
+          'Porque dados_teste é sempre mais fácil',
+          'Não faz diferença nenhuma',
+        ],
+        correct: 0,
+      },
+    ],
+  },
+  {
+    id: 'preparo-features-academia',
+    emoji: '🏋️',
+    titulo: 'Rede de Academias FitBairro',
+    setor: 'saude',
+    skillId: 'feature-engineering',
+    briefing:
+      'A FitBairro tem uma planilha de alunos bagunçada pra qualquer modelo: a cidade vem como ' +
+      'texto e a idade e o faturamento estão em escalas bem diferentes. Prepare a tabela — sem ' +
+      'isso, nenhum modelo vai rodar direito nela.',
+    metaLabel: 'Cidade codificada em colunas + idade/faturamento em escalas comparáveis',
+    payout: 460,
+    reputacao: 14,
+    prereqContractIds: ['diagnostico-inadimplencia'],
+    datasetUrl: DATASET('academias.csv'),
+    starterCode: `import pandas as pd
+from sklearn.preprocessing import StandardScaler
+
+def preparar_features(dados):
+    # dados: tabela com cidade (texto), idade e faturamento (escalas bem diferentes)
+    #
+    # 1. Transforme a coluna 'cidade' em colunas 0/1, uma por cidade (pd.get_dummies)
+    # 2. Reescale 'idade' e 'faturamento' pra ficarem em escalas comparáveis (StandardScaler)
+    # 3. Devolva a tabela transformada
+    ...
+`,
+    setupCode: SETUP_LER_ACADEMIA,
+    tests: [
+      {
+        name: 'preparar_features(...) devolve um resultado',
+        hidden: false,
+        code: `_res = preparar_features(dados)
+assert _res is not None, "A função retornou None — faltou o return?"
+`,
+      },
+      {
+        name: "A coluna 'cidade' não aparece mais como texto",
+        hidden: false,
+        code: `_res = preparar_features(dados)
+assert "cidade" not in _res.columns, "cidade deveria ter virado colunas 0/1, uma por cidade"
+`,
+      },
+      {
+        name: 'Teste oculto: uma coluna nova pra cada cidade',
+        hidden: true,
+        code: `_res = preparar_features(dados)
+_esperado = len(dados.columns) - 1 + dados["cidade"].nunique()
+assert len(_res.columns) == _esperado, f"esperava {_esperado} colunas, veio {len(_res.columns)}"
+`,
+      },
+      {
+        name: 'Teste oculto: idade e faturamento ficam em escalas comparáveis',
+        hidden: true,
+        code: `_res = preparar_features(dados)
+_dif = abs(float(_res["idade"].std()) - float(_res["faturamento"].std()))
+assert _dif < 0.2, f"diferença de escala = {_dif} — as duas colunas deveriam ter espalhamento parecido"
+`,
+      },
+    ],
+    metricsCode: `_res = preparar_features(dados)
+_ne_result = {
+    "Colunas antes": int(len(dados.columns)),
+    "Colunas depois": int(len(_res.columns)),
+    "Cidades codificadas": int(dados["cidade"].nunique()),
+}
+`,
+    hints: [
+      "pd.get_dummies(dados, columns=['cidade']) transforma a coluna de texto em colunas 0/1.",
+      'StandardScaler().fit_transform(tabela[["idade", "faturamento"]]) reescala as duas colunas juntas.',
+      'Você pode fazer o encoding primeiro, guardar numa variável, e então sobrescrever as colunas idade/faturamento dela com o resultado do scaler.',
+    ],
+    solution: `import pandas as pd
+from sklearn.preprocessing import StandardScaler
+
+def preparar_features(dados):
+    codificado = pd.get_dummies(dados, columns=["cidade"])
+    escalador = StandardScaler()
+    codificado[["idade", "faturamento"]] = escalador.fit_transform(codificado[["idade", "faturamento"]])
+    return codificado
+`,
+    interrogation: [
+      {
+        q: 'Por que transformar "cidade" (texto) em colunas 0/1 em vez de deixar como está?',
+        options: [
+          'A maioria dos modelos só entende números, não texto',
+          'É só estética, não muda nada pro modelo',
+          'Porque texto ocupa mais espaço em disco',
+        ],
+        correct: 0,
+      },
+      {
+        q: 'Por que colocar idade e faturamento na mesma escala?',
+        options: [
+          'Senão a coluna com números maiores (faturamento) domina o modelo só pelo tamanho, não pela importância real',
+          'Pra deixar a tabela mais bonita',
+          'Não faz diferença pra nenhum modelo',
+        ],
+        correct: 0,
+      },
+      {
+        q: 'O que muda de verdade nos dados quando você reescala uma coluna?',
+        options: [
+          'Só o espalhamento/unidade dos números — a ordem relativa entre os alunos continua a mesma',
+          'Os valores de cada aluno passam a representar outra pessoa',
+          'A coluna deixa de existir',
+        ],
+        correct: 0,
+      },
+    ],
+  },
 ]
 
 // ---------------------------------------------------------------- Runa do Código (katas)
@@ -398,6 +619,85 @@ def classificar(dados_treino, dados_novos):
 `,
     interrogation: [],
   },
+  {
+    id: 'kata-validacao',
+    emoji: '🔓',
+    titulo: 'Kata · Validação',
+    setor: 'financas',
+    skillId: 'validacao',
+    briefing: 'Aquecimento antes da Prova: treine um modelo simples e devolva a acurácia de treino e de teste. Aqui não cobramos overfitting mínimo — só medir os dois números certos.',
+    metaLabel: 'Devolver (acurácia_treino, acurácia_teste)',
+    payout: 0,
+    reputacao: 0,
+    prereqContractIds: [],
+    datasetUrl: DATASET('financas.csv'),
+    starterCode: `from sklearn.linear_model import LogisticRegression
+
+def avaliar(dados_treino, dados_teste):
+    # 1. colunas = ["renda", "divida", "score_credito"]
+    # 2. modelo = LogisticRegression(max_iter=1000).fit(dados_treino[colunas], dados_treino["inadimplente"])
+    # 3. devolva (modelo.score(dados_treino[colunas], dados_treino["inadimplente"]),
+    #             modelo.score(dados_teste[colunas], dados_teste["inadimplente"]))
+    ...
+`,
+    setupCode: SETUP_VALIDACAO,
+    tests: [
+      { name: 'Devolve dois valores', hidden: false, code: `_r = avaliar(dados_treino, dados_teste)\nassert len(_r) == 2\n` },
+      { name: 'São proporções válidas', hidden: true, code: `_a, _b = avaliar(dados_treino, dados_teste)\nassert 0.0 <= float(_a) <= 1.0 and 0.0 <= float(_b) <= 1.0\n` },
+    ],
+    metricsCode: `_a, _b = avaliar(dados_treino, dados_teste)\n_ne_result = {"Acurácia treino": f"{round(float(_a)*100)}%", "Acurácia teste": f"{round(float(_b)*100)}%"}\n`,
+    hints: [
+      'colunas = ["renda", "divida", "score_credito"]; alvo = "inadimplente".',
+      'modelo.score(X, y) já devolve a acurácia — chame com dados_treino e com dados_teste.',
+      'return (acc_treino, acc_teste) — os dois números, nessa ordem.',
+    ],
+    solution: `from sklearn.linear_model import LogisticRegression
+
+def avaliar(dados_treino, dados_teste):
+    colunas = ["renda", "divida", "score_credito"]
+    modelo = LogisticRegression(max_iter=1000)
+    modelo.fit(dados_treino[colunas], dados_treino["inadimplente"])
+    acc_treino = modelo.score(dados_treino[colunas], dados_treino["inadimplente"])
+    acc_teste = modelo.score(dados_teste[colunas], dados_teste["inadimplente"])
+    return acc_treino, acc_teste
+`,
+    interrogation: [],
+  },
+  {
+    id: 'kata-feature-engineering',
+    emoji: '🔓',
+    titulo: 'Kata · Feature Engineering',
+    setor: 'saude',
+    skillId: 'feature-engineering',
+    briefing: 'Aquecimento antes da Prova: transforme a coluna de cidade (texto) em colunas 0/1. Aqui não cobramos a escala das outras colunas ainda — só o encoding.',
+    metaLabel: "Transformar 'cidade' em colunas 0/1",
+    payout: 0,
+    reputacao: 0,
+    prereqContractIds: [],
+    datasetUrl: DATASET('academias.csv'),
+    starterCode: `import pandas as pd
+
+def codificar_cidade(dados):
+    # Devolva a tabela com 'cidade' transformada em colunas 0/1 (uma por cidade).
+    ...
+`,
+    setupCode: SETUP_LER_ACADEMIA,
+    tests: [
+      { name: "'cidade' vira colunas", hidden: false, code: `_r = codificar_cidade(dados)\nassert "cidade" not in _r.columns\n` },
+      { name: 'Uma coluna nova por cidade', hidden: true, code: `_r = codificar_cidade(dados)\nassert len(_r.columns) == len(dados.columns) - 1 + dados["cidade"].nunique()\n` },
+    ],
+    metricsCode: `_r = codificar_cidade(dados)\n_ne_result = {"Colunas depois": int(len(_r.columns))}\n`,
+    hints: [
+      "pd.get_dummies(tabela, columns=['cidade']) faz a transformação inteira de uma vez.",
+      'O resultado já vem sem a coluna original de texto.',
+    ],
+    solution: `import pandas as pd
+
+def codificar_cidade(dados):
+    return pd.get_dummies(dados, columns=["cidade"])
+`,
+    interrogation: [],
+  },
 ]
 
 // ---------------------------------------------------------------- Aulas de código (ensino)
@@ -448,6 +748,52 @@ export const LESSONS_CH2: Record<string, Lesson> = {
       { code: '    modelo = KNeighborsClassifier(n_neighbors=5)', explica: 'Cria o modelo com k=5.' },
       { code: '    modelo.fit(X, y)', explica: 'Guarda os dados de treino.' },
       { code: '    return modelo.predict(dados_novos[colunas])', explica: 'Classifica os imóveis novos pelos vizinhos mais próximos.' },
+    ],
+  },
+  'kata-validacao': {
+    intro: 'A pergunta de ouro da Validação: o modelo aprendeu o padrão, ou só decorou os exemplos?',
+    passos: [
+      { code: 'from sklearn.linear_model import LogisticRegression', explica: 'Um modelo simples de classificação.' },
+      { code: 'def avaliar(dados_treino, dados_teste):', explica: 'Recebe as duas fatias — treino e teste.' },
+      { code: '    colunas = ["renda", "divida", "score_credito"]', explica: 'Entradas do modelo.' },
+      { code: '    modelo = LogisticRegression(max_iter=1000)', explica: 'Cria o modelo.' },
+      { code: '    modelo.fit(dados_treino[colunas], dados_treino["inadimplente"])', explica: 'Treina SÓ com dados_treino.' },
+      { code: '    acc_treino = modelo.score(dados_treino[colunas], dados_treino["inadimplente"])', explica: 'Mede o quanto o modelo acerta no que ele já viu.' },
+      { code: '    acc_teste = modelo.score(dados_teste[colunas], dados_teste["inadimplente"])', explica: 'Mede o quanto acerta em gente que ele NUNCA viu — o teste de verdade.' },
+      { code: '    return acc_treino, acc_teste', explica: 'Devolve os dois números pra comparar.' },
+    ],
+  },
+  'diagnostico-inadimplencia': {
+    intro: 'Mesmo ritual, com um modelo que "decora fácil" (árvore sem limite) — é assim que se enxerga overfitting de verdade.',
+    passos: [
+      { code: 'from sklearn.tree import DecisionTreeClassifier', explica: 'Uma árvore de decisão sem limite tende a decorar o treino.' },
+      { code: 'def avaliar_modelo(dados_treino, dados_teste):', explica: 'Recebe as duas fatias.' },
+      { code: '    colunas = ["renda", "divida", "score_credito"]', explica: 'Entradas do modelo.' },
+      { code: '    modelo = DecisionTreeClassifier(random_state=0)', explica: 'Cria a árvore.' },
+      { code: '    modelo.fit(dados_treino[colunas], dados_treino["inadimplente"])', explica: 'Treina SÓ com dados_treino.' },
+      { code: '    acc_treino = modelo.score(dados_treino[colunas], dados_treino["inadimplente"])', explica: 'Quase sempre bem alto — o modelo decorou.' },
+      { code: '    acc_teste = modelo.score(dados_teste[colunas], dados_teste["inadimplente"])', explica: 'Bem mais baixo — a prova real do overfitting.' },
+      { code: '    return acc_treino, acc_teste', explica: 'A diferença entre os dois é o diagnóstico.' },
+    ],
+  },
+  'kata-feature-engineering': {
+    intro: 'Modelos não entendem texto — "SP", "RJ" precisam virar números antes de qualquer treino.',
+    passos: [
+      { code: 'import pandas as pd', explica: 'Só o pandas já resolve o encoding.' },
+      { code: 'def codificar_cidade(dados):', explica: 'Recebe a tabela crua.' },
+      { code: '    return pd.get_dummies(dados, columns=["cidade"])', explica: "Cria uma coluna 0/1 pra cada cidade e remove a coluna de texto original." },
+    ],
+  },
+  'preparo-features-academia': {
+    intro: 'Duas sujeiras diferentes: texto vira número (encoding) e escalas diferentes viram comparáveis (normalização).',
+    passos: [
+      { code: 'import pandas as pd', explica: 'Pra fazer o encoding.' },
+      { code: 'from sklearn.preprocessing import StandardScaler', explica: 'Pra reescalar números.' },
+      { code: 'def preparar_features(dados):', explica: 'Recebe a tabela crua.' },
+      { code: '    codificado = pd.get_dummies(dados, columns=["cidade"])', explica: "Cidade vira colunas 0/1." },
+      { code: '    escalador = StandardScaler()', explica: 'Cria o reescalador.' },
+      { code: '    codificado[["idade", "faturamento"]] = escalador.fit_transform(codificado[["idade", "faturamento"]])', explica: 'Reescala as duas colunas juntas pra ficarem comparáveis.' },
+      { code: '    return codificado', explica: 'Devolve a tabela pronta pra qualquer modelo.' },
     ],
   },
 }
