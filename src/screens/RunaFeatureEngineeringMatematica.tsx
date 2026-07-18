@@ -20,7 +20,7 @@ const PASSOS: readonly Passo[] = [
   {
     titulo: 'Identificar colunas numéricas em escalas diferentes',
     dica: 'ex.: idade (dezenas) e faturamento (milhares)',
-    porque: 'Escalas muito diferentes fazem uma coluna dominar as outras só pelo tamanho.',
+    porque: 'Agora que as categorias já viraram números, vale olhar se os números que já existiam têm escalas muito diferentes entre si.',
   },
   {
     titulo: 'Reescalar todas pra uma faixa comparável antes de treinar',
