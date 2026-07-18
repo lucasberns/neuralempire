@@ -6,6 +6,7 @@ import type { GameState } from '../persistence/saveGame'
 import { SKILLS_CH1, CONTRACTS_CH1, RELAMPAGO, KATAS_CH1, REPEATABLE, LESSONS_CH1 } from './content/chapter1'
 import { SKILLS_CH2, CONTRACTS_CH2, KATAS_CH2, LESSONS_CH2 } from './content/chapter2'
 import { SKILLS_CH3, CONTRACTS_CH3, KATAS_CH3, LESSONS_CH3 } from './content/chapter3'
+import { SPECIAL } from './content/special'
 
 // ---------------------------------------------------------------- Economia
 export const RENT_PER_TURN = 60 // energia + aluguel da garagem, cobrado a cada entrega (GDD §4.1)
@@ -47,7 +48,7 @@ export const isKata = (id: string) => id.startsWith('kata-')
 // ---------------------------------------------------------------- Contratos (bosses + katas)
 export const CONTRACTS: Contract[] = [...CONTRACTS_CH1, ...CONTRACTS_CH2, ...CONTRACTS_CH3]
 export const KATAS: Contract[] = [...KATAS_CH1, ...KATAS_CH2, ...KATAS_CH3]
-export { RELAMPAGO, REPEATABLE }
+export { RELAMPAGO, REPEATABLE, SPECIAL }
 
 // ---------------------------------------------------------------- Conquistas (GDD §8)
 export interface Achievement {
@@ -132,7 +133,8 @@ export const contractById = (id: string): Contract | undefined =>
     ? RELAMPAGO
     : (CONTRACTS.find((c) => c.id === id) ??
       KATAS.find((c) => c.id === id) ??
-      REPEATABLE.find((c) => c.id === id))
+      REPEATABLE.find((c) => c.id === id) ??
+      SPECIAL.find((c) => c.id === id))
 
 export const isDone = (g: GameState, id: string) => g.contracts.doneIds.includes(id)
 
