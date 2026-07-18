@@ -227,10 +227,16 @@ export type Hotspot = 'pc' | 'door' | 'board'
 
 export function GarageScene({
   level,
+  chapter,
+  internCount,
   notify,
   onSelect,
 }: {
   level: number
+  /** Cap. 1 = garagem (paleta lima); Cap. 2 = Sala Comercial (paleta ciano + placa). */
+  chapter: 1 | 2
+  /** Estagiários contratados (GDD §4.2) — ≥1 mostra a mesa extra na cena. */
+  internCount: number
   /** Contratos esperando → badge de notificação sobre a porta. */
   notify: number
   onSelect: (h: Hotspot) => void
@@ -296,11 +302,11 @@ export function GarageScene({
 
   return (
     <svg
-      className="garage"
+      className={`garage${chapter === 2 ? ' chapter-2' : ''}`}
       viewBox={GARAGE_VIEWBOX}
       preserveAspectRatio="xMidYMid meet"
       role="img"
-      aria-label="Sua garagem em vista isométrica"
+      aria-label={chapter === 2 ? 'Sua sala comercial em vista isométrica' : 'Sua garagem em vista isométrica'}
     >
       {/* paredes */}
       <polygon className="wall" points={wallA} />
@@ -317,6 +323,17 @@ export function GarageScene({
           return <circle key={i} className="pnn" cx={cx} cy={cy} r={2.2} />
         })}
       </g>
+
+      {/* placa da virada de capítulo — só depois do Tier 1 completo (GDD §2) */}
+      {chapter === 2 &&
+        (() => {
+          const [sx, sy] = iso(0, (GD_Y1 + GD_Y2) / 2, GD_Z + 0.12)
+          return (
+            <text className="chapter-sign" x={sx} y={sy} textAnchor="middle">
+              SALA COMERCIAL
+            </text>
+          )
+        })()}
 
       {/* piso + grade */}
       <polygon className="floor" points={floor} />
@@ -533,6 +550,21 @@ export function GarageScene({
       <CratePileOpen x={1.773} y={3.664} big={0.85} />
       {level < 2 && <CratePile x={4.0} y={5.0} big={1.05} />}
       {level < 1 && <CratePileCluster x={0.94} y={0.3} big={0.95} />}
+
+      {/* mesa do estagiário (GDD §4.2): só aparece com ao menos 1 estagiário contratado —
+          canto livre do piso, longe das pilhas de caixa e da porta. */}
+      {internCount > 0 && (
+        <g className="intern-desk">
+          <Box x={0.3} y={4.3} z={0} w={0.5} d={0.35} h={0.55} tone="desk" />
+          <Box x={0.42} y={4.42} z={0.55} w={0.26} d={0.2} h={0.32} tone="intern" />
+          <circle
+            className="intern-hood"
+            cx={iso(0.55, 4.52, 1.0)[0]}
+            cy={iso(0.55, 4.52, 1.0)[1]}
+            r={5.6}
+          />
+        </g>
+      )}
     </svg>
   )
 }

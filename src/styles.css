@@ -815,6 +815,31 @@ button {
   stroke: rgba(182, 241, 69, 0.4);
   stroke-width: 1;
 }
+
+/* Cap. 2 (Sala Comercial): mesma geometria, paleta deslocada pro ciano — sinaliza a virada
+   de capítulo sem redesenhar a sala (ver spec: redesenho completo fica pra iteração futura). */
+.garage.chapter-2 .wall {
+  fill: #0e1c21;
+  stroke: rgba(88, 214, 255, 0.35);
+}
+.garage.chapter-2 .wall-b {
+  fill: #0a1519;
+}
+.garage.chapter-2 .floor {
+  fill: #0a1315;
+  stroke: rgba(88, 214, 255, 0.4);
+}
+.garage.chapter-2 .grid {
+  stroke: rgba(88, 214, 255, 0.14);
+}
+.garage .chapter-sign {
+  font-family: var(--mono);
+  font-size: 5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  fill: var(--cyan);
+  filter: drop-shadow(0 0 3px rgba(88, 214, 255, 0.7));
+}
 .garage .grid {
   stroke: rgba(182, 241, 69, 0.14);
   stroke-width: 0.5;
@@ -915,6 +940,15 @@ button {
 .garage .tone-chair .f-t { fill: #3a342c; }
 .garage .tone-chair .f-r { fill: #2b261f; }
 .garage .tone-chair .f-l { fill: #1d1a15; }
+.garage .tone-intern polygon { stroke: rgba(255, 191, 71, 0.45); }
+.garage .tone-intern .f-t { fill: #362c1a; }
+.garage .tone-intern .f-r { fill: #291f10; }
+.garage .tone-intern .f-l { fill: #1b140a; }
+.garage .intern-hood {
+  fill: #241c10;
+  stroke: rgba(255, 191, 71, 0.4);
+  stroke-width: 0.6;
+}
 .garage .dev {
   animation: dev-bob 2.6s ease-in-out infinite;
   transform-box: fill-box;

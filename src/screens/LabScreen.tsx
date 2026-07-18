@@ -79,7 +79,13 @@ export function LabScreen({
       <span className="mote m2" aria-hidden />
       <span className="mote m3" aria-hidden />
       <span className="mote m4" aria-hidden />
-      <GarageScene level={game.hardwareLevel} notify={waiting} onSelect={go} />
+      <GarageScene
+        level={game.hardwareLevel}
+        chapter={chapterOf(game)}
+        internCount={game.interns.length}
+        notify={waiting}
+        onSelect={go}
+      />
 
       {/* HUD mínimo */}
       <header className="ov ov-tl" aria-hidden>
