@@ -342,4 +342,46 @@ export function reviewSkill(g: GameState, skillId: string): GameState {
   return { ...g, skillReview: bumpReview(g.skillReview, skillId, today()) }
 }
 
+// ---------------------------------------------------------------- Equipe / Estagiários (GDD §4.2)
+// Só as skills com um contrato do bairro (REPEATABLE) hoje — `ler` e `explorar` — têm o que
+// automatizar. Custo único (não recorrente); entrega automática paga metade e NÃO conta como
+// revisão de ferrugem (o jogador não exercitou a skill — só o estagiário trabalhou).
+export const INTERN_COST = 250
+export const INTERN_PAYOUT_SHARE = 0.5
+
+export const internHireable = (g: GameState, skillId: string) =>
+  !g.interns.includes(skillId) &&
+  REPEATABLE.some((c) => c.skillId === skillId) &&
+  !!skillById(skillId) &&
+  isDone(g, skillById(skillId)!.contractId)
+
+export function hireIntern(g: GameState, skillId: string): GameState | null {
+  if (!internHireable(g, skillId) || g.money < INTERN_COST) return null
+  return { ...g, money: g.money - INTERN_COST, interns: [...g.interns, skillId] }
+}
+
+/** Roda 1x/dia (chamado junto de `applyDailyBill`): cada estagiário entrega o contrato do bairro
+ *  da sua skill, se ainda não entregue hoje. Ferrugem ainda desconta o pagamento (×0.6) — a
+ *  "equipe" também enferruja; mas não bumpa `skillReview`, pra ferrugem do JOGADOR continuar
+ *  avançando normalmente mesmo com o estagiário trabalhando. */
+export function applyInternWork(
+  g: GameState,
+  todayISO: string,
+): { next: GameState; earned: number; delivered: string[] } {
+  let money = g.money
+  let bairroLastDayISO = g.bairroLastDayISO
+  const delivered: string[] = []
+  for (const skillId of g.interns) {
+    const c = REPEATABLE.find((r) => r.skillId === skillId)
+    if (!c || !bairroAvailable({ ...g, bairroLastDayISO }, c, todayISO)) continue
+    const rusty = isRusted(g, skillId, todayISO)
+    const pay = Math.round(c.payout * INTERN_PAYOUT_SHARE * (rusty ? 0.6 : 1))
+    money += pay
+    bairroLastDayISO = { ...bairroLastDayISO, [c.id]: todayISO }
+    delivered.push(c.titulo)
+  }
+  if (delivered.length === 0) return { next: g, earned: 0, delivered: [] }
+  return { next: { ...g, money, bairroLastDayISO }, earned: money - g.money, delivered }
+}
+
 export const todayISO = () => today()

@@ -35,6 +35,8 @@ export interface GameState {
   bairroLastDayISO: Record<string, string>
   // Aprendizado obrigatório (Fase 1): cooldown do boss após reprovar/abandonar — cresce por tentativa.
   bossCooldown: Record<string, { untilMs: number; attempts: number }>
+  // Equipe (GDD §4.2): skillIds com estagiário contratado (automatiza o contrato do bairro daquela skill).
+  interns: string[]
 }
 
 const SAVE_KEY = 'save'
@@ -61,6 +63,7 @@ export function newGameState(): GameState {
     skillReview: {},
     bairroLastDayISO: {},
     bossCooldown: {},
+    interns: [],
   }
 }
 
@@ -76,6 +79,7 @@ function normalize(raw: GameState): GameState {
     skillReview: raw.skillReview ?? base.skillReview,
     bairroLastDayISO: raw.bairroLastDayISO ?? {},
     bossCooldown: raw.bossCooldown ?? {},
+    interns: raw.interns ?? [],
   }
 }
 
