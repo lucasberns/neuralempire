@@ -1,0 +1,111 @@
+/* src/screens/RunaMetricasAvancadasIntuicao.css */
+.runa-metricas-avancadas-intuicao {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.rma-lead {
+  font-family: var(--sans);
+  color: var(--muted);
+  line-height: 1.5;
+}
+.rma-plot {
+  width: 100%;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+}
+.rma-axis {
+  stroke: var(--line-bright);
+  stroke-width: 1;
+}
+.rma-axis-label {
+  fill: var(--dim);
+  font-family: var(--mono);
+  font-size: 9px;
+}
+.rma-limiar {
+  stroke: var(--cyan);
+  stroke-width: 2;
+  stroke-dasharray: 4 3;
+}
+.rma-limiar.is-good {
+  stroke: var(--lime);
+}
+.rma-dot {
+  stroke: var(--panel);
+  stroke-width: 1;
+}
+.rma-dot.is-risco {
+  fill: var(--red);
+}
+.rma-dot.is-ok {
+  fill: var(--lime);
+}
+.rma-slider {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.rma-slider-top {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.rma-val {
+  color: var(--text);
+}
+.rma-matriz {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.rma-quad {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line-bright);
+  background: var(--panel-2);
+  font-family: var(--mono);
+}
+.rma-quad-k {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+.rma-quad-v {
+  font-weight: 700;
+  font-size: 1rem;
+}
+.rma-quad.is-vp .rma-quad-v {
+  color: var(--lime);
+}
+.rma-quad.is-vn .rma-quad-v {
+  color: var(--dim);
+}
+.rma-quad.is-fp .rma-quad-v,
+.rma-quad.is-fn .rma-quad-v {
+  color: var(--amber);
+}
+.rma-meter {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.rma-scores {
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin: 0;
+}
+.rma-scores .is-good {
+  color: var(--lime);
+}
+.rma-meter-hint {
+  color: var(--muted);
+  font-size: 0.8rem;
+  margin: 0;
+}
