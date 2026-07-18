@@ -370,6 +370,19 @@ _gap = float(_a) - float(_b)
 assert _gap >= 0.15, f"gap = {_gap} — parece que dados_teste não foi avaliado de verdade (ou houve vazamento)"
 `,
       },
+      {
+        name: 'Teste oculto: os números batem com o modelo treinado de verdade',
+        hidden: true,
+        code: `from sklearn.tree import DecisionTreeClassifier
+_a, _b = avaliar_modelo(dados_treino, dados_teste)
+_cols = ["renda", "divida", "score_credito"]
+_ref = DecisionTreeClassifier(random_state=0)
+_ref.fit(dados_treino[_cols], dados_treino["inadimplente"])
+_ref_a = _ref.score(dados_treino[_cols], dados_treino["inadimplente"])
+_ref_b = _ref.score(dados_teste[_cols], dados_teste["inadimplente"])
+assert abs(float(_a) - _ref_a) < 0.05 and abs(float(_b) - _ref_b) < 0.05, "os valores não batem com o modelo treinado nos dados reais"
+`,
+      },
     ],
     metricsCode: `_a, _b = avaliar_modelo(dados_treino, dados_teste)
 _ne_result = {
