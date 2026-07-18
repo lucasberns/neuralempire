@@ -2,12 +2,20 @@ import type { GameState } from '../persistence/saveGame'
 
 const money = (n: number) => `R$ ${n.toLocaleString('pt-BR')}`
 
-// Barra das sub-telas: único caminho de volta é a garagem.
-export function TopBar({ game, onBack }: { game: GameState; onBack: () => void }) {
+// Barra das sub-telas: o rótulo de volta é decidido por quem chama (App.tsx sabe pra onde onBack vai).
+export function TopBar({
+  game,
+  backLabel,
+  onBack,
+}: {
+  game: GameState
+  backLabel: string
+  onBack: () => void
+}) {
   return (
     <div className="topbar">
       <button className="back-btn" onClick={onBack}>
-        ← Garagem
+        {backLabel}
       </button>
       <div className="topbar-stats">
         <span className="ov-stat amber">◈ {money(game.money)}</span>

@@ -15,6 +15,7 @@ import {
   applyDailyBill,
   applyInternWork,
   bossOnCooldown,
+  chapterOf,
   completeRune,
   contractById,
   declararFalencia,
@@ -199,6 +200,8 @@ export default function App() {
   const back = view === 'runa' ? () => setView('skills') : goLab
   // Fase 1: sair do boss no meio consome a tentativa — pede confirmação antes.
   const requestBack = () => (bossInProgress ? setAskLeave(true) : back())
+  const backLabel =
+    view === 'runa' ? '← Árvore de Skills' : chapterOf(game) === 2 ? '← Sala Comercial' : '← Garagem'
   const abandonBoss = () => {
     if (active) setGame(failBoss(game, active.id, nowMs()))
     setAskLeave(false)
@@ -246,7 +249,7 @@ export default function App() {
         />
       ) : (
         <div className="app">
-          <TopBar game={game} onBack={requestBack} />
+          <TopBar game={game} backLabel={backLabel} onBack={requestBack} />
           <main className="app-main">
             {view === 'contratos' && (
               <ContractsScreen game={game} onGameChange={setGame} onNavigate={setView} />
