@@ -1,0 +1,92 @@
+/* src/screens/RunaArvoresDecisaoIntuicao.css */
+.runa-arvores-decisao-intuicao {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.rad-lead {
+  font-family: var(--sans);
+  color: var(--muted);
+  line-height: 1.5;
+}
+.rad-em {
+  color: var(--red);
+}
+.rad-em-ok {
+  color: var(--lime);
+}
+.rad-plot {
+  width: 100%;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+}
+.rad-axis {
+  stroke: var(--line-bright);
+  stroke-width: 1;
+}
+.rad-axis-label {
+  fill: var(--dim);
+  font-family: var(--mono);
+  font-size: 9px;
+}
+.rad-corte {
+  stroke: var(--cyan);
+  stroke-width: 2;
+  stroke-dasharray: 4 3;
+}
+.rad-corte.is-good {
+  stroke: var(--lime);
+}
+.rad-dot {
+  stroke: var(--panel);
+  stroke-width: 1;
+}
+.rad-dot.is-fraude {
+  fill: var(--red);
+}
+.rad-dot.is-ok {
+  fill: var(--lime);
+}
+.rad-slider {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.rad-slider-top {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.rad-val {
+  color: var(--text);
+}
+.rad-meter {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.rad-lados {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin: 0;
+}
+.rad-meter-top {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--mono);
+  font-size: 0.85rem;
+}
+.rad-imp {
+  color: var(--dim);
+}
+.rad-imp.is-good {
+  color: var(--lime);
+}
+.rad-meter-hint {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
