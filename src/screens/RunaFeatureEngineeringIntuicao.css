@@ -1,0 +1,63 @@
+.runa-fe-intuicao {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.rfe-lead {
+  font-family: var(--sans);
+  color: var(--muted);
+  line-height: 1.5;
+}
+.rfe-task {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.rfe-task-title {
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  color: var(--text);
+}
+.rfe-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+.rfe-table th,
+.rfe-table td {
+  padding: 0.35rem 0.5rem;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+}
+.rfe-hint {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+.rfe-toggle {
+  align-self: flex-start;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  padding: 8px 14px;
+  min-height: 42px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  color: var(--text);
+  cursor: pointer;
+}
+.rfe-toggle:hover {
+  border-color: var(--lime);
+}
+.rfe-sucesso {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.rfe-sucesso-msg {
+  color: var(--lime);
+  border: 1px solid rgba(182, 241, 69, 0.4);
+  background: rgba(182, 241, 69, 0.06);
+  border-radius: var(--r-sm);
+  padding: 10px 12px;
+  font-size: 0.85rem;
+}
