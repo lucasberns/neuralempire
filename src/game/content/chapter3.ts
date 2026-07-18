@@ -455,6 +455,125 @@ def classificar_peca(dados_treino, dados_novos):
       },
     ],
   },
+  {
+    id: 'limite-credito-regularizado',
+    emoji: '💳',
+    titulo: 'Banco CréditoMais',
+    setor: 'financas',
+    skillId: 'regularizacao',
+    briefing:
+      'O banco quer prever o limite de crédito ideal a partir de várias variáveis do cliente — ' +
+      'mas metade delas é ruído sem relação real com o limite, e um modelo comum "decora" esse ' +
+      'ruído. Compare um modelo comum com um modelo regularizado e mostre que o segundo ' +
+      'generaliza melhor pra clientes novos.',
+    metaLabel: 'R² do modelo regularizado ≥ 40% E pelo menos 5 pontos melhor que o comum',
+    payout: 560,
+    reputacao: 18,
+    prereqContractIds: ['diagnostico-risco-raro', 'controle-qualidade-pecas'],
+    datasetUrl: DATASET('creditopremium.csv'),
+    starterCode: `from sklearn.linear_model import LinearRegression, Lasso
+
+def comparar_modelos(dados_treino, dados_teste):
+    # dados_treino / dados_teste: renda, tempo_emprego, num_cartoes, indice_x1..x5, limite_credito
+    # 3 colunas são relevantes de verdade; as 5 "indice_x" são ruído puro
+    #
+    # 1. Treine um LinearRegression() com TODAS as colunas de entrada (menos o alvo)
+    # 2. Calcule o R² dele em dados_teste (modelo.score(...))
+    # 3. Treine um Lasso(alpha=50) com as MESMAS colunas
+    # 4. Calcule o R² dele em dados_teste
+    # 5. Devolva os dois números: (r2_linear, r2_lasso)
+    ...
+`,
+    setupCode: SETUP_CREDITO,
+    tests: [
+      {
+        name: 'comparar_modelos(...) devolve dois valores',
+        hidden: false,
+        code: `_res = comparar_modelos(dados_treino, dados_teste)
+assert len(_res) == 2, "Esperava (r2_linear, r2_lasso)"
+`,
+      },
+      {
+        name: 'Os dois valores são números (R² pode ser negativo, mas tem que ser float)',
+        hidden: false,
+        code: `_a, _b = comparar_modelos(dados_treino, dados_teste)
+float(_a); float(_b)
+`,
+      },
+      {
+        name: 'Teste oculto: o modelo regularizado generaliza melhor',
+        hidden: true,
+        code: `_a, _b = comparar_modelos(dados_treino, dados_teste)
+assert float(_b) - float(_a) >= 0.05, f"r2_lasso ({_b}) deveria superar r2_linear ({_a}) por pelo menos 0.05"
+`,
+      },
+      {
+        name: 'Teste oculto: o R² regularizado atinge a meta (≥ 40%)',
+        hidden: true,
+        code: `_a, _b = comparar_modelos(dados_treino, dados_teste)
+assert float(_b) >= 0.4, f"r2_lasso = {_b}"
+`,
+      },
+    ],
+    metricsCode: `_a, _b = comparar_modelos(dados_treino, dados_teste)
+_ne_result = {
+    "R² modelo comum": round(float(_a), 3),
+    "R² modelo regularizado": round(float(_b), 3),
+    "Melhora": round(float(_b) - float(_a), 3),
+}
+`,
+    hints: [
+      'colunas = todas menos "limite_credito" — use [c for c in dados_treino.columns if c != "limite_credito"].',
+      'lin = LinearRegression().fit(dados_treino[colunas], dados_treino["limite_credito"]); r2_lin = lin.score(dados_teste[colunas], dados_teste["limite_credito"]).',
+      'las = Lasso(alpha=50).fit(dados_treino[colunas], dados_treino["limite_credito"]); r2_las = las.score(dados_teste[colunas], dados_teste["limite_credito"]).',
+    ],
+    solution: `from sklearn.linear_model import LinearRegression, Lasso
+
+def comparar_modelos(dados_treino, dados_teste):
+    colunas = [c for c in dados_treino.columns if c != "limite_credito"]
+    y_treino = dados_treino["limite_credito"]
+    y_teste = dados_teste["limite_credito"]
+
+    linear = LinearRegression()
+    linear.fit(dados_treino[colunas], y_treino)
+    r2_linear = linear.score(dados_teste[colunas], y_teste)
+
+    lasso = Lasso(alpha=50, max_iter=20000)
+    lasso.fit(dados_treino[colunas], y_treino)
+    r2_lasso = lasso.score(dados_teste[colunas], y_teste)
+
+    return r2_linear, r2_lasso
+`,
+    interrogation: [
+      {
+        q: 'Por que o modelo comum vai pior no teste mesmo tendo mais variáveis pra usar?',
+        options: [
+          'Ele dá peso até pras variáveis de ruído, "decorando" padrões que não existem de verdade',
+          'Mais variáveis sempre pioram qualquer modelo, sem exceção',
+          'O modelo comum não usa nenhuma variável de verdade',
+        ],
+        correct: 0,
+      },
+      {
+        q: 'O que a regularização L1 (Lasso) faz de diferente de L2 (Ridge)?',
+        options: [
+          'L1 pode zerar completamente o peso de uma variável (seleciona variáveis); L2 só encolhe todo mundo um pouco',
+          'L1 e L2 fazem exatamente a mesma coisa',
+          'L2 é sempre melhor que L1 em qualquer situação',
+        ],
+        correct: 0,
+      },
+      {
+        q: 'Isso lembra qual outra skill que você já dominou?',
+        options: [
+          'Validação — de novo é a diferença entre desempenho no treino/modelo comum e desempenho em dados novos que conta a história',
+          'KNN — regularização também usa distância entre pontos',
+          'Nenhuma relação com o que já foi visto',
+        ],
+        correct: 0,
+      },
+    ],
+  },
 ]
 
 // ---------------------------------------------------------------- Runa do Código (katas)
@@ -586,6 +705,49 @@ def classificar(dados_treino, dados_novos):
 `,
     interrogation: [],
   },
+  {
+    id: 'kata-regularizacao',
+    emoji: '🔓',
+    titulo: 'Kata · Regularização',
+    setor: 'financas',
+    skillId: 'regularizacao',
+    briefing: 'Aquecimento antes da Prova: compare LinearRegression com Lasso no mesmo dataset. Aqui não cobramos a meta — só calcular os dois R².',
+    metaLabel: 'Devolver (r2_linear, r2_lasso)',
+    payout: 0,
+    reputacao: 0,
+    prereqContractIds: [],
+    datasetUrl: DATASET('creditopremium.csv'),
+    starterCode: `from sklearn.linear_model import LinearRegression, Lasso
+
+def comparar(dados_treino, dados_teste):
+    # 1. colunas = todas menos "limite_credito"
+    # 2. treine LinearRegression e Lasso(alpha=50) nas mesmas colunas
+    # 3. devolva (r2_linear, r2_lasso), cada um via modelo.score(dados_teste[colunas], alvo)
+    ...
+`,
+    setupCode: SETUP_CREDITO,
+    tests: [
+      { name: 'Devolve 2 valores', hidden: false, code: `_a, _b = comparar(dados_treino, dados_teste)\nfloat(_a); float(_b)\n` },
+      { name: 'Lasso não fica muito pior que o linear', hidden: true, code: `_a, _b = comparar(dados_treino, dados_teste)\nassert float(_b) >= float(_a) - 0.2\n` },
+    ],
+    metricsCode: `_a, _b = comparar(dados_treino, dados_teste)\n_ne_result = {"R² comum": round(float(_a),3), "R² regularizado": round(float(_b),3)}\n`,
+    hints: [
+      'colunas = [c for c in dados_treino.columns if c != "limite_credito"].',
+      'linear = LinearRegression().fit(dados_treino[colunas], dados_treino["limite_credito"]).',
+      'lasso = Lasso(alpha=50).fit(dados_treino[colunas], dados_treino["limite_credito"]); use .score(...) nos dois.',
+    ],
+    solution: `from sklearn.linear_model import LinearRegression, Lasso
+
+def comparar(dados_treino, dados_teste):
+    colunas = [c for c in dados_treino.columns if c != "limite_credito"]
+    y_treino = dados_treino["limite_credito"]
+    y_teste = dados_teste["limite_credito"]
+    linear = LinearRegression().fit(dados_treino[colunas], y_treino)
+    lasso = Lasso(alpha=50, max_iter=20000).fit(dados_treino[colunas], y_treino)
+    return linear.score(dados_teste[colunas], y_teste), lasso.score(dados_teste[colunas], y_teste)
+`,
+    interrogation: [],
+  },
 ]
 
 // ---------------------------------------------------------------- Aulas de código (ensino)
@@ -667,6 +829,34 @@ export const LESSONS_CH3: Record<string, Lesson> = {
       { code: '    modelo = SVC(kernel="linear")', explica: 'Cria o modelo.' },
       { code: '    modelo.fit(X, y)', explica: 'Treina buscando a margem máxima.' },
       { code: '    return modelo.predict(dados_novos[colunas])', explica: 'Classifica as peças novas.' },
+    ],
+  },
+  'kata-regularizacao': {
+    intro: 'Regularização penaliza pesos grandes — o modelo passa a preferir explicações mais simples, mesmo abrindo mão de um pouco de ajuste no treino.',
+    passos: [
+      { code: 'from sklearn.linear_model import LinearRegression, Lasso', explica: 'O modelo comum e o regularizado.' },
+      { code: 'def comparar(dados_treino, dados_teste):', explica: 'Recebe treino e teste.' },
+      { code: '    colunas = [c for c in dados_treino.columns if c != "limite_credito"]', explica: 'Todas as colunas de entrada, incluindo o ruído.' },
+      { code: '    y_treino = dados_treino["limite_credito"]', explica: 'Alvo do treino.' },
+      { code: '    y_teste = dados_teste["limite_credito"]', explica: 'Alvo do teste.' },
+      { code: '    linear = LinearRegression().fit(dados_treino[colunas], y_treino)', explica: 'Modelo comum, sem penalidade.' },
+      { code: '    lasso = Lasso(alpha=50).fit(dados_treino[colunas], y_treino)', explica: 'Modelo regularizado (L1) — alpha controla a força da penalidade.' },
+      { code: '    return linear.score(dados_teste[colunas], y_teste), lasso.score(dados_teste[colunas], y_teste)', explica: 'Compara o R² dos dois no teste.' },
+    ],
+  },
+  'limite-credito-regularizado': {
+    intro: 'Mesmo ritual da runa, agora valendo: comparar o modelo comum com o regularizado no mesmo teste.',
+    passos: [
+      { code: 'from sklearn.linear_model import LinearRegression, Lasso', explica: 'Importa os dois modelos.' },
+      { code: 'def comparar_modelos(dados_treino, dados_teste):', explica: 'Recebe treino e teste.' },
+      { code: '    colunas = [c for c in dados_treino.columns if c != "limite_credito"]', explica: 'Todas as colunas de entrada.' },
+      { code: '    y_treino = dados_treino["limite_credito"]', explica: 'Alvo do treino.' },
+      { code: '    y_teste = dados_teste["limite_credito"]', explica: 'Alvo do teste.' },
+      { code: '    linear = LinearRegression(); linear.fit(dados_treino[colunas], y_treino)', explica: 'Treina o modelo comum.' },
+      { code: '    r2_linear = linear.score(dados_teste[colunas], y_teste)', explica: 'R² do modelo comum no teste.' },
+      { code: '    lasso = Lasso(alpha=50); lasso.fit(dados_treino[colunas], y_treino)', explica: 'Treina o modelo regularizado.' },
+      { code: '    r2_lasso = lasso.score(dados_teste[colunas], y_teste)', explica: 'R² do modelo regularizado no teste.' },
+      { code: '    return r2_linear, r2_lasso', explica: 'Devolve os dois pra comparar.' },
     ],
   },
 }
