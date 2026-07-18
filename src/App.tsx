@@ -13,6 +13,7 @@ import {
   RELAMPAGO,
   agiotaAvailable,
   applyDailyBill,
+  applyInternWork,
   bossOnCooldown,
   completeRune,
   contractById,
@@ -85,6 +86,14 @@ export default function App() {
     if (bill.charged > 0) {
       next = bill.next
       msgs.push(`🧾 Conta do laboratório: −R$ ${bill.charged} (energia + aluguel)`)
+    }
+
+    const intern = applyInternWork(next, todayISO())
+    if (intern.earned > 0) {
+      next = intern.next
+      msgs.push(
+        `🧑‍💻 Sua equipe entregou ${intern.delivered.length} serviço(s) automaticamente: +R$ ${intern.earned}`,
+      )
     }
 
     if (next !== game) setGame(next)
