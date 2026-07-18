@@ -59,6 +59,10 @@ export interface Achievement {
 const skillBossDone = (g: GameState) =>
   SKILLS.filter((s) => g.contracts.doneIds.includes(s.contractId)).length
 
+/** Cap. 2 ("Sala Comercial") começa quando o jogador domina as 4 skills do Tier 1 — mesma
+ *  condição da conquista `tier1-completo`. Fonte única pro custo fixo novo e pro rótulo do HUD. */
+export const chapterOf = (g: GameState): 1 | 2 => (skillBossDone(g) >= SKILLS_CH1.length ? 2 : 1)
+
 export const ACHIEVEMENTS: Achievement[] = [
   { id: 'primeira-entrega', nome: 'Primeiro cliente', desc: 'Entregue seu primeiro contrato.', test: (g) => g.contracts.doneIds.length >= 1 },
   { id: 'primeira-skill', nome: 'Aprendiz', desc: 'Domine sua primeira skill.', test: (g) => skillBossDone(g) >= 1 },
@@ -270,7 +274,9 @@ export function fmtCooldown(ms: number): string {
 
 // ---------------------------------------------------------------- Economia de tensão (GDD §4.4)
 // Conta diária do laboratório (energia + aluguel) — cresce com o hardware.
-export const dailyBill = (hardwareLevel: number) => 30 + hardwareLevel * 30
+// +50/dia (escritório) a partir do Cap. 2 — dobra a conta em torno da metade do jogo (GDD §4.1).
+export const dailyBill = (hardwareLevel: number, chapter: 1 | 2 = 1) =>
+  30 + hardwareLevel * 30 + (chapter === 2 ? 50 : 0)
 export const LOAN = 400 // valor do empréstimo do agiota
 const DEBT_INTEREST = 1.1 // juros por dia sobre a dívida
 
@@ -280,7 +286,7 @@ const daysBetween = (aISO: string, bISO: string) =>
 /** Cobra a conta do lab uma vez por dia + aplica juros da dívida. Idempotente no mesmo dia. */
 export function applyDailyBill(g: GameState, todayISO: string): { next: GameState; charged: number } {
   if (g.lastBillDayISO === todayISO) return { next: g, charged: 0 }
-  const charged = dailyBill(g.hardwareLevel)
+  const charged = dailyBill(g.hardwareLevel, chapterOf(g))
   const debt = g.debt > 0 ? Math.round(g.debt * DEBT_INTEREST) : 0
   return { next: { ...g, money: g.money - charged, debt, lastBillDayISO: todayISO }, charged }
 }

@@ -8,6 +8,7 @@ import {
   RENT_PER_TURN,
   SKILLS,
   buyHardware,
+  chapterOf,
   currentHardware,
   curriculoText,
   dailyBill,
@@ -88,7 +89,9 @@ export function LabScreen({
             NEURAL<span className="hud-logo-accent">://</span>EMPIRE
           </span>
         </div>
-        <span className="ov-chapter">CAP. 01 · A GARAGEM</span>
+        <span className="ov-chapter">
+          {chapterOf(game) === 2 ? 'CAP. 02 · A SALA COMERCIAL' : 'CAP. 01 · A GARAGEM'}
+        </span>
       </header>
 
       <div className="ov ov-tr">
@@ -146,7 +149,7 @@ export function LabScreen({
           <div className="sheet" role="dialog" aria-label="Configurações" onClick={(e) => e.stopPropagation()}>
             <h3 className="panel-title">Configurações</h3>
             <div className="cfg-econ">
-              <span>Conta diária: {money(dailyBill(game.hardwareLevel))}</span>
+              <span>Conta diária: {money(dailyBill(game.hardwareLevel, chapterOf(game)))}</span>
               <span>Custo por entrega: {money(RENT_PER_TURN)}</span>
             </div>
             {game.debt > 0 && (
