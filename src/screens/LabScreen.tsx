@@ -254,7 +254,7 @@ export function LabScreen({
           <div className="sheet" role="dialog" aria-label="Upgrades" onClick={(e) => e.stopPropagation()}>
             <h3 className="panel-title">Upgrades</h3>
 
-            <div className="cfg-debt">
+            <div className="cfg-row">
               <span>Sala Comercial</span>
               {game.salaComercialComprada ? (
                 <span className="cc-lock ok">✓ adquirida</span>
@@ -282,7 +282,7 @@ export function LabScreen({
               const owned = i <= game.hardwareLevel
               const isNext = i === game.hardwareLevel + 1
               return (
-                <div key={tier.nome} className="cfg-debt">
+                <div key={tier.nome} className="cfg-row">
                   <span>{tier.nome}</span>
                   {owned ? (
                     <span className="cc-lock ok">{i === game.hardwareLevel ? '✓ atual' : '✓'}</span>
