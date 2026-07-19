@@ -302,6 +302,120 @@ def detectar_fraude(dados_treino, dados_novos):
       },
     ],
   },
+  {
+    id: 'segmentacao-clientes',
+    emoji: '🧩',
+    titulo: 'Rede de Lojas Vitrine',
+    setor: 'varejo',
+    skillId: 'clustering',
+    briefing:
+      'A rede quer segmentar clientes pra campanhas direcionadas (VIP/regular/ocasional) — mas ' +
+      'ninguém rotulou os clientes antes. Sem gabarito, agrupe os clientes parecidos entre si a ' +
+      'partir de quanto compram e com que frequência.',
+    metaLabel: '3 grupos distintos, silhueta ≥ 60%',
+    payout: 600,
+    reputacao: 19,
+    prereqContractIds: ['retencao-assinantes'],
+    datasetUrl: DATASET('segmentacao-clientes.csv'),
+    starterCode: `from sklearn.cluster import KMeans
+
+def segmentar_clientes(dados):
+    # dados: tabela com frequencia_compra e ticket_medio (SEM rótulo — não supervisionado)
+    #
+    # 1. Selecione as colunas de entrada
+    # 2. Treine um KMeans(n_clusters=3) nelas
+    # 3. Devolva o rótulo de cluster (0, 1 ou 2) de cada cliente
+    ...
+`,
+    setupCode: SETUP_CLIENTES,
+    tests: [
+      {
+        name: 'segmentar_clientes(...) devolve um resultado',
+        hidden: false,
+        code: `_res = segmentar_clientes(dados)
+assert _res is not None, "A função retornou None — faltou o return?"
+`,
+      },
+      {
+        name: 'Um rótulo de cluster por cliente',
+        hidden: false,
+        code: `import numpy as np
+_res = np.asarray(segmentar_clientes(dados)).ravel()
+assert len(_res) == len(dados), f"Esperava {len(dados)} rótulos, recebi {len(_res)}"
+`,
+      },
+      {
+        name: 'Teste oculto: exatamente 3 grupos distintos',
+        hidden: true,
+        code: `import numpy as np
+_res = np.asarray(segmentar_clientes(dados)).ravel()
+assert len(set(_res)) == 3, f"Esperava 3 grupos distintos, veio {len(set(_res))}"
+`,
+      },
+      {
+        name: 'Teste oculto: os grupos são bem separados (silhueta ≥ 60%)',
+        hidden: true,
+        code: `import numpy as np
+from sklearn.metrics import silhouette_score
+_res = np.asarray(segmentar_clientes(dados)).ravel()
+_sil = silhouette_score(dados[["frequencia_compra", "ticket_medio"]], _res)
+assert _sil >= 0.6, f"silhueta = {_sil}"
+`,
+      },
+    ],
+    metricsCode: `import numpy as np
+from sklearn.metrics import silhouette_score
+_res = np.asarray(segmentar_clientes(dados)).ravel()
+_sil = silhouette_score(dados[["frequencia_compra", "ticket_medio"]], _res)
+_ne_result = {
+    "Grupos encontrados": int(len(set(_res))),
+    "Silhueta": f"{round(_sil * 100)}%",
+    "Meta do contrato": "≥ 60%",
+}
+`,
+    hints: [
+      'colunas = ["frequencia_compra", "ticket_medio"] — não existe coluna-alvo aqui, é não supervisionado.',
+      'modelo = KMeans(n_clusters=3, random_state=0, n_init=10); modelo.fit(dados[colunas]).',
+      'return modelo.labels_ (ou modelo.predict(dados[colunas]), dá o mesmo resultado).',
+    ],
+    solution: `from sklearn.cluster import KMeans
+
+def segmentar_clientes(dados):
+    colunas = ["frequencia_compra", "ticket_medio"]
+    modelo = KMeans(n_clusters=3, random_state=0, n_init=10)
+    modelo.fit(dados[colunas])
+    return modelo.labels_
+`,
+    interrogation: [
+      {
+        q: 'Por que esse contrato não tem "dados_novos" nem holdout, diferente dos anteriores?',
+        options: [
+          'Clustering é não supervisionado — não existe rótulo certo pra comparar, então não há como "testar num holdout" da mesma forma',
+          'O cliente esqueceu de mandar os dados de entrega',
+          'Não faz diferença, é só um detalhe técnico sem motivo',
+        ],
+        correct: 0,
+      },
+      {
+        q: 'O que o K-means faz, passo a passo, pra formar os grupos?',
+        options: [
+          'Atribui cada ponto ao centro mais próximo, recalcula os centros como a média dos pontos, e repete até estabilizar',
+          'Ordena os clientes por ticket médio e corta em 3 partes iguais',
+          'Sorteia 3 grupos aleatórios e nunca muda',
+        ],
+        correct: 0,
+      },
+      {
+        q: 'O que a silhueta mede?',
+        options: [
+          'O quão bem separado cada ponto está do seu próprio grupo em relação aos outros grupos',
+          'Quantos clientes tem em cada grupo',
+          'O tempo de treino do modelo',
+        ],
+        correct: 0,
+      },
+    ],
+  },
 ]
 
 // ---------------------------------------------------------------- Runa do Código (katas)
@@ -388,6 +502,47 @@ def classificar(dados_treino, dados_novos):
 `,
     interrogation: [],
   },
+  {
+    id: 'kata-clustering',
+    emoji: '🔓',
+    titulo: 'Kata · Clustering',
+    setor: 'varejo',
+    skillId: 'clustering',
+    briefing: 'Aquecimento antes da Prova: rode um KMeans e devolva os rótulos de cluster. Aqui não cobramos a meta — só fazer o modelo agrupar.',
+    metaLabel: 'Devolver um rótulo de cluster por cliente',
+    payout: 0,
+    reputacao: 0,
+    prereqContractIds: [],
+    datasetUrl: DATASET('segmentacao-clientes.csv'),
+    starterCode: `from sklearn.cluster import KMeans
+
+def agrupar(dados):
+    # 1. colunas = ["frequencia_compra", "ticket_medio"]
+    # 2. modelo = KMeans(n_clusters=3, random_state=0, n_init=10).fit(dados[colunas])
+    # 3. devolva modelo.labels_
+    ...
+`,
+    setupCode: SETUP_CLIENTES,
+    tests: [
+      { name: 'Um rótulo por cliente', hidden: false, code: `import numpy as np\n_r = np.asarray(agrupar(dados)).ravel()\nassert len(_r) == len(dados)\n` },
+      { name: '3 grupos distintos', hidden: true, code: `import numpy as np\n_r = np.asarray(agrupar(dados)).ravel()\nassert len(set(_r)) == 3\n` },
+    ],
+    metricsCode: `import numpy as np\n_r = np.asarray(agrupar(dados)).ravel()\n_ne_result = {"Grupos encontrados": int(len(set(_r)))}\n`,
+    hints: [
+      'colunas = ["frequencia_compra", "ticket_medio"].',
+      'modelo = KMeans(n_clusters=3, random_state=0, n_init=10); modelo.fit(dados[colunas]).',
+      'return modelo.labels_',
+    ],
+    solution: `from sklearn.cluster import KMeans
+
+def agrupar(dados):
+    colunas = ["frequencia_compra", "ticket_medio"]
+    modelo = KMeans(n_clusters=3, random_state=0, n_init=10)
+    modelo.fit(dados[colunas])
+    return modelo.labels_
+`,
+    interrogation: [],
+  },
 ]
 
 // ---------------------------------------------------------------- Aulas de código (ensino)
@@ -438,6 +593,28 @@ export const LESSONS_CH4: Record<string, Lesson> = {
       { code: '    modelo = GradientBoostingClassifier(random_state=0)', explica: 'Cria o modelo.' },
       { code: '    modelo.fit(X, y)', explica: 'Treina a sequência de árvores.' },
       { code: '    return modelo.predict(dados_novos[colunas])', explica: 'Prevê fraude nas transações novas.' },
+    ],
+  },
+  'kata-clustering': {
+    intro: 'K-means não precisa de rótulo — ele encontra grupos sozinho, olhando só a distância entre os pontos.',
+    passos: [
+      { code: 'from sklearn.cluster import KMeans', explica: 'Importa o algoritmo de clustering.' },
+      { code: 'def agrupar(dados):', explica: 'Recebe só os dados — sem alvo.' },
+      { code: '    colunas = ["frequencia_compra", "ticket_medio"]', explica: 'As 2 variáveis usadas pra agrupar.' },
+      { code: '    modelo = KMeans(n_clusters=3, random_state=0, n_init=10)', explica: 'Pede 3 grupos.' },
+      { code: '    modelo.fit(dados[colunas])', explica: 'Encontra os 3 centros e agrupa cada ponto.' },
+      { code: '    return modelo.labels_', explica: 'O rótulo de grupo (0, 1 ou 2) de cada cliente.' },
+    ],
+  },
+  'segmentacao-clientes': {
+    intro: 'Mesmo ritual da runa, agora valendo: escolher colunas, agrupar, devolver os rótulos.',
+    passos: [
+      { code: 'from sklearn.cluster import KMeans', explica: 'Importa o modelo.' },
+      { code: 'def segmentar_clientes(dados):', explica: 'Recebe os clientes, sem rótulo.' },
+      { code: '    colunas = ["frequencia_compra", "ticket_medio"]', explica: 'Entradas do agrupamento.' },
+      { code: '    modelo = KMeans(n_clusters=3, random_state=0, n_init=10)', explica: 'Cria o modelo com 3 grupos.' },
+      { code: '    modelo.fit(dados[colunas])', explica: 'Agrupa os clientes.' },
+      { code: '    return modelo.labels_', explica: 'Devolve o grupo de cada cliente.' },
     ],
   },
 }
