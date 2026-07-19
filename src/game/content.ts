@@ -415,6 +415,9 @@ export function buyAndarInteiro(g: GameState): GameState | null {
   return { ...g, money: g.money - ANDAR_INTEIRO_COST, andarInteiroComprado: true }
 }
 
+// A sheet de Upgrades (LabScreen.tsx) duplica essas 2 condições em vez de chamar esta função,
+// pra poder mostrar qual delas falhou ("domine o Tier 3" vs. "requer o Andar Inteiro") — se
+// mudar a regra aqui, ajuste a UI também.
 export const predioHireable = (g: GameState) =>
   chapterOf(g) === 4 && g.andarInteiroComprado && !g.predioComprado
 
