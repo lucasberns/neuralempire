@@ -416,6 +416,122 @@ def segmentar_clientes(dados):
       },
     ],
   },
+  {
+    id: 'reducao-biomarcadores',
+    emoji: '🔬',
+    titulo: 'Clínica BioAnálise',
+    setor: 'saude',
+    skillId: 'reducao-dimensionalidade',
+    briefing:
+      'A clínica mede 6 biomarcadores por paciente — dimensional demais pra visualizar ou ' +
+      'interpretar de uma vez. Reduza pra 2 componentes sem perder a informação principal, pra ' +
+      'dar pro médico um gráfico simples de olhar.',
+    metaLabel: '2 componentes capturando ≥ 70% da variância',
+    payout: 640,
+    reputacao: 22,
+    prereqContractIds: ['deteccao-fraude-transacoes', 'segmentacao-clientes'],
+    datasetUrl: DATASET('biomarcadores.csv'),
+    starterCode: `from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+
+def reduzir_dimensoes(dados):
+    # dados: tabela com 6 biomarcadores numéricos (SEM alvo — não supervisionado)
+    #
+    # 1. Padronize as colunas com StandardScaler (escalas diferentes dominariam senão)
+    # 2. Treine um PCA(n_components=2) nos dados padronizados
+    # 3. Devolva os componentes (uma tabela/array com 2 colunas, uma linha por paciente)
+    ...
+`,
+    setupCode: SETUP_BIOMARCADORES,
+    tests: [
+      {
+        name: 'reduzir_dimensoes(...) devolve um resultado',
+        hidden: false,
+        code: `_res = reduzir_dimensoes(dados)
+assert _res is not None, "A função retornou None — faltou o return?"
+`,
+      },
+      {
+        name: 'A saída tem 2 colunas, uma linha por paciente',
+        hidden: false,
+        code: `import numpy as np
+_res = np.asarray(reduzir_dimensoes(dados))
+assert _res.shape == (len(dados), 2), f"Esperava shape ({len(dados)}, 2), veio {_res.shape}"
+`,
+      },
+      {
+        name: 'Teste oculto: os 2 componentes capturam a maior parte da variância',
+        hidden: true,
+        code: `import numpy as np
+from sklearn.preprocessing import StandardScaler
+_res = np.asarray(reduzir_dimensoes(dados))
+_colunas = [c for c in dados.columns]
+_escalado = StandardScaler().fit_transform(dados[_colunas])
+_var_total = float(np.var(_escalado, axis=0, ddof=1).sum())
+_var_saida = float(np.var(_res, axis=0, ddof=1).sum())
+assert _var_saida / _var_total >= 0.7, f"variância capturada = {_var_saida / _var_total}"
+`,
+      },
+    ],
+    metricsCode: `import numpy as np
+from sklearn.preprocessing import StandardScaler
+_res = np.asarray(reduzir_dimensoes(dados))
+_colunas = [c for c in dados.columns]
+_escalado = StandardScaler().fit_transform(dados[_colunas])
+_var_total = float(np.var(_escalado, axis=0, ddof=1).sum())
+_var_saida = float(np.var(_res, axis=0, ddof=1).sum())
+_ne_result = {
+    "Variância capturada": f"{round((_var_saida / _var_total) * 100)}%",
+    "Meta do contrato": "≥ 70%",
+    "Colunas antes": int(dados.shape[1]),
+    "Colunas depois": 2,
+}
+`,
+    hints: [
+      'colunas = list(dados.columns) — todas as 6 são numéricas, sem alvo.',
+      'escalado = StandardScaler().fit_transform(dados[colunas]) — padroniza antes do PCA.',
+      'modelo = PCA(n_components=2); modelo.fit(escalado); return modelo.transform(escalado).',
+    ],
+    solution: `from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+
+def reduzir_dimensoes(dados):
+    colunas = list(dados.columns)
+    escalado = StandardScaler().fit_transform(dados[colunas])
+    modelo = PCA(n_components=2)
+    modelo.fit(escalado)
+    return modelo.transform(escalado)
+`,
+    interrogation: [
+      {
+        q: 'Por que padronizar (StandardScaler) antes do PCA?',
+        options: [
+          'Sem padronizar, a variável com maior escala numérica dominaria os componentes só pelo tamanho, não pela importância real',
+          'Padronizar é só estética, não muda o resultado',
+          'PCA não funciona sem padronização, trava com erro',
+        ],
+        correct: 0,
+      },
+      {
+        q: 'O que os "2 componentes" representam?',
+        options: [
+          'As 2 direções de maior variância nos dados originais — combinações das 6 colunas originais',
+          '2 das 6 colunas originais, escolhidas ao acaso',
+          'A média e o desvio padrão dos dados',
+        ],
+        correct: 0,
+      },
+      {
+        q: 'Por que essa skill fecha o Tier 4, exigindo Gradient Boosting E Clustering antes?',
+        options: [
+          'PCA conecta a ideia de "quais variáveis importam" (ensembles) com "estrutura sem rótulo" (clustering) — as duas dão contexto pra reduzir dimensões com critério',
+          'É só uma ordem arbitrária, sem relação pedagógica',
+          'PCA precisa literalmente do código de Gradient Boosting pra funcionar',
+        ],
+        correct: 0,
+      },
+    ],
+  },
 ]
 
 // ---------------------------------------------------------------- Runa do Código (katas)
@@ -543,6 +659,51 @@ def agrupar(dados):
 `,
     interrogation: [],
   },
+  {
+    id: 'kata-reducao-dimensionalidade',
+    emoji: '🔓',
+    titulo: 'Kata · Redução de Dimensionalidade',
+    setor: 'saude',
+    skillId: 'reducao-dimensionalidade',
+    briefing: 'Aquecimento antes da Prova: padronize e rode um PCA de 2 componentes. Aqui não cobramos a meta — só devolver a forma certa.',
+    metaLabel: 'Devolver uma tabela de 2 colunas',
+    payout: 0,
+    reputacao: 0,
+    prereqContractIds: [],
+    datasetUrl: DATASET('biomarcadores.csv'),
+    starterCode: `from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+
+def reduzir(dados):
+    # 1. colunas = list(dados.columns)
+    # 2. escalado = StandardScaler().fit_transform(dados[colunas])
+    # 3. modelo = PCA(n_components=2).fit(escalado)
+    # 4. devolva modelo.transform(escalado)
+    ...
+`,
+    setupCode: SETUP_BIOMARCADORES,
+    tests: [
+      { name: 'Saída tem 2 colunas', hidden: false, code: `import numpy as np\n_r = np.asarray(reduzir(dados))\nassert _r.shape == (len(dados), 2)\n` },
+      { name: 'Não é None nem vazio', hidden: true, code: `import numpy as np\n_r = np.asarray(reduzir(dados))\nassert _r.size > 0\n` },
+    ],
+    metricsCode: `import numpy as np\n_r = np.asarray(reduzir(dados))\n_ne_result = {"Formato da saida": f"{_r.shape[0]}x{_r.shape[1]}"}\n`,
+    hints: [
+      'colunas = list(dados.columns) — todas numéricas, sem alvo.',
+      'escalado = StandardScaler().fit_transform(dados[colunas]).',
+      'modelo = PCA(n_components=2); modelo.fit(escalado); return modelo.transform(escalado).',
+    ],
+    solution: `from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+
+def reduzir(dados):
+    colunas = list(dados.columns)
+    escalado = StandardScaler().fit_transform(dados[colunas])
+    modelo = PCA(n_components=2)
+    modelo.fit(escalado)
+    return modelo.transform(escalado)
+`,
+    interrogation: [],
+  },
 ]
 
 // ---------------------------------------------------------------- Aulas de código (ensino)
@@ -615,6 +776,32 @@ export const LESSONS_CH4: Record<string, Lesson> = {
       { code: '    modelo = KMeans(n_clusters=3, random_state=0, n_init=10)', explica: 'Cria o modelo com 3 grupos.' },
       { code: '    modelo.fit(dados[colunas])', explica: 'Agrupa os clientes.' },
       { code: '    return modelo.labels_', explica: 'Devolve o grupo de cada cliente.' },
+    ],
+  },
+  'kata-reducao-dimensionalidade': {
+    intro: 'PCA comprime várias colunas correlacionadas em poucas, sem perder a informação principal.',
+    passos: [
+      { code: 'from sklearn.preprocessing import StandardScaler', explica: 'Padroniza as escalas.' },
+      { code: 'from sklearn.decomposition import PCA', explica: 'O algoritmo de redução.' },
+      { code: 'def reduzir(dados):', explica: 'Recebe só os dados — sem alvo.' },
+      { code: '    colunas = list(dados.columns)', explica: 'Todas as colunas são numéricas aqui.' },
+      { code: '    escalado = StandardScaler().fit_transform(dados[colunas])', explica: 'Coloca todas na mesma escala antes do PCA.' },
+      { code: '    modelo = PCA(n_components=2)', explica: 'Pede 2 componentes.' },
+      { code: '    modelo.fit(escalado)', explica: 'Acha as 2 direções de maior variância.' },
+      { code: '    return modelo.transform(escalado)', explica: 'Projeta os dados nessas 2 direções.' },
+    ],
+  },
+  'reducao-biomarcadores': {
+    intro: 'Mesmo ritual da runa, agora valendo: padronizar, treinar o PCA, projetar.',
+    passos: [
+      { code: 'from sklearn.preprocessing import StandardScaler', explica: 'Importa o padronizador.' },
+      { code: 'from sklearn.decomposition import PCA', explica: 'Importa o PCA.' },
+      { code: 'def reduzir_dimensoes(dados):', explica: 'Recebe os pacientes, sem alvo.' },
+      { code: '    colunas = list(dados.columns)', explica: 'Os 6 biomarcadores.' },
+      { code: '    escalado = StandardScaler().fit_transform(dados[colunas])', explica: 'Padroniza antes do PCA.' },
+      { code: '    modelo = PCA(n_components=2)', explica: 'Cria o modelo com 2 componentes.' },
+      { code: '    modelo.fit(escalado)', explica: 'Acha as direções de maior variância.' },
+      { code: '    return modelo.transform(escalado)', explica: 'Devolve os 2 componentes por paciente.' },
     ],
   },
 }
