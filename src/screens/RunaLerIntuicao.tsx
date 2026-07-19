@@ -5,6 +5,7 @@ import './RunaLerIntuicao.css'
 // perguntas simples só de olhar pra ela, sem calcular nada. Props CONGELADAS.
 
 type Linha = { produto: string; categoria: string; preco: number; estoque: number }
+type ColunaKey = 'produto' | 'categoria' | 'preco' | 'estoque'
 
 const ESTOQUE: readonly Linha[] = [
   { produto: 'Teclado mecânico', categoria: 'Periférico', preco: 320, estoque: 12 },
@@ -18,46 +19,71 @@ const ESTOQUE: readonly Linha[] = [
 ]
 
 type Pergunta =
-  | { tipo: 'linha'; texto: string; respostaIdx: number }
-  | { tipo: 'numero'; texto: string; resposta: number }
+  | { tipo: 'linha'; texto: string; respostaIdx: number; coluna: ColunaKey }
+  | { tipo: 'numero'; texto: string; resposta: number; coluna: ColunaKey }
 
 const idxMaiorPreco = ESTOQUE.reduce((best, l, i) => (l.preco > ESTOQUE[best].preco ? i : best), 0)
 const idxMenorEstoque = ESTOQUE.reduce((best, l, i) => (l.estoque < ESTOQUE[best].estoque ? i : best), 0)
 
 const PERGUNTAS: readonly Pergunta[] = [
-  { tipo: 'linha', texto: 'Clique na linha do produto com o MAIOR preço.', respostaIdx: idxMaiorPreco },
-  { tipo: 'linha', texto: 'Clique na linha do produto com o MENOR estoque.', respostaIdx: idxMenorEstoque },
+  {
+    tipo: 'linha',
+    texto: 'Clique na linha do produto com o MAIOR preço.',
+    respostaIdx: idxMaiorPreco,
+    coluna: 'preco',
+  },
+  {
+    tipo: 'linha',
+    texto: 'Clique na linha do produto com o MENOR estoque.',
+    respostaIdx: idxMenorEstoque,
+    coluna: 'estoque',
+  },
   {
     tipo: 'numero',
     texto: "Quantos produtos são da categoria 'Periférico'?",
     resposta: ESTOQUE.filter((l) => l.categoria === 'Periférico').length,
+    coluna: 'categoria',
   },
+]
+
+const COLUNAS: readonly { key: ColunaKey; label: string }[] = [
+  { key: 'produto', label: 'Produto' },
+  { key: 'categoria', label: 'Categoria' },
+  { key: 'preco', label: 'Preço' },
+  { key: 'estoque', label: 'Estoque' },
 ]
 
 export function RunaLerIntuicao({ onComplete }: { onComplete: () => void }) {
   const [passo, setPasso] = useState(0)
-  const [feedback, setFeedback] = useState<'idle' | 'errado'>('idle')
+  const [feedback, setFeedback] = useState<'idle' | 'errado' | 'certo'>('idle')
   const [numInput, setNumInput] = useState('')
   const done = passo >= PERGUNTAS.length
   const atual = PERGUNTAS[passo]
 
   const acertou = () => {
-    setFeedback('idle')
-    setNumInput('')
-    setPasso((p) => p + 1)
+    setFeedback('certo')
+    // Delay proposital: dá tempo do jogador ver "✓ Isso mesmo!" e a linha
+    // destacada antes de avançar — hoje pulava direto sem confirmação.
+    window.setTimeout(() => {
+      setFeedback('idle')
+      setNumInput('')
+      setPasso((p) => p + 1)
+    }, 800)
   }
 
   const responderLinha = (idx: number) => {
-    if (!atual || atual.tipo !== 'linha') return
+    if (done || atual.tipo !== 'linha' || feedback === 'certo') return
     if (idx === atual.respostaIdx) acertou()
     else setFeedback('errado')
   }
 
   const responderNumero = () => {
-    if (atual.tipo !== 'numero') return
+    if (done || atual.tipo !== 'numero' || feedback === 'certo') return
     if (Number(numInput) === atual.resposta) acertou()
     else setFeedback('errado')
   }
+
+  const colunaAtual = !done ? COLUNAS.find((c) => c.key === atual.coluna) : undefined
 
   return (
     <div className="runa runa-ler-intuicao">
@@ -66,41 +92,61 @@ export function RunaLerIntuicao({ onComplete }: { onComplete: () => void }) {
         <span className="rli-em">olhar pra tabela</span>.
       </p>
 
-      <table className="rli-table">
-        <thead>
-          <tr>
-            <th>Produto</th>
-            <th>Categoria</th>
-            <th>Preço</th>
-            <th>Estoque</th>
-          </tr>
-        </thead>
-        <tbody>
-          {ESTOQUE.map((l, i) => (
-            <tr
-              key={l.produto}
-              className={`rli-row${atual?.tipo === 'linha' ? ' rli-row-clickable' : ''}`}
-              onClick={() => responderLinha(i)}
-              role={atual?.tipo === 'linha' ? 'button' : undefined}
-              tabIndex={atual?.tipo === 'linha' ? 0 : undefined}
-              onKeyDown={(e) => {
-                if (atual?.tipo === 'linha' && (e.key === 'Enter' || e.key === ' ')) {
-                  if (e.key === ' ') e.preventDefault()
-                  responderLinha(i)
-                }
-              }}
-            >
-              <td>{l.produto}</td>
-              <td>{l.categoria}</td>
-              <td>R$ {l.preco}</td>
-              <td>{l.estoque}</td>
+      <div className="rli-table-wrap">
+        <table className="rli-table">
+          <thead>
+            <tr>
+              {COLUNAS.map((c) => (
+                <th key={c.key} className={feedback === 'errado' && colunaAtual?.key === c.key ? 'rli-col-hint' : ''}>
+                  {c.label}
+                </th>
+              ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {ESTOQUE.map((l, i) => (
+              <tr
+                key={l.produto}
+                className={`rli-row${
+                  !done && atual.tipo === 'linha' && feedback !== 'certo' ? ' rli-row-clickable' : ''
+                }${feedback === 'certo' && !done && atual.tipo === 'linha' && i === atual.respostaIdx ? ' rli-row-certo' : ''}`}
+                onClick={() => responderLinha(i)}
+                role={!done && atual.tipo === 'linha' ? 'button' : undefined}
+                tabIndex={!done && atual.tipo === 'linha' ? 0 : undefined}
+                onKeyDown={(e) => {
+                  if (!done && atual.tipo === 'linha' && (e.key === 'Enter' || e.key === ' ')) {
+                    if (e.key === ' ') e.preventDefault()
+                    responderLinha(i)
+                  }
+                }}
+              >
+                <td className={feedback === 'errado' && colunaAtual?.key === 'produto' ? 'rli-col-hint' : ''}>
+                  {l.produto}
+                </td>
+                <td className={feedback === 'errado' && colunaAtual?.key === 'categoria' ? 'rli-col-hint' : ''}>
+                  {l.categoria}
+                </td>
+                <td
+                  className={`rli-num${feedback === 'errado' && colunaAtual?.key === 'preco' ? ' rli-col-hint' : ''}`}
+                >
+                  R$ {l.preco}
+                </td>
+                <td
+                  className={`rli-num${feedback === 'errado' && colunaAtual?.key === 'estoque' ? ' rli-col-hint' : ''}`}
+                >
+                  {l.estoque}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       {!done && (
         <div className="rli-task">
+          <p className="rli-progresso">
+            Pergunta {passo + 1} de {PERGUNTAS.length}
+          </p>
           <p className="rli-pergunta">{atual.texto}</p>
           {atual.tipo === 'numero' && (
             <div className="rli-numero">
@@ -108,16 +154,30 @@ export function RunaLerIntuicao({ onComplete }: { onComplete: () => void }) {
                 type="number"
                 value={numInput}
                 onChange={(e) => setNumInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') responderNumero()
+                }}
                 aria-label="Sua resposta"
+                disabled={feedback === 'certo'}
               />
-              <button type="button" className="rli-responder" onClick={responderNumero}>
+              <button
+                type="button"
+                className="rli-responder"
+                onClick={responderNumero}
+                disabled={feedback === 'certo'}
+              >
                 Responder
               </button>
             </div>
           )}
           {feedback === 'errado' && (
             <p className="rli-feedback" role="status">
-              Ainda não é essa. Olhe de novo a coluna certa.
+              Ainda não é essa. Olhe de novo a coluna <b>{colunaAtual?.label}</b>.
+            </p>
+          )}
+          {feedback === 'certo' && (
+            <p className="rli-feedback rli-feedback-ok" role="status">
+              ✓ Isso mesmo!
             </p>
           )}
         </div>

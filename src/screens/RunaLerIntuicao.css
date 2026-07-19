@@ -12,11 +12,22 @@
   line-height: 1.5;
   margin: 0;
 }
+.rli-progresso {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0;
+}
 .rli-pergunta {
   font-family: var(--sans);
   color: var(--text);
   line-height: 1.45;
   margin: 0;
+}
+.rli-table-wrap {
+  overflow-x: auto;
 }
 .rli-table {
   width: 100%;
@@ -29,6 +40,17 @@
   border-bottom: 1px solid var(--line);
   text-align: left;
 }
+.rli-table tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.03);
+}
+.rli-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.rli-col-hint {
+  background: rgba(255, 191, 71, 0.18);
+  transition: background 0.2s ease;
+}
 .rli-row-clickable {
   cursor: pointer;
 }
@@ -36,6 +58,9 @@
 .rli-row-clickable:focus-visible {
   background: rgba(182, 241, 69, 0.08);
   outline: none;
+}
+.rli-table tbody tr.rli-row-certo {
+  background: rgba(182, 241, 69, 0.16);
 }
 .rli-task {
   display: flex;
@@ -64,8 +89,15 @@
   outline: 2px solid var(--cyan);
   outline-offset: 2px;
 }
+.rli-responder:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
 .rli-feedback {
   color: var(--amber);
+}
+.rli-feedback-ok {
+  color: var(--lime);
 }
 .rli-sucesso {
   display: flex;
