@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { GameState } from '../persistence/saveGame'
 import type { RuneKind } from '../nav'
 import {
@@ -55,6 +55,24 @@ export function SkillTreeScreen({
   const bossReady = status === 'boss'
   const done = status === 'dominada'
   const rusted = selected ? done && isRusted(game, selected.id, hoje) : false
+
+  // Popup do nó: por padrão ancorado logo abaixo do nó, mas isso podia (a) vazar
+  // pra fora do fundo do canvas em nós das últimas linhas — ficando escondido
+  // atrás do scroll interno do .skill-graph-viewport sem nenhum aviso — e (b)
+  // encostar/sobrepor visualmente o nó da linha de baixo em nós do topo. Corrige
+  // as duas coisas medindo a altura real do popup depois de montado: aumenta o
+  // respiro abaixo do nó (34 → 44) e prende o popup dentro dos limites do
+  // canvas (nunca deixa o fundo dele passar de layout.bounds.h), além de rolar
+  // o container pra garantir que o popup inteiro fique visível.
+  const popupRef = useRef<HTMLDivElement | null>(null)
+  const popupNaturalTop = selectedNode ? selectedNode.y - layout.bounds.y + NODE_R + 44 : 0
+  useLayoutEffect(() => {
+    const el = popupRef.current
+    if (!el) return
+    const maxTop = layout.bounds.h - el.offsetHeight - 12
+    el.style.top = `${Math.min(popupNaturalTop, Math.max(maxTop, 0))}px`
+    el.scrollIntoView({ block: 'nearest' })
+  }, [selectedId, popupNaturalTop, layout.bounds.h])
 
   return (
     <section className="screen">
@@ -132,10 +150,11 @@ export function SkillTreeScreen({
 
           {selected && selectedNode && (
             <div
+              ref={popupRef}
               className="skill-popup"
               style={{
                 left: selectedNode.x - layout.bounds.x,
-                top: selectedNode.y - layout.bounds.y + NODE_R + 34,
+                top: popupNaturalTop,
               }}
             >
               <button
