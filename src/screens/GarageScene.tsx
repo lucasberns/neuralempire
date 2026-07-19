@@ -265,8 +265,11 @@ export function GarageScene({
   ]
 
   // Porta de escritório (remodeled): parede A, canto livre depois da mesa.
-  const OFFICE_DOOR_X1 = 5.0
-  const OFFICE_DOOR_X2 = 5.9
+  // X1/X2 empurrados p/ x>=5.25 de propósito — abaixo disso o polígono da porta
+  // colide visualmente com o gabinete (Box em x=5.05..5.45,y=0.3..0.72), que fica
+  // bem na frente dessa mesma faixa da parede. Ver hit rects abaixo (mesmo motivo).
+  const OFFICE_DOOR_X1 = 5.25
+  const OFFICE_DOOR_X2 = 5.95
   const OFFICE_DOOR_Z = 2.05
 
   // Quadro de skills (corkboard) na parede A (y=0)
@@ -451,7 +454,7 @@ export function GarageScene({
               cy={iso(OFFICE_DOOR_X2 - 0.12, 0, OFFICE_DOOR_Z * 0.35)[1]}
               r={1.2}
             />
-            <rect className="hit" x={343} y={77} width={30} height={96} />
+            <rect className="hit" x={353} y={78} width={22} height={97} />
           </g>
         </>
       )}
@@ -560,7 +563,10 @@ export function GarageScene({
           />
           {/* luz no centro-baixo da face frontal do gabinete (face frontal = y+d, não y) */}
           <Leds x={5.25} y={0.7} z={0.1} n={level >= 1 ? 3 : 1} cls={`led ${level >= 1 ? 'cyan' : ''}`} />
-          <rect className="hit" x={326} y={120} width={32} height={58} />
+          {/* largura encurtada (era 32) — a borda direita entrava na hitbox da porta
+              do escritório (remodeled); a caixa visual (Box w=0.4) fica bem mais
+              estreita que isso, então ainda cobre a forma real com folga. */}
+          <rect className="hit" x={326} y={120} width={26} height={58} />
         </g>
       )}
 
