@@ -199,26 +199,19 @@ export function ContractsScreen({
         const desafios = SPECIAL.filter((c) => isAvailable(game, c) || isDone(game, c.id))
         if (desafios.length === 0) return null
         return (
-          <>
-            <div className="screen-head bairro-head">
-              <h3 className="panel-title">Desafios</h3>
-              <p className="muted">Contratos únicos pra skills já dominadas: duelos e crises de manutenção.</p>
-            </div>
-            {desafios.map((c) => {
-              const state: CardState = isDone(game, c.id) ? 'done' : 'boss'
-              return (
-                <BossCard
-                  key={c.id}
-                  c={c}
-                  state={state}
-                  cooldownMsLeft={bossCooldownMsLeft(game, c.id, now)}
-                  hardwareBlocked={!hardwareOk(game, c)}
-                  onAccept={() => open(c)}
-                  onRunes={() => onNavigate('skills')}
-                />
-              )
-            })}
-          </>
+          <article className="contract-card">
+            <header className="cc-head">
+              <span className="cc-emoji">⚔️</span>
+              <div className="cc-titles">
+                <h3 className="panel-title">Desafios</h3>
+                <span className="chip">{desafios.length} disponível(is)</span>
+              </div>
+            </header>
+            <p className="cc-brief">Contratos únicos pra skills já dominadas: duelos e crises de manutenção.</p>
+            <button className="btn btn-primary" onClick={() => onNavigate('desafios')}>
+              → Ver Desafios
+            </button>
+          </article>
         )
       })()}
     </section>

@@ -4,6 +4,7 @@ import { TopBar } from './components/TopBar'
 import type { View, RuneKind } from './nav'
 import { LabScreen } from './screens/LabScreen'
 import { ContractsScreen } from './screens/ContractsScreen'
+import { DesafiosScreen } from './screens/DesafiosScreen'
 import { SkillTreeScreen } from './screens/SkillTreeScreen'
 import { WorkbenchScreen } from './screens/WorkbenchScreen'
 import { RunaScreen } from './screens/RunaScreen'
@@ -197,11 +198,18 @@ export default function App() {
     !isKata(active.id) &&
     !isDone(game, active.id) &&
     !bossOnCooldown(game, active.id, nowMs())
-  const back = view === 'runa' ? () => setView('skills') : goLab
+  const back =
+    view === 'runa' ? () => setView('skills') : view === 'desafios' ? () => setView('contratos') : goLab
   // Fase 1: sair do boss no meio consome a tentativa — pede confirmação antes.
   const requestBack = () => (bossInProgress ? setAskLeave(true) : back())
   const backLabel =
-    view === 'runa' ? '← Árvore de Skills' : chapterOf(game) === 2 ? '← Sala Comercial' : '← Garagem'
+    view === 'runa'
+      ? '← Árvore de Skills'
+      : view === 'desafios'
+        ? '← Mesa de Contratos'
+        : chapterOf(game) === 2
+          ? '← Sala Comercial'
+          : '← Garagem'
   const abandonBoss = () => {
     if (active) setGame(failBoss(game, active.id, nowMs()))
     setAskLeave(false)
@@ -253,6 +261,9 @@ export default function App() {
           <main className="app-main">
             {view === 'contratos' && (
               <ContractsScreen game={game} onGameChange={setGame} onNavigate={setView} />
+            )}
+            {view === 'desafios' && (
+              <DesafiosScreen game={game} onGameChange={setGame} onNavigate={setView} />
             )}
             {view === 'skills' && (
               <SkillTreeScreen
