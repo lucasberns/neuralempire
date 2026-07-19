@@ -14,7 +14,6 @@ import {
   dailyBill,
   nextHardware,
   payAgiota,
-  relampagoAvailable,
   skillStatus,
 } from '../game/content'
 
@@ -55,9 +54,6 @@ export function LabScreen({
 
   const hw = currentHardware(game)
   const next = nextHardware(game)
-  // bosses prontos (runas feitas) + relâmpago do dia = clientes na porta
-  const waiting =
-    SKILLS.filter((s) => skillStatus(game, s) === 'boss').length + (relampagoAvailable(game) ? 1 : 0)
   const hasActive = game.contracts.activeId !== null
   const firstTime = game.contracts.doneIds.length === 0 && !hasActive
 
@@ -83,7 +79,6 @@ export function LabScreen({
         level={game.hardwareLevel}
         chapter={chapterOf(game)}
         internCount={game.interns.length}
-        notify={waiting}
         onSelect={go}
       />
 

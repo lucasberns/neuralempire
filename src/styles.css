@@ -1048,27 +1048,6 @@ button {
   stroke: rgba(88, 214, 255, 0.5);
   stroke-width: 0.5;
 }
-/* notificação de cliente sobre a porta */
-.garage .notify-dot {
-  fill: var(--lime);
-  stroke: #0a1206;
-  stroke-width: 1;
-  filter: drop-shadow(0 0 7px rgba(182, 241, 69, 0.9));
-  animation: notify-bounce 1.5s ease-in-out infinite;
-}
-.garage .notify-n {
-  fill: #0a1206;
-  font-family: var(--mono);
-  font-size: 9px;
-  font-weight: 700;
-  text-anchor: middle;
-  animation: notify-bounce 1.5s ease-in-out infinite;
-}
-@keyframes notify-bounce {
-  50% {
-    transform: translateY(-3px);
-  }
-}
 .garage .panelboard {
   fill: #1a2620;
   stroke: rgba(88, 214, 255, 0.55);

@@ -229,7 +229,6 @@ export function GarageScene({
   level,
   chapter,
   internCount,
-  notify,
   onSelect,
 }: {
   level: number
@@ -237,8 +236,6 @@ export function GarageScene({
   chapter: 1 | 2
   /** Estagiários contratados (GDD §4.2) — ≥1 mostra a mesa extra na cena. */
   internCount: number
-  /** Contratos esperando → badge de notificação sobre a porta. */
-  notify: number
   onSelect: (h: Hotspot) => void
 }) {
   // Grade do piso
@@ -297,8 +294,6 @@ export function GarageScene({
   for (let l = 0; l < netLayers.length - 1; l++)
     for (const a of netLayers[l])
       for (const b of netLayers[l + 1]) netEdges.push([iso(0, a.y, a.z), iso(0, b.y, b.z)])
-
-  const [badgeX, badgeY] = iso(0, 2.1, 2.25) // logo acima do portão
 
   return (
     <svg
@@ -372,7 +367,7 @@ export function GarageScene({
         onClick={() => onSelect('door')}
         role="button"
         tabIndex={0}
-        aria-label={notify > 0 ? `Portão — ${notify} contrato(s) esperando` : 'Portão da garagem'}
+        aria-label="Portão da garagem"
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault()
@@ -405,14 +400,6 @@ export function GarageScene({
         ))}
         {/* moldura por cima dos painéis — só o contorno, nítido */}
         <polygon className="gdoor" points={wallQuadB(GD_Y1, GD_Y2, 0, GD_Z)} />
-        {notify > 0 && (
-          <g className="notify">
-            <circle className="notify-dot" cx={badgeX} cy={badgeY} r={8.5} />
-            <text className="notify-n" x={badgeX} y={badgeY + 3.2}>
-              {notify}
-            </text>
-          </g>
-        )}
         <rect className="hit" x={157} y={30} width={70} height={117} />
       </g>
 
