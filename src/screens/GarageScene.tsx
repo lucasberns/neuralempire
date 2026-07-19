@@ -578,12 +578,13 @@ export function GarageScene({
       </g>
 
       {/* personagem (de costas, digitando — estilo GDT), com bob próprio.
-          z começa um pouco acima do assento (0.48 vs assento em 0.45) — gap visível
-          de propósito, pra não parecer que o corpo se funde/atravessa a cadeira. */}
+          z começa no topo do estofado do assento (0.83, era 0.48 — ficava por baixo
+          do topo do assento e a caixa opaca do corpo engolia o assento visualmente).
+          Todo o grupo (corpo + capuz) sobe junto pra manter a proporção. */}
       <g className="dev">
-        <Box x={3.24} y={1.08} z={0.48} w={0.44} d={0.36} h={0.6} tone="person" />
+        <Box x={3.24} y={1.08} z={0.83} w={0.44} d={0.36} h={0.6} tone="person" />
         {/* capuz: uma única forma (sem cabeça separada) */}
-        <circle className="dev-hood" cx={iso(3.46, 1.28, 1.27)[0]} cy={iso(3.46, 1.28, 1.27)[1]} r={7.2} />
+        <circle className="dev-hood" cx={iso(3.46, 1.28, 1.62)[0]} cy={iso(3.46, 1.28, 1.62)[1]} r={7.2} />
       </g>
 
       {/* caixotes / tralha da garagem — 3 modelos diferentes, espalhados pela garagem.
@@ -612,15 +613,21 @@ export function GarageScene({
       )}
 
       {/* mesa do estagiário (GDD §4.2): só aparece com ao menos 1 estagiário contratado —
-          canto livre do piso, longe das pilhas de caixa e da porta. */}
+          canto livre do piso, longe das pilhas de caixa e da porta.
+          y nudado de 4.3 p/ 4.6 (afasta da janela da sala remodelada) e a figura
+          senta À FRENTE da mesa (y>=5.0), numa cadeirinha própria — antes ela ficava
+          dentro da própria pegada da mesa (em pé em cima dela). */}
       {internCount > 0 && (
         <g className="intern-desk">
-          <Box x={0.3} y={4.3} z={0} w={0.5} d={0.35} h={0.55} tone="desk" />
-          <Box x={0.42} y={4.42} z={0.55} w={0.26} d={0.2} h={0.32} tone="intern" />
+          <Box x={0.3} y={4.6} z={0} w={0.5} d={0.35} h={0.55} tone="desk" />
+          {/* cadeirinha (base+assento combinados + encosto), miniatura da cadeira principal */}
+          <Box x={0.38} y={5.0} z={0} w={0.36} d={0.28} h={0.22} tone="chair" />
+          <Box x={0.38} y={5.22} z={0.18} w={0.36} d={0.08} h={0.34} tone="chair" />
+          <Box x={0.44} y={5.04} z={0.22} w={0.22} d={0.18} h={0.28} tone="intern" />
           <circle
             className="intern-hood"
-            cx={iso(0.55, 4.52, 1.0)[0]}
-            cy={iso(0.55, 4.52, 1.0)[1]}
+            cx={iso(0.55, 5.13, 0.64)[0]}
+            cy={iso(0.55, 5.13, 0.64)[1]}
             r={5.6}
           />
         </g>
