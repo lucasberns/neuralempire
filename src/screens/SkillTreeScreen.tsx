@@ -60,78 +60,88 @@ export function SkillTreeScreen({
   // `position: fixed` nunca depende de onde o nó está no canvas, então a
   // classe inteira de bug "popup cobre nó vizinho" (que as duas tentativas
   // anteriores tentaram resolver com clamp/flip/troca de tela) some de graça.
+  // O sheet fica FORA de `<section className="screen">` de propósito: `.screen`
+  // anima com `transform` (fade-up), e qualquer ancestral com `transform`
+  // vira containing block de `position: fixed` — o sheet ficaria preso dentro
+  // dos limites da tela em vez de cobrir a viewport inteira (TopBar incluído).
   return (
-    <section className="screen">
-      <div className="screen-head">
-        <h2 className="screen-title">Árvore de Skills</h2>
-        <p className="muted">
-          {dominadas}/{SKILLS.length} skills dominadas. Toque um nó pra ver os detalhes.
-        </p>
-      </div>
-
-      <div className="skill-graph-viewport">
-        <div className="skill-graph-canvas" style={{ width: layout.bounds.w, height: layout.bounds.h }}>
-          <svg
-            className="skill-graph"
-            viewBox={`${layout.bounds.x} ${layout.bounds.y} ${layout.bounds.w} ${layout.bounds.h}`}
-            width={layout.bounds.w}
-            height={layout.bounds.h}
-            role="img"
-            aria-label="Mapa da árvore de skills"
-          >
-            {layout.edges.map((e) => {
-              const from = layout.byId.get(e.from)
-              const to = layout.byId.get(e.to)
-              if (!from || !to) return null
-              const toSkill = skillById(e.to)
-              const edgeActive = !!toSkill && skillStatus(game, toSkill) !== 'bloqueada'
-              return (
-                <line
-                  key={`${e.from}-${e.to}`}
-                  className={`skill-edge${edgeActive ? '' : ' dim'}`}
-                  x1={from.x}
-                  y1={from.y}
-                  x2={to.x}
-                  y2={to.y}
-                />
-              )
-            })}
-
-            {layout.nodes.map((n) => {
-              const s = skillById(n.id)
-              if (!s) return null
-              const nStatus = skillStatus(game, s)
-              const nMeta = STATUS_META[nStatus]
-              const nRusted = nStatus === 'dominada' && isRusted(game, s.id, hoje)
-              return (
-                <g
-                  key={n.id}
-                  transform={`translate(${n.x}, ${n.y})`}
-                  className={`skill-node-g is-${nStatus}${nRusted ? ' is-rusted' : ''}`}
-                  role="button"
-                  tabIndex={0}
-                  aria-label={`${s.nome} — ${nRusted ? 'Enferrujada' : nMeta.label}`}
-                  onClick={() => toggleSelected(n.id)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault()
-                      toggleSelected(n.id)
-                    }
-                  }}
-                >
-                  <circle className="skill-node-circle" r={NODE_R} />
-                  <text className="skill-node-icon" y={8} textAnchor="middle">
-                    {nMeta.glyph}
-                  </text>
-                  <text className="skill-node-nome" y={NODE_R + 18} textAnchor="middle">
-                    {s.nome}
-                  </text>
-                </g>
-              )
-            })}
-          </svg>
+    <>
+      <section className="screen">
+        <div className="screen-head">
+          <h2 className="screen-title">Árvore de Skills</h2>
+          <p className="muted">
+            {dominadas}/{SKILLS.length} skills dominadas. Toque um nó pra ver os detalhes.
+          </p>
         </div>
-      </div>
+
+        <div className="skill-graph-viewport">
+          <div className="skill-graph-canvas" style={{ width: layout.bounds.w, height: layout.bounds.h }}>
+            <svg
+              className="skill-graph"
+              viewBox={`${layout.bounds.x} ${layout.bounds.y} ${layout.bounds.w} ${layout.bounds.h}`}
+              width={layout.bounds.w}
+              height={layout.bounds.h}
+              role="img"
+              aria-label="Mapa da árvore de skills"
+            >
+              {layout.edges.map((e) => {
+                const from = layout.byId.get(e.from)
+                const to = layout.byId.get(e.to)
+                if (!from || !to) return null
+                const toSkill = skillById(e.to)
+                const edgeActive = !!toSkill && skillStatus(game, toSkill) !== 'bloqueada'
+                return (
+                  <line
+                    key={`${e.from}-${e.to}`}
+                    className={`skill-edge${edgeActive ? '' : ' dim'}`}
+                    x1={from.x}
+                    y1={from.y}
+                    x2={to.x}
+                    y2={to.y}
+                  />
+                )
+              })}
+
+              {layout.nodes.map((n) => {
+                const s = skillById(n.id)
+                if (!s) return null
+                const nStatus = skillStatus(game, s)
+                const nMeta = STATUS_META[nStatus]
+                const nRusted = nStatus === 'dominada' && isRusted(game, s.id, hoje)
+                return (
+                  <g
+                    key={n.id}
+                    transform={`translate(${n.x}, ${n.y})`}
+                    className={`skill-node-g is-${nStatus}${nRusted ? ' is-rusted' : ''}`}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`${s.nome} — ${nRusted ? 'Enferrujada' : nMeta.label}`}
+                    onClick={() => toggleSelected(n.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        toggleSelected(n.id)
+                      }
+                    }}
+                  >
+                    <circle className="skill-node-circle" r={NODE_R} />
+                    <text className="skill-node-icon" y={8} textAnchor="middle">
+                      {nMeta.glyph}
+                    </text>
+                    <text className="skill-node-nome" y={NODE_R + 18} textAnchor="middle">
+                      {s.nome}
+                    </text>
+                  </g>
+                )
+              })}
+            </svg>
+          </div>
+        </div>
+
+        <p className="footnote">
+          A árvore brilhando é o retrato do seu conhecimento. Você pode perder o lab — nunca as skills.
+        </p>
+      </section>
 
       {selected && (
         <div className="sheet-back" onClick={() => setSelectedId(null)}>
@@ -229,10 +239,6 @@ export function SkillTreeScreen({
           </div>
         </div>
       )}
-
-      <p className="footnote">
-        A árvore brilhando é o retrato do seu conhecimento. Você pode perder o lab — nunca as skills.
-      </p>
-    </section>
+    </>
   )
 }
