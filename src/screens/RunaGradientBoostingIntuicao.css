@@ -1,0 +1,66 @@
+/* src/screens/RunaGradientBoostingIntuicao.css */
+.runa-gradient-boosting-intuicao {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.rgb-lead {
+  font-family: var(--sans);
+  color: var(--muted);
+  line-height: 1.5;
+}
+.rgb-barra-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+}
+.rgb-trilha {
+  height: 18px;
+  background: var(--panel);
+  border: 1px solid var(--line-bright);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.rgb-barra {
+  height: 100%;
+  background: linear-gradient(90deg, var(--cyan), var(--red));
+  transition: width 0.2s ease;
+}
+.rgb-barra.is-good {
+  background: linear-gradient(90deg, var(--cyan), var(--lime));
+}
+.rgb-residuo-txt {
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  color: var(--muted);
+  margin: 0;
+}
+.rgb-slider {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.rgb-slider-top {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.rgb-val {
+  color: var(--text);
+}
+.rgb-meter {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.rgb-meter-hint {
+  color: var(--muted);
+  font-size: 0.8rem;
+  margin: 0;
+}
