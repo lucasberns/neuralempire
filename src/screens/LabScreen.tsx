@@ -80,7 +80,7 @@ export function LabScreen({
       <span className="mote m4" aria-hidden />
       <GarageScene
         level={game.hardwareLevel}
-        chapter={chapterOf(game)}
+        remodeled={game.salaComercialComprada}
         internCount={game.interns.length}
         onSelect={go}
       />

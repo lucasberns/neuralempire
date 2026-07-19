@@ -227,13 +227,13 @@ export type Hotspot = 'pc' | 'door' | 'board'
 
 export function GarageScene({
   level,
-  chapter,
+  remodeled,
   internCount,
   onSelect,
 }: {
   level: number
-  /** Cap. 1 = garagem (paleta lima); Cap. 2 = Sala Comercial (paleta ciano + placa). */
-  chapter: 1 | 2
+  /** Sala Comercial comprada (loja de upgrades) — troca porta/parede/decoração; independente de `chapterOf`. */
+  remodeled: boolean
   /** Estagiários contratados (GDD §4.2) — ≥1 mostra a mesa extra na cena. */
   internCount: number
   onSelect: (h: Hotspot) => void
@@ -263,6 +263,11 @@ export function GarageScene({
     [1.725, 0.75],
     [2.62, 0.75],
   ]
+
+  // Porta de escritório (remodeled): parede A, canto livre depois da mesa.
+  const OFFICE_DOOR_X1 = 5.0
+  const OFFICE_DOOR_X2 = 5.9
+  const OFFICE_DOOR_Z = 2.05
 
   // Quadro de skills (corkboard) na parede A (y=0)
   const board = wallQuadA(0.5, 2.0, 1.0, 2.0)
@@ -297,11 +302,11 @@ export function GarageScene({
 
   return (
     <svg
-      className={`garage${chapter === 2 ? ' chapter-2' : ''}`}
+      className={`garage${remodeled ? ' remodeled' : ''}`}
       viewBox={GARAGE_VIEWBOX}
       preserveAspectRatio="xMidYMid meet"
       role="img"
-      aria-label={chapter === 2 ? 'Sua sala comercial em vista isométrica' : 'Sua garagem em vista isométrica'}
+      aria-label={remodeled ? 'Sua sala comercial em vista isométrica' : 'Sua garagem em vista isométrica'}
     >
       {/* paredes */}
       <polygon className="wall" points={wallA} />
@@ -320,7 +325,7 @@ export function GarageScene({
       </g>
 
       {/* placa da virada de capítulo — só depois do Tier 1 completo (GDD §2) */}
-      {chapter === 2 &&
+      {remodeled &&
         (() => {
           const [sx, sy] = iso(0, (GD_Y1 + GD_Y2) / 2, GD_Z + 0.12)
           return (
@@ -361,47 +366,95 @@ export function GarageScene({
         <rect className="hit" x={244} y={28} width={46} height={56} />
       </g>
 
-      {/* porta de garagem seccional (parede B) — hotspot dos contratos */}
-      <g
-        className="hot"
-        onClick={() => onSelect('door')}
-        role="button"
-        tabIndex={0}
-        aria-label="Portão da garagem"
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault()
-            onSelect('door')
-          }
-        }}
-      >
-        {/* trilhos laterais */}
-        {[GD_Y1, GD_Y2].map((y) => (
-          <line
-            key={y}
-            className="gdoor-rail"
-            x1={iso(0, y, 0)[0]}
-            y1={iso(0, y, 0)[1]}
-            x2={iso(0, y, GD_Z)[0]}
-            y2={iso(0, y, GD_Z)[1]}
-          />
-        ))}
-        {/* painéis horizontais (tons alternados = relevo prensado) */}
-        {GD_BANDS.map(([z1, z2], i) => (
-          <polygon
-            key={z1}
-            className={`gdoor-panel ${i % 2 === 0 ? 'a' : 'b'}`}
-            points={wallQuadB(GD_Y1, GD_Y2, z1, z2)}
-          />
-        ))}
-        {/* fileira de janelas no painel superior */}
-        {GD_WINDOWS.map(([y, w]) => (
-          <polygon key={y} className="gdoor-window" points={wallQuadB(y, y + w, 1.55, 1.9)} />
-        ))}
-        {/* moldura por cima dos painéis — só o contorno, nítido */}
-        <polygon className="gdoor" points={wallQuadB(GD_Y1, GD_Y2, 0, GD_Z)} />
-        <rect className="hit" x={157} y={30} width={70} height={117} />
-      </g>
+      {/* porta: garagem (parede B) OU escritório na parede A + janela na parede B (remodeled) */}
+      {!remodeled ? (
+        <g
+          className="hot"
+          onClick={() => onSelect('door')}
+          role="button"
+          tabIndex={0}
+          aria-label="Portão da garagem"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              onSelect('door')
+            }
+          }}
+        >
+          {/* trilhos laterais */}
+          {[GD_Y1, GD_Y2].map((y) => (
+            <line
+              key={y}
+              className="gdoor-rail"
+              x1={iso(0, y, 0)[0]}
+              y1={iso(0, y, 0)[1]}
+              x2={iso(0, y, GD_Z)[0]}
+              y2={iso(0, y, GD_Z)[1]}
+            />
+          ))}
+          {/* painéis horizontais (tons alternados = relevo prensado) */}
+          {GD_BANDS.map(([z1, z2], i) => (
+            <polygon
+              key={z1}
+              className={`gdoor-panel ${i % 2 === 0 ? 'a' : 'b'}`}
+              points={wallQuadB(GD_Y1, GD_Y2, z1, z2)}
+            />
+          ))}
+          {/* fileira de janelas no painel superior */}
+          {GD_WINDOWS.map(([y, w]) => (
+            <polygon key={y} className="gdoor-window" points={wallQuadB(y, y + w, 1.55, 1.9)} />
+          ))}
+          {/* moldura por cima dos painéis — só o contorno, nítido */}
+          <polygon className="gdoor" points={wallQuadB(GD_Y1, GD_Y2, 0, GD_Z)} />
+          <rect className="hit" x={157} y={30} width={70} height={117} />
+        </g>
+      ) : (
+        <>
+          {/* janela na parede B (onde a porta ficava) — decorativa, vista da cidade */}
+          <g className="window" aria-hidden="true">
+            <polygon className="window-glass" points={wallQuadB(0.85, 3.35, 0.3, 1.9)} />
+            <polygon className="window-building b1" points={wallQuadB(0.95, 1.35, 0.35, 1.1)} />
+            <polygon className="window-building b2" points={wallQuadB(1.5, 2.0, 0.35, 1.6)} />
+            <polygon className="window-building b3" points={wallQuadB(2.15, 2.6, 0.35, 0.95)} />
+            <polygon className="window-frame" points={wallQuadB(0.7, 3.5, 0, 2.05)} />
+          </g>
+          {/* porta na parede A, canto livre depois da mesa — hotspot dos contratos */}
+          <g
+            className="hot"
+            onClick={() => onSelect('door')}
+            role="button"
+            tabIndex={0}
+            aria-label="Porta da sala"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                onSelect('door')
+              }
+            }}
+          >
+            <polygon
+              className="office-door"
+              points={wallQuadA(OFFICE_DOOR_X1, OFFICE_DOOR_X2, 0, OFFICE_DOOR_Z)}
+            />
+            <polygon
+              className="office-door-window"
+              points={wallQuadA(
+                OFFICE_DOOR_X1 + 0.15,
+                OFFICE_DOOR_X2 - 0.15,
+                OFFICE_DOOR_Z * 0.45,
+                OFFICE_DOOR_Z * 0.8,
+              )}
+            />
+            <circle
+              className="led"
+              cx={iso(OFFICE_DOOR_X2 - 0.12, 0, OFFICE_DOOR_Z * 0.35)[0]}
+              cy={iso(OFFICE_DOOR_X2 - 0.12, 0, OFFICE_DOOR_Z * 0.35)[1]}
+              r={1.2}
+            />
+            <rect className="hit" x={343} y={77} width={30} height={96} />
+          </g>
+        </>
+      )}
 
       {/* rack de GPUs (nível 2) — canto do fundo */}
       {level >= 2 && (
@@ -533,10 +586,22 @@ export function GarageScene({
       {/* rotação de papéis: modelo 3 (seta) agora é o que nunca some; modelo 1
           (clássica) some no estágio 3; modelo 2 (cluster) some no estágio 2,
           no canto do rack — modelo 4 (fechado) continua sempre visível. */}
-      <CratePileArrow x={4.7} y={2.4} big={0.85} />
-      <CratePileOpen x={1.773} y={3.664} big={0.85} />
-      {level < 2 && <CratePile x={4.0} y={5.0} big={1.05} />}
-      {level < 1 && <CratePileCluster x={0.94} y={0.3} big={0.95} />}
+      {remodeled ? (
+        <>
+          {/* planta — vaso (crate2) + folhagem (book1, reaproveita o verde-lima já existente) */}
+          <Box x={0.94} y={0.3} z={0} w={0.4} d={0.4} h={0.32} tone="crate2" />
+          <Box x={0.99} y={0.35} z={0.32} w={0.3} d={0.3} h={0.4} tone="book1" />
+          {/* armário de arquivo — reaproveita o tom "tower2" (metal ciano) já usado no gabinete */}
+          <Box x={4.0} y={5.0} z={0} w={0.5} d={0.45} h={0.9} tone="tower2" />
+        </>
+      ) : (
+        <>
+          <CratePileArrow x={4.7} y={2.4} big={0.85} />
+          <CratePileOpen x={1.773} y={3.664} big={0.85} />
+          {level < 2 && <CratePile x={4.0} y={5.0} big={1.05} />}
+          {level < 1 && <CratePileCluster x={0.94} y={0.3} big={0.95} />}
+        </>
+      )}
 
       {/* mesa do estagiário (GDD §4.2): só aparece com ao menos 1 estagiário contratado —
           canto livre do piso, longe das pilhas de caixa e da porta. */}

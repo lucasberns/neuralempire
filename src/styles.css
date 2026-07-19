@@ -829,21 +829,44 @@ button {
   stroke-width: 1;
 }
 
-/* Cap. 2 (Sala Comercial): mesma geometria, paleta deslocada pro ciano — sinaliza a virada
-   de capítulo sem redesenhar a sala (ver spec: redesenho completo fica pra iteração futura). */
-.garage.chapter-2 .wall {
+/* Sala Comercial (remodeled): mesma geometria, paleta deslocada pro ciano — sinaliza a
+   compra da sala sem redesenhar tudo (ver spec: redesenho completo fica pra iteração futura). */
+.garage.remodeled .wall {
   fill: #0e1c21;
   stroke: rgba(88, 214, 255, 0.35);
 }
-.garage.chapter-2 .wall-b {
+.garage.remodeled .wall-b {
   fill: #0a1519;
 }
-.garage.chapter-2 .floor {
+.garage.remodeled .floor {
   fill: #0a1315;
   stroke: rgba(88, 214, 255, 0.4);
 }
-.garage.chapter-2 .grid {
+.garage.remodeled .grid {
   stroke: rgba(88, 214, 255, 0.14);
+}
+.garage .window-frame {
+  fill: none;
+  stroke: rgba(88, 214, 255, 0.4);
+  stroke-width: 1;
+}
+.garage .window-glass {
+  fill: rgba(88, 214, 255, 0.16);
+  stroke: rgba(88, 214, 255, 0.5);
+  stroke-width: 0.6;
+}
+.garage .window-building {
+  fill: rgba(10, 21, 25, 0.9);
+}
+.garage .office-door {
+  fill: #14241f;
+  stroke: rgba(88, 214, 255, 0.45);
+  stroke-width: 1;
+}
+.garage .office-door-window {
+  fill: rgba(88, 214, 255, 0.25);
+  stroke: rgba(88, 214, 255, 0.5);
+  stroke-width: 0.5;
 }
 .garage .chapter-sign {
   font-family: var(--mono);
