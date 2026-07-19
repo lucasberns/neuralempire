@@ -5,15 +5,18 @@ import type { ClientState } from '../pyodide/client'
 import { GarageScene, type Hotspot } from './GarageScene'
 import {
   ACHIEVEMENTS,
+  HARDWARE,
   RENT_PER_TURN,
+  SALA_COMERCIAL_COST,
   SKILLS,
   buyHardware,
+  buySalaComercial,
   chapterOf,
   currentHardware,
   curriculoText,
   dailyBill,
-  nextHardware,
   payAgiota,
+  salaComercialHireable,
   skillStatus,
 } from '../game/content'
 
@@ -42,6 +45,7 @@ export function LabScreen({
   const [zooming, setZooming] = useState(arriveFromDesk)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [achievementsOpen, setAchievementsOpen] = useState(false)
+  const [upgradesOpen, setUpgradesOpen] = useState(false)
 
   useEffect(() => {
     if (!arriveFromDesk) return
@@ -53,7 +57,6 @@ export function LabScreen({
   }, [])
 
   const hw = currentHardware(game)
-  const next = nextHardware(game)
   const hasActive = game.contracts.activeId !== null
   const firstTime = game.contracts.doneIds.length === 0 && !hasActive
 
@@ -112,23 +115,9 @@ export function LabScreen({
       </div>
 
       <div className="ov ov-bl">
-        <span className="ov-hw">{hw.nome}</span>
-        {next &&
-          (game.money >= next.custo ? (
-            <button
-              className="ov-upgrade ready"
-              onClick={() => {
-                const g = buyHardware(game)
-                if (g) onGameChange(g)
-              }}
-            >
-              ⬆ {next.nome} · {money(next.custo)}
-            </button>
-          ) : (
-            <button className="ov-upgrade" disabled>
-              🔒 {next.nome} · falta {money(next.custo - game.money)}
-            </button>
-          ))}
+        <button className="ov-upgrade ready" onClick={() => setUpgradesOpen(true)}>
+          {hw.nome} ▸
+        </button>
       </div>
 
       <button
@@ -253,6 +242,74 @@ export function LabScreen({
               })}
             </ul>
             <button className="btn btn-primary" onClick={() => setAchievementsOpen(false)}>
+              Fechar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Upgrades: Sala Comercial + hardware, unificados num menu só */}
+      {upgradesOpen && (
+        <div className="sheet-back" onClick={() => setUpgradesOpen(false)}>
+          <div className="sheet" role="dialog" aria-label="Upgrades" onClick={(e) => e.stopPropagation()}>
+            <h3 className="panel-title">Upgrades</h3>
+
+            <div className="cfg-debt">
+              <span>Sala Comercial</span>
+              {game.salaComercialComprada ? (
+                <span className="cc-lock ok">✓ adquirida</span>
+              ) : !salaComercialHireable(game) ? (
+                <span className="cc-lock">🔒 domine o Tier 1</span>
+              ) : game.money >= SALA_COMERCIAL_COST ? (
+                <button
+                  className="btn btn-ghost sm"
+                  onClick={() => {
+                    const g = buySalaComercial(game)
+                    if (g) onGameChange(g)
+                  }}
+                >
+                  Comprar · {money(SALA_COMERCIAL_COST)}
+                </button>
+              ) : (
+                <button className="btn btn-ghost sm" disabled>
+                  🔒 falta {money(SALA_COMERCIAL_COST - game.money)}
+                </button>
+              )}
+            </div>
+
+            <p className="panel-title cfg-sec">Hardware</p>
+            {HARDWARE.map((tier, i) => {
+              const owned = i <= game.hardwareLevel
+              const isNext = i === game.hardwareLevel + 1
+              return (
+                <div key={tier.nome} className="cfg-debt">
+                  <span>{tier.nome}</span>
+                  {owned ? (
+                    <span className="cc-lock ok">{i === game.hardwareLevel ? '✓ atual' : '✓'}</span>
+                  ) : !isNext ? (
+                    <span className="cc-lock">🔒 compre antes: {HARDWARE[game.hardwareLevel + 1].nome}</span>
+                  ) : i === 2 && !game.salaComercialComprada ? (
+                    <span className="cc-lock">🔒 requer Sala Comercial</span>
+                  ) : game.money >= tier.custo ? (
+                    <button
+                      className="btn btn-ghost sm"
+                      onClick={() => {
+                        const g = buyHardware(game)
+                        if (g) onGameChange(g)
+                      }}
+                    >
+                      Comprar · {money(tier.custo)}
+                    </button>
+                  ) : (
+                    <button className="btn btn-ghost sm" disabled>
+                      🔒 falta {money(tier.custo - game.money)}
+                    </button>
+                  )}
+                </div>
+              )
+            })}
+
+            <button className="btn btn-primary" onClick={() => setUpgradesOpen(false)}>
               Fechar
             </button>
           </div>
