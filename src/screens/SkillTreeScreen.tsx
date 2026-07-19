@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import type { GameState } from '../persistence/saveGame'
 import type { RuneKind } from '../nav'
 import {
@@ -55,24 +55,11 @@ export function SkillTreeScreen({
   const done = status === 'dominada'
   const rusted = selected ? done && isRusted(game, selected.id, hoje) : false
 
-  // Popup do nó: por que isso virou uma "tela de detalhe" que SUBSTITUI a
-  // árvore, em vez de uma tooltip flutuando perto do nó (como nas tentativas
-  // anteriores)? O conteúdo do popup (~300px) é bem mais alto que o
-  // espaçamento entre as linhas da árvore (118px), e o container do grafo
-  // rola por dentro — então mesmo que a tooltip fique "fora" da área do
-  // grafo na tela, os nós das linhas vizinhas continuam existindo no DOM com
-  // as coordenadas reais deles (getBoundingClientRect não zera isso só
-  // porque o CSS overflow escondeu visualmente). Qualquer popup ancorado
-  // nas coordenadas do nó — com clamp, com flip, tanto faz — vai sempre
-  // coincidir com pelo menos uma linha vizinha em algum nó do meio da árvore.
-  // A única forma de garantir zero sobreposição de verdade é os outros nós
-  // não existirem na tela enquanto o popup tá aberto — daí trocar de tela em
-  // vez de sobrepor.
-  const popupRef = useRef<HTMLDivElement | null>(null)
-  useEffect(() => {
-    if (selectedId) popupRef.current?.scrollIntoView({ block: 'start' })
-  }, [selectedId])
-
+  // Popup do nó: sheet fixo (mesmo padrão de Configurações/Conquistas/Upgrades
+  // na LabScreen) em vez de tooltip ancorada nas coordenadas do nó. Um sheet
+  // `position: fixed` nunca depende de onde o nó está no canvas, então a
+  // classe inteira de bug "popup cobre nó vizinho" (que as duas tentativas
+  // anteriores tentaram resolver com clamp/flip/troca de tela) some de graça.
   return (
     <section className="screen">
       <div className="screen-head">
@@ -82,161 +69,163 @@ export function SkillTreeScreen({
         </p>
       </div>
 
-      {selected ? (
-        <div ref={popupRef} className="skill-popup">
-          <button
-            type="button"
-            className="skill-popup-close"
-            aria-label="Fechar"
-            onClick={() => setSelectedId(null)}
+      <div className="skill-graph-viewport">
+        <div className="skill-graph-canvas" style={{ width: layout.bounds.w, height: layout.bounds.h }}>
+          <svg
+            className="skill-graph"
+            viewBox={`${layout.bounds.x} ${layout.bounds.y} ${layout.bounds.w} ${layout.bounds.h}`}
+            width={layout.bounds.w}
+            height={layout.bounds.h}
+            role="img"
+            aria-label="Mapa da árvore de skills"
           >
-            ✕
-          </button>
-
-          <div className="skill-popup-head">
-            <h3 className="panel-title">{selected.nome}</h3>
-            {rusted ? (
-              <span className="chip status-rusted">Enferrujada</span>
-            ) : (
-              <span className={`chip status-${status}`}>{meta.label}</span>
-            )}
-          </div>
-          <p className="muted">{selected.desc}</p>
-
-          <div className="skill-popup-runas">
-            {(['intuicao', 'matematica'] as RuneKind[]).map((k) => {
-              const doneRune = runes[k]
-              const icon = k === 'intuicao' ? '◆' : 'Σ'
-              const label = k === 'intuicao' ? 'Intuição' : 'Matemática'
+            {layout.edges.map((e) => {
+              const from = layout.byId.get(e.from)
+              const to = layout.byId.get(e.to)
+              if (!from || !to) return null
+              const toSkill = skillById(e.to)
+              const edgeActive = !!toSkill && skillStatus(game, toSkill) !== 'bloqueada'
               return (
-                <button
-                  key={k}
-                  type="button"
-                  className={`skill-popup-runa ${doneRune ? 'on' : ''}`}
-                  disabled={!active || doneRune || done}
-                  onClick={() => onOpenRune(selected.id, k)}
-                >
-                  <span className="spr-icon">{icon}</span>
-                  <span className="spr-label">{label}</span>
-                  {doneRune && <span className="spr-check">✓</span>}
-                </button>
+                <line
+                  key={`${e.from}-${e.to}`}
+                  className={`skill-edge${edgeActive ? '' : ' dim'}`}
+                  x1={from.x}
+                  y1={from.y}
+                  x2={to.x}
+                  y2={to.y}
+                />
               )
             })}
+
+            {layout.nodes.map((n) => {
+              const s = skillById(n.id)
+              if (!s) return null
+              const nStatus = skillStatus(game, s)
+              const nMeta = STATUS_META[nStatus]
+              const nRusted = nStatus === 'dominada' && isRusted(game, s.id, hoje)
+              return (
+                <g
+                  key={n.id}
+                  transform={`translate(${n.x}, ${n.y})`}
+                  className={`skill-node-g is-${nStatus}${nRusted ? ' is-rusted' : ''}`}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`${s.nome} — ${nRusted ? 'Enferrujada' : nMeta.label}`}
+                  onClick={() => toggleSelected(n.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      toggleSelected(n.id)
+                    }
+                  }}
+                >
+                  <circle className="skill-node-circle" r={NODE_R} />
+                  <text className="skill-node-icon" y={8} textAnchor="middle">
+                    {nMeta.glyph}
+                  </text>
+                  <text className="skill-node-nome" y={NODE_R + 18} textAnchor="middle">
+                    {s.nome}
+                  </text>
+                </g>
+              )
+            })}
+          </svg>
+        </div>
+      </div>
+
+      {selected && (
+        <div className="sheet-back" onClick={() => setSelectedId(null)}>
+          <div className="sheet" role="dialog" aria-label={selected.nome} onClick={(e) => e.stopPropagation()}>
             <button
               type="button"
-              className={`skill-popup-runa ${runes.codigo ? 'on' : ''}`}
-              disabled={!active || runes.codigo || done}
-              onClick={() => onOpenKata(selected.id)}
+              className="skill-popup-close"
+              aria-label="Fechar"
+              onClick={() => setSelectedId(null)}
             >
-              <span className="spr-icon">{'{}'}</span>
-              <span className="spr-label">Código</span>
-              {runes.codigo && <span className="spr-check">✓</span>}
+              ✕
             </button>
-          </div>
 
-          {rusted && (
-            <p className="footnote left rust-warn">
-              Sem uso, sua equipe enferrujou aqui — contratos do bairro dessa skill pagam menos. Uma revisão
-              rápida tira a ferrugem.
-            </p>
-          )}
-          {rusted && (
-            <button className="btn btn-primary sm" onClick={() => onReview(selected.id)}>
-              🔧 Revisar (tirar a ferrugem)
-            </button>
-          )}
-          {done && (
-            <button
-              className={`btn ${rusted ? 'btn-ghost' : 'btn-primary'} sm`}
-              onClick={() => onOpenBoss(selected.contractId)}
-            >
-              Revisar a Prova
-            </button>
-          )}
-          {bossReady &&
-            (() => {
-              const cd = bossCooldownMsLeft(game, selected.contractId, now)
-              const boss = contractById(selected.contractId)
-              const hwBlock = !!boss && !hardwareOk(game, boss)
-              if (cd > 0)
-                return <p className="footnote left">⏳ Prova em cooldown — tente em {fmtCooldown(cd)}.</p>
-              if (hwBlock)
-                return (
-                  <p className="footnote left">
-                    🖥 Requer {HARDWARE[boss?.minHardware ?? 0]?.nome}. Faça o upgrade na garagem.
-                  </p>
-                )
-              return (
-                <button className="btn btn-primary sm" onClick={() => onOpenBoss(selected.contractId)}>
-                  ⚔ Fazer a Prova de Domínio
-                </button>
-              )
-            })()}
-          {status === 'runas' && <p className="footnote left">Complete as 2 runas para liberar a Prova.</p>}
-          {status === 'bloqueada' && <p className="footnote left">Domine a skill anterior primeiro.</p>}
-        </div>
-      ) : (
-        <div className="skill-graph-viewport">
-          <div className="skill-graph-canvas" style={{ width: layout.bounds.w, height: layout.bounds.h }}>
-            <svg
-              className="skill-graph"
-              viewBox={`${layout.bounds.x} ${layout.bounds.y} ${layout.bounds.w} ${layout.bounds.h}`}
-              width={layout.bounds.w}
-              height={layout.bounds.h}
-              role="img"
-              aria-label="Mapa da árvore de skills"
-            >
-              {layout.edges.map((e) => {
-                const from = layout.byId.get(e.from)
-                const to = layout.byId.get(e.to)
-                if (!from || !to) return null
-                const toSkill = skillById(e.to)
-                const edgeActive = !!toSkill && skillStatus(game, toSkill) !== 'bloqueada'
-                return (
-                  <line
-                    key={`${e.from}-${e.to}`}
-                    className={`skill-edge${edgeActive ? '' : ' dim'}`}
-                    x1={from.x}
-                    y1={from.y}
-                    x2={to.x}
-                    y2={to.y}
-                  />
-                )
-              })}
+            <div className="skill-popup-head">
+              <h3 className="panel-title">{selected.nome}</h3>
+              {rusted ? (
+                <span className="chip status-rusted">Enferrujada</span>
+              ) : (
+                <span className={`chip status-${status}`}>{meta.label}</span>
+              )}
+            </div>
+            <p className="muted">{selected.desc}</p>
 
-              {layout.nodes.map((n) => {
-                const s = skillById(n.id)
-                if (!s) return null
-                const nStatus = skillStatus(game, s)
-                const nMeta = STATUS_META[nStatus]
-                const nRusted = nStatus === 'dominada' && isRusted(game, s.id, hoje)
+            <div className="skill-popup-runas">
+              {(['intuicao', 'matematica'] as RuneKind[]).map((k) => {
+                const doneRune = runes[k]
+                const icon = k === 'intuicao' ? '◆' : 'Σ'
+                const label = k === 'intuicao' ? 'Intuição' : 'Matemática'
                 return (
-                  <g
-                    key={n.id}
-                    transform={`translate(${n.x}, ${n.y})`}
-                    className={`skill-node-g is-${nStatus}${nRusted ? ' is-rusted' : ''}`}
-                    role="button"
-                    tabIndex={0}
-                    aria-label={`${s.nome} — ${nRusted ? 'Enferrujada' : nMeta.label}`}
-                    onClick={() => toggleSelected(n.id)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault()
-                        toggleSelected(n.id)
-                      }
-                    }}
+                  <button
+                    key={k}
+                    type="button"
+                    className={`skill-popup-runa ${doneRune ? 'on' : ''}`}
+                    disabled={!active || doneRune || done}
+                    onClick={() => onOpenRune(selected.id, k)}
                   >
-                    <circle className="skill-node-circle" r={NODE_R} />
-                    <text className="skill-node-icon" y={8} textAnchor="middle">
-                      {nMeta.glyph}
-                    </text>
-                    <text className="skill-node-nome" y={NODE_R + 18} textAnchor="middle">
-                      {s.nome}
-                    </text>
-                  </g>
+                    <span className="spr-icon">{icon}</span>
+                    <span className="spr-label">{label}</span>
+                    {doneRune && <span className="spr-check">✓</span>}
+                  </button>
                 )
               })}
-            </svg>
+              <button
+                type="button"
+                className={`skill-popup-runa ${runes.codigo ? 'on' : ''}`}
+                disabled={!active || runes.codigo || done}
+                onClick={() => onOpenKata(selected.id)}
+              >
+                <span className="spr-icon">{'{}'}</span>
+                <span className="spr-label">Código</span>
+                {runes.codigo && <span className="spr-check">✓</span>}
+              </button>
+            </div>
+
+            {rusted && (
+              <p className="footnote left rust-warn">
+                Sem uso, sua equipe enferrujou aqui — contratos do bairro dessa skill pagam menos. Uma
+                revisão rápida tira a ferrugem.
+              </p>
+            )}
+            {rusted && (
+              <button className="btn btn-primary sm" onClick={() => onReview(selected.id)}>
+                🔧 Revisar (tirar a ferrugem)
+              </button>
+            )}
+            {done && (
+              <button
+                className={`btn ${rusted ? 'btn-ghost' : 'btn-primary'} sm`}
+                onClick={() => onOpenBoss(selected.contractId)}
+              >
+                Revisar a Prova
+              </button>
+            )}
+            {bossReady &&
+              (() => {
+                const cd = bossCooldownMsLeft(game, selected.contractId, now)
+                const boss = contractById(selected.contractId)
+                const hwBlock = !!boss && !hardwareOk(game, boss)
+                if (cd > 0)
+                  return <p className="footnote left">⏳ Prova em cooldown — tente em {fmtCooldown(cd)}.</p>
+                if (hwBlock)
+                  return (
+                    <p className="footnote left">
+                      🖥 Requer {HARDWARE[boss?.minHardware ?? 0]?.nome}. Faça o upgrade na garagem.
+                    </p>
+                  )
+                return (
+                  <button className="btn btn-primary sm" onClick={() => onOpenBoss(selected.contractId)}>
+                    ⚔ Fazer a Prova de Domínio
+                  </button>
+                )
+              })()}
+            {status === 'runas' && <p className="footnote left">Complete as 2 runas para liberar a Prova.</p>}
+            {status === 'bloqueada' && <p className="footnote left">Domine a skill anterior primeiro.</p>}
           </div>
         </div>
       )}
