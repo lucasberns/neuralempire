@@ -243,6 +243,7 @@ export function completeContract(
 export function buyHardware(g: GameState): GameState | null {
   const nxt = nextHardware(g)
   if (!nxt || g.money < nxt.custo) return null
+  if (g.hardwareLevel + 1 === 2 && !g.salaComercialComprada) return null
   return { ...g, money: g.money - nxt.custo, hardwareLevel: g.hardwareLevel + 1 }
 }
 
@@ -365,6 +366,7 @@ export const INTERN_COST = 250
 export const INTERN_PAYOUT_SHARE = 0.5
 
 export const internHireable = (g: GameState, skillId: string) =>
+  g.salaComercialComprada &&
   !g.interns.includes(skillId) &&
   REPEATABLE.some((c) => c.skillId === skillId) &&
   !!skillById(skillId) &&
@@ -373,6 +375,18 @@ export const internHireable = (g: GameState, skillId: string) =>
 export function hireIntern(g: GameState, skillId: string): GameState | null {
   if (!internHireable(g, skillId) || g.money < INTERN_COST) return null
   return { ...g, money: g.money - INTERN_COST, interns: [...g.interns, skillId] }
+}
+
+// ---------------------------------------------------------------- Loja da Sala Comercial
+// Compra única, elegível só depois do Tier 1 (chapterOf === 2) — soma-se ao sistema de
+// capítulo existente, não o substitui. Desbloqueia estagiário, PC nível 3 e a cena remodelada.
+export const SALA_COMERCIAL_COST = 800
+
+export const salaComercialHireable = (g: GameState) => chapterOf(g) === 2 && !g.salaComercialComprada
+
+export function buySalaComercial(g: GameState): GameState | null {
+  if (!salaComercialHireable(g) || g.money < SALA_COMERCIAL_COST) return null
+  return { ...g, money: g.money - SALA_COMERCIAL_COST, salaComercialComprada: true }
 }
 
 /** Roda 1x/dia (chamado junto de `applyDailyBill`): cada estagiário entrega o contrato do bairro

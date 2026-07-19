@@ -37,6 +37,8 @@ export interface GameState {
   bossCooldown: Record<string, { untilMs: number; attempts: number }>
   // Equipe (GDD §4.2): skillIds com estagiário contratado (automatiza o contrato do bairro daquela skill).
   interns: string[]
+  // Loja da Sala Comercial: comprada uma vez, desbloqueia estagiário + PC nível 3 + cena remodelada.
+  salaComercialComprada: boolean
 }
 
 const SAVE_KEY = 'save'
@@ -64,6 +66,7 @@ export function newGameState(): GameState {
     bairroLastDayISO: {},
     bossCooldown: {},
     interns: [],
+    salaComercialComprada: false,
   }
 }
 
@@ -80,6 +83,7 @@ function normalize(raw: GameState): GameState {
     bairroLastDayISO: raw.bairroLastDayISO ?? {},
     bossCooldown: raw.bossCooldown ?? {},
     interns: raw.interns ?? [],
+    salaComercialComprada: raw.salaComercialComprada ?? false,
   }
 }
 
