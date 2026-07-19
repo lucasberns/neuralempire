@@ -594,9 +594,11 @@ export function GarageScene({
           no canto do rack — modelo 4 (fechado) continua sempre visível. */}
       {remodeled ? (
         <>
-          {/* planta — vaso (crate2) + folhagem (book1, reaproveita o verde-lima já existente) */}
-          <Box x={0.94} y={0.3} z={0} w={0.4} d={0.4} h={0.32} tone="crate2" />
-          <Box x={0.99} y={0.35} z={0.32} w={0.3} d={0.3} h={0.4} tone="book1" />
+          {/* planta — vaso (crate2) + folhagem (book1, reaproveita o verde-lima já existente).
+              Posição longe do canto do rack (x=0.3..1.15,y=0.3..1.15) — esse canto colidia
+              com o rack de GPUs no nível 2, que não tem guarda de `level` como as caixas tinham. */}
+          <Box x={1.773} y={3.664} z={0} w={0.4} d={0.4} h={0.32} tone="crate2" />
+          <Box x={1.823} y={3.714} z={0.32} w={0.3} d={0.3} h={0.4} tone="book1" />
           {/* armário de arquivo — reaproveita o tom "tower2" (metal ciano) já usado no gabinete */}
           <Box x={4.0} y={5.0} z={0} w={0.5} d={0.45} h={0.9} tone="tower2" />
         </>
