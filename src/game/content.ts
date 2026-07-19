@@ -385,6 +385,7 @@ export function applyInternWork(
 ): { next: GameState; earned: number; delivered: string[] } {
   let money = g.money
   let bairroLastDayISO = g.bairroLastDayISO
+  let codeByContract = g.codeByContract
   const delivered: string[] = []
   for (const skillId of g.interns) {
     const c = REPEATABLE.find((r) => r.skillId === skillId)
@@ -393,10 +394,14 @@ export function applyInternWork(
     const pay = Math.round(c.payout * INTERN_PAYOUT_SHARE * (rusty ? 0.6 : 1))
     money += pay
     bairroLastDayISO = { ...bairroLastDayISO, [c.id]: todayISO }
+    if (c.id in codeByContract) {
+      codeByContract = { ...codeByContract }
+      delete codeByContract[c.id]
+    }
     delivered.push(c.titulo)
   }
   if (delivered.length === 0) return { next: g, earned: 0, delivered: [] }
-  return { next: { ...g, money, bairroLastDayISO }, earned: money - g.money, delivered }
+  return { next: { ...g, money, bairroLastDayISO, codeByContract }, earned: money - g.money, delivered }
 }
 
 export const todayISO = () => today()
