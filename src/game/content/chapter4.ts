@@ -187,6 +187,121 @@ def prever_cancelamento_rf(dados_treino, dados_novos):
       },
     ],
   },
+  {
+    id: 'deteccao-fraude-transacoes',
+    emoji: '📈',
+    titulo: 'Banco SegurCash',
+    setor: 'financas',
+    skillId: 'gradient-boosting',
+    briefing:
+      'O banco quer detectar fraude em transações. Em vez de árvores independentes votando, ' +
+      'você vai treinar árvores em sequência: cada uma corrige o erro que sobrou da anterior ' +
+      '(boosting), refinando a previsão passo a passo.',
+    metaLabel: 'Acurácia ≥ 75% nas 12 transações de entrega',
+    payout: 640,
+    reputacao: 21,
+    prereqContractIds: ['retencao-assinantes'],
+    datasetUrl: DATASET('transacoes.csv'),
+    starterCode: `from sklearn.ensemble import GradientBoostingClassifier
+
+def detectar_fraude(dados_treino, dados_novos):
+    # dados_treino: tabela com valor_transacao, hora_dia, distancia_km e fraude (0 ou 1)
+    # dados_novos:  mesma tabela, MENOS a coluna fraude
+    #
+    # 1. Separe X (colunas de entrada) e y (fraude) de dados_treino
+    # 2. Treine um GradientBoostingClassifier() — árvores em sequência, cada uma corrigindo a anterior
+    # 3. Devolva as previsões do modelo para dados_novos
+    ...
+`,
+    setupCode: SETUP_TRANSACOES,
+    tests: [
+      {
+        name: 'detectar_fraude(...) devolve um resultado',
+        hidden: false,
+        code: `_res = detectar_fraude(dados_treino, dados_novos)
+assert _res is not None, "A função retornou None — faltou o return?"
+`,
+      },
+      {
+        name: 'Uma previsão por transação nova',
+        hidden: false,
+        code: `import numpy as np
+_res = np.asarray(detectar_fraude(dados_treino, dados_novos)).ravel()
+assert len(_res) == len(dados_novos), f"Esperava {len(dados_novos)} previsões, recebi {len(_res)}"
+`,
+      },
+      {
+        name: 'Teste oculto: o modelo realmente reage aos dados',
+        hidden: true,
+        code: `import numpy as np
+_res = np.asarray(detectar_fraude(dados_treino, dados_novos)).ravel()
+assert len(set(_res)) > 1, "O modelo previu sempre a mesma classe — não olhou pros dados"
+`,
+      },
+      {
+        name: 'Teste oculto: entrega dentro da meta (acurácia ≥ 75%)',
+        hidden: true,
+        code: `import numpy as np
+_pred = np.asarray(detectar_fraude(dados_treino, dados_novos)).ravel()
+_acc = float((_pred == _ne_holdout["fraude"].to_numpy()).mean())
+assert _acc >= 0.75, f"acurácia = {_acc}"
+`,
+      },
+    ],
+    metricsCode: `import numpy as np
+_pred = np.asarray(detectar_fraude(dados_treino, dados_novos)).ravel()
+_acc = float((_pred == _ne_holdout["fraude"].to_numpy()).mean())
+_ne_result = {
+    "Acurácia na entrega": f"{round(_acc * 100)}%",
+    "Meta do contrato": "≥ 75%",
+    "Fraudes detectadas": int(_pred.sum()),
+}
+`,
+    hints: [
+      'As colunas de entrada são valor_transacao, hora_dia e distancia_km. O alvo é fraude.',
+      'X = dados_treino[["valor_transacao", "hora_dia", "distancia_km"]] e y = dados_treino["fraude"].',
+      'modelo = GradientBoostingClassifier(random_state=0); modelo.fit(X, y); return modelo.predict(dados_novos[colunas]).',
+    ],
+    solution: `from sklearn.ensemble import GradientBoostingClassifier
+
+def detectar_fraude(dados_treino, dados_novos):
+    colunas = ["valor_transacao", "hora_dia", "distancia_km"]
+    X = dados_treino[colunas]
+    y = dados_treino["fraude"]
+    modelo = GradientBoostingClassifier(random_state=0)
+    modelo.fit(X, y)
+    return modelo.predict(dados_novos[colunas])
+`,
+    interrogation: [
+      {
+        q: 'Qual a diferença central entre Random Forest e Gradient Boosting?',
+        options: [
+          'Random Forest treina árvores independentes que votam; Gradient Boosting treina em sequência, cada árvore corrigindo o erro da anterior',
+          'Não tem diferença nenhuma, são o mesmo algoritmo com nomes diferentes',
+          'Gradient Boosting não usa árvores de decisão',
+        ],
+        correct: 0,
+      },
+      {
+        q: 'O que é o "resíduo" que a próxima árvore tenta prever?',
+        options: [
+          'A diferença entre o valor real e o que o modelo já previu até agora',
+          'O tempo que falta pra terminar o treino',
+          'Uma coluna aleatória do dataset',
+        ],
+        correct: 0,
+      },
+      {
+        q: 'Por que treinar árvores sequencialmente pode ser arriscado se não for controlado?',
+        options: [
+          'Cada árvore nova ajusta cada vez mais aos dados de treino — sem controle, isso vira overfitting',
+          'Não existe risco nenhum, quanto mais árvores sempre melhor',
+          'O modelo fica mais rápido conforme mais árvores são adicionadas',
+        ],
+        correct: 0,
+      },
+    ],
+  },
 ]
 
 // ---------------------------------------------------------------- Runa do Código (katas)
@@ -232,6 +347,47 @@ def prever(dados_treino, dados_novos):
 `,
     interrogation: [],
   },
+  {
+    id: 'kata-gradient-boosting',
+    emoji: '🔓',
+    titulo: 'Kata · Gradient Boosting',
+    setor: 'financas',
+    skillId: 'gradient-boosting',
+    briefing: 'Aquecimento antes da Prova: treine um GradientBoostingClassifier e devolva as previsões. Aqui não cobramos a meta — só fazer o modelo prever.',
+    metaLabel: 'Devolver uma previsão (0 ou 1) por transação nova',
+    payout: 0,
+    reputacao: 0,
+    prereqContractIds: [],
+    datasetUrl: DATASET('transacoes.csv'),
+    starterCode: `from sklearn.ensemble import GradientBoostingClassifier
+
+def classificar(dados_treino, dados_novos):
+    # 1. X = colunas de entrada, y = fraude (de dados_treino)
+    # 2. modelo = GradientBoostingClassifier().fit(X, y)
+    # 3. devolva modelo.predict(dados_novos)
+    ...
+`,
+    setupCode: SETUP_TRANSACOES,
+    tests: [
+      { name: 'Uma previsão por transação nova', hidden: false, code: `import numpy as np\n_r = np.asarray(classificar(dados_treino, dados_novos)).ravel()\nassert len(_r) == len(dados_novos)\n` },
+      { name: 'As previsões são 0 ou 1', hidden: true, code: `import numpy as np\n_r = np.asarray(classificar(dados_treino, dados_novos)).ravel()\nassert set(np.unique(_r)).issubset({0, 1})\n` },
+    ],
+    metricsCode: `import numpy as np\n_r = np.asarray(classificar(dados_treino, dados_novos)).ravel()\n_ne_result = {"Previsões feitas": int(len(_r))}\n`,
+    hints: [
+      'Colunas de entrada: ["valor_transacao", "hora_dia", "distancia_km"]. Alvo: "fraude".',
+      'X = dados_treino[colunas]; y = dados_treino["fraude"].',
+      'modelo = GradientBoostingClassifier(random_state=0); modelo.fit(X, y); return modelo.predict(dados_novos[colunas]).',
+    ],
+    solution: `from sklearn.ensemble import GradientBoostingClassifier
+
+def classificar(dados_treino, dados_novos):
+    colunas = ["valor_transacao", "hora_dia", "distancia_km"]
+    modelo = GradientBoostingClassifier(random_state=0)
+    modelo.fit(dados_treino[colunas], dados_treino["fraude"])
+    return modelo.predict(dados_novos[colunas])
+`,
+    interrogation: [],
+  },
 ]
 
 // ---------------------------------------------------------------- Aulas de código (ensino)
@@ -258,6 +414,30 @@ export const LESSONS_CH4: Record<string, Lesson> = {
       { code: '    modelo = RandomForestClassifier(n_estimators=100, random_state=0)', explica: 'Cria a floresta.' },
       { code: '    modelo.fit(X, y)', explica: 'Treina com X e y.' },
       { code: '    return modelo.predict(dados_novos[colunas])', explica: 'Prevê cancelamento pelo voto da maioria.' },
+    ],
+  },
+  'kata-gradient-boosting': {
+    intro: 'Gradient Boosting treina árvores uma de cada vez, e cada árvore nova ataca só o que a anterior errou.',
+    passos: [
+      { code: 'from sklearn.ensemble import GradientBoostingClassifier', explica: 'Importa o modelo de boosting.' },
+      { code: 'def classificar(dados_treino, dados_novos):', explica: 'Recebe treino e as transações novas.' },
+      { code: '    colunas = ["valor_transacao", "hora_dia", "distancia_km"]', explica: 'Entradas do modelo.' },
+      { code: '    modelo = GradientBoostingClassifier(random_state=0)', explica: 'Cria o modelo (as árvores vêm em sequência).' },
+      { code: '    modelo.fit(dados_treino[colunas], dados_treino["fraude"])', explica: 'Treina a sequência inteira de árvores.' },
+      { code: '    return modelo.predict(dados_novos[colunas])', explica: 'Prevê fraude nas transações novas.' },
+    ],
+  },
+  'deteccao-fraude-transacoes': {
+    intro: 'Mesmo ritual da runa, agora valendo: escolher colunas, criar, treinar e prever.',
+    passos: [
+      { code: 'from sklearn.ensemble import GradientBoostingClassifier', explica: 'Importa o modelo.' },
+      { code: 'def detectar_fraude(dados_treino, dados_novos):', explica: 'Recebe treino e as transações a classificar.' },
+      { code: '    colunas = ["valor_transacao", "hora_dia", "distancia_km"]', explica: 'Entradas do modelo.' },
+      { code: '    X = dados_treino[colunas]', explica: 'X = as colunas de entrada.' },
+      { code: '    y = dados_treino["fraude"]', explica: 'y = o que queremos prever.' },
+      { code: '    modelo = GradientBoostingClassifier(random_state=0)', explica: 'Cria o modelo.' },
+      { code: '    modelo.fit(X, y)', explica: 'Treina a sequência de árvores.' },
+      { code: '    return modelo.predict(dados_novos[colunas])', explica: 'Prevê fraude nas transações novas.' },
     ],
   },
 }
