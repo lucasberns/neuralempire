@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { GameState } from '../persistence/saveGame'
 import type { RuneKind } from '../nav'
 import {
@@ -47,7 +47,6 @@ export function SkillTreeScreen({
   const toggleSelected = (id: string) => setSelectedId((cur) => (cur === id ? null : id))
 
   const selected = selectedId ? skillById(selectedId) : undefined
-  const selectedNode = selectedId ? layout.byId.get(selectedId) : undefined
   const status = selected ? skillStatus(game, selected) : 'bloqueada'
   const meta = STATUS_META[status]
   const runes = selected ? runesOf(game, selected.id) : { intuicao: false, matematica: false, codigo: false }
@@ -56,23 +55,23 @@ export function SkillTreeScreen({
   const done = status === 'dominada'
   const rusted = selected ? done && isRusted(game, selected.id, hoje) : false
 
-  // Popup do nó: por padrão ancorado logo abaixo do nó, mas isso podia (a) vazar
-  // pra fora do fundo do canvas em nós das últimas linhas — ficando escondido
-  // atrás do scroll interno do .skill-graph-viewport sem nenhum aviso — e (b)
-  // encostar/sobrepor visualmente o nó da linha de baixo em nós do topo. Corrige
-  // as duas coisas medindo a altura real do popup depois de montado: aumenta o
-  // respiro abaixo do nó (34 → 44) e prende o popup dentro dos limites do
-  // canvas (nunca deixa o fundo dele passar de layout.bounds.h), além de rolar
-  // o container pra garantir que o popup inteiro fique visível.
+  // Popup do nó: por que isso virou uma "tela de detalhe" que SUBSTITUI a
+  // árvore, em vez de uma tooltip flutuando perto do nó (como nas tentativas
+  // anteriores)? O conteúdo do popup (~300px) é bem mais alto que o
+  // espaçamento entre as linhas da árvore (118px), e o container do grafo
+  // rola por dentro — então mesmo que a tooltip fique "fora" da área do
+  // grafo na tela, os nós das linhas vizinhas continuam existindo no DOM com
+  // as coordenadas reais deles (getBoundingClientRect não zera isso só
+  // porque o CSS overflow escondeu visualmente). Qualquer popup ancorado
+  // nas coordenadas do nó — com clamp, com flip, tanto faz — vai sempre
+  // coincidir com pelo menos uma linha vizinha em algum nó do meio da árvore.
+  // A única forma de garantir zero sobreposição de verdade é os outros nós
+  // não existirem na tela enquanto o popup tá aberto — daí trocar de tela em
+  // vez de sobrepor.
   const popupRef = useRef<HTMLDivElement | null>(null)
-  const popupNaturalTop = selectedNode ? selectedNode.y - layout.bounds.y + NODE_R + 44 : 0
-  useLayoutEffect(() => {
-    const el = popupRef.current
-    if (!el) return
-    const maxTop = layout.bounds.h - el.offsetHeight - 12
-    el.style.top = `${Math.min(popupNaturalTop, Math.max(maxTop, 0))}px`
-    el.scrollIntoView({ block: 'nearest' })
-  }, [selectedId, popupNaturalTop, layout.bounds.h])
+  useEffect(() => {
+    if (selectedId) popupRef.current?.scrollIntoView({ block: 'start' })
+  }, [selectedId])
 
   return (
     <section className="screen">
@@ -83,178 +82,164 @@ export function SkillTreeScreen({
         </p>
       </div>
 
-      <div className="skill-graph-viewport">
-        <div className="skill-graph-canvas" style={{ width: layout.bounds.w, height: layout.bounds.h }}>
-          <svg
-            className="skill-graph"
-            viewBox={`${layout.bounds.x} ${layout.bounds.y} ${layout.bounds.w} ${layout.bounds.h}`}
-            width={layout.bounds.w}
-            height={layout.bounds.h}
-            role="img"
-            aria-label="Mapa da árvore de skills"
+      {selected ? (
+        <div ref={popupRef} className="skill-popup">
+          <button
+            type="button"
+            className="skill-popup-close"
+            aria-label="Fechar"
+            onClick={() => setSelectedId(null)}
           >
-            {layout.edges.map((e) => {
-              const from = layout.byId.get(e.from)
-              const to = layout.byId.get(e.to)
-              if (!from || !to) return null
-              const toSkill = skillById(e.to)
-              const edgeActive = !!toSkill && skillStatus(game, toSkill) !== 'bloqueada'
+            ✕
+          </button>
+
+          <div className="skill-popup-head">
+            <h3 className="panel-title">{selected.nome}</h3>
+            {rusted ? (
+              <span className="chip status-rusted">Enferrujada</span>
+            ) : (
+              <span className={`chip status-${status}`}>{meta.label}</span>
+            )}
+          </div>
+          <p className="muted">{selected.desc}</p>
+
+          <div className="skill-popup-runas">
+            {(['intuicao', 'matematica'] as RuneKind[]).map((k) => {
+              const doneRune = runes[k]
+              const icon = k === 'intuicao' ? '◆' : 'Σ'
+              const label = k === 'intuicao' ? 'Intuição' : 'Matemática'
               return (
-                <line
-                  key={`${e.from}-${e.to}`}
-                  className={`skill-edge${edgeActive ? '' : ' dim'}`}
-                  x1={from.x}
-                  y1={from.y}
-                  x2={to.x}
-                  y2={to.y}
-                />
-              )
-            })}
-
-            {layout.nodes.map((n) => {
-              const s = skillById(n.id)
-              if (!s) return null
-              const nStatus = skillStatus(game, s)
-              const nMeta = STATUS_META[nStatus]
-              const nRusted = nStatus === 'dominada' && isRusted(game, s.id, hoje)
-              return (
-                <g
-                  key={n.id}
-                  transform={`translate(${n.x}, ${n.y})`}
-                  className={`skill-node-g is-${nStatus}${nRusted ? ' is-rusted' : ''}${
-                    n.id === selectedId ? ' is-selected' : ''
-                  }`}
-                  role="button"
-                  tabIndex={0}
-                  aria-label={`${s.nome} — ${nRusted ? 'Enferrujada' : nMeta.label}`}
-                  aria-pressed={n.id === selectedId}
-                  onClick={() => toggleSelected(n.id)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault()
-                      toggleSelected(n.id)
-                    }
-                  }}
-                >
-                  <circle className="skill-node-circle" r={NODE_R} />
-                  <text className="skill-node-icon" y={8} textAnchor="middle">
-                    {nMeta.glyph}
-                  </text>
-                  <text className="skill-node-nome" y={NODE_R + 18} textAnchor="middle">
-                    {s.nome}
-                  </text>
-                </g>
-              )
-            })}
-          </svg>
-
-          {selected && selectedNode && (
-            <div
-              ref={popupRef}
-              className="skill-popup"
-              style={{
-                left: selectedNode.x - layout.bounds.x,
-                top: popupNaturalTop,
-              }}
-            >
-              <button
-                type="button"
-                className="skill-popup-close"
-                aria-label="Fechar"
-                onClick={() => setSelectedId(null)}
-              >
-                ✕
-              </button>
-
-              <div className="skill-popup-head">
-                <h3 className="panel-title">{selected.nome}</h3>
-                {rusted ? (
-                  <span className="chip status-rusted">Enferrujada</span>
-                ) : (
-                  <span className={`chip status-${status}`}>{meta.label}</span>
-                )}
-              </div>
-              <p className="muted">{selected.desc}</p>
-
-              <div className="skill-popup-runas">
-                {(['intuicao', 'matematica'] as RuneKind[]).map((k) => {
-                  const doneRune = runes[k]
-                  const icon = k === 'intuicao' ? '◆' : 'Σ'
-                  const label = k === 'intuicao' ? 'Intuição' : 'Matemática'
-                  return (
-                    <button
-                      key={k}
-                      type="button"
-                      className={`skill-popup-runa ${doneRune ? 'on' : ''}`}
-                      disabled={!active || doneRune || done}
-                      onClick={() => onOpenRune(selected.id, k)}
-                    >
-                      <span className="spr-icon">{icon}</span>
-                      <span className="spr-label">{label}</span>
-                      {doneRune && <span className="spr-check">✓</span>}
-                    </button>
-                  )
-                })}
                 <button
+                  key={k}
                   type="button"
-                  className={`skill-popup-runa ${runes.codigo ? 'on' : ''}`}
-                  disabled={!active || runes.codigo || done}
-                  onClick={() => onOpenKata(selected.id)}
+                  className={`skill-popup-runa ${doneRune ? 'on' : ''}`}
+                  disabled={!active || doneRune || done}
+                  onClick={() => onOpenRune(selected.id, k)}
                 >
-                  <span className="spr-icon">{'{}'}</span>
-                  <span className="spr-label">Código</span>
-                  {runes.codigo && <span className="spr-check">✓</span>}
+                  <span className="spr-icon">{icon}</span>
+                  <span className="spr-label">{label}</span>
+                  {doneRune && <span className="spr-check">✓</span>}
                 </button>
-              </div>
+              )
+            })}
+            <button
+              type="button"
+              className={`skill-popup-runa ${runes.codigo ? 'on' : ''}`}
+              disabled={!active || runes.codigo || done}
+              onClick={() => onOpenKata(selected.id)}
+            >
+              <span className="spr-icon">{'{}'}</span>
+              <span className="spr-label">Código</span>
+              {runes.codigo && <span className="spr-check">✓</span>}
+            </button>
+          </div>
 
-              {rusted && (
-                <p className="footnote left rust-warn">
-                  Sem uso, sua equipe enferrujou aqui — contratos do bairro dessa skill pagam
-                  menos. Uma revisão rápida tira a ferrugem.
-                </p>
-              )}
-              {rusted && (
-                <button className="btn btn-primary sm" onClick={() => onReview(selected.id)}>
-                  🔧 Revisar (tirar a ferrugem)
-                </button>
-              )}
-              {done && (
-                <button
-                  className={`btn ${rusted ? 'btn-ghost' : 'btn-primary'} sm`}
-                  onClick={() => onOpenBoss(selected.contractId)}
-                >
-                  Revisar a Prova
-                </button>
-              )}
-              {bossReady &&
-                (() => {
-                  const cd = bossCooldownMsLeft(game, selected.contractId, now)
-                  const boss = contractById(selected.contractId)
-                  const hwBlock = !!boss && !hardwareOk(game, boss)
-                  if (cd > 0)
-                    return (
-                      <p className="footnote left">⏳ Prova em cooldown — tente em {fmtCooldown(cd)}.</p>
-                    )
-                  if (hwBlock)
-                    return (
-                      <p className="footnote left">
-                        🖥 Requer {HARDWARE[boss?.minHardware ?? 0]?.nome}. Faça o upgrade na garagem.
-                      </p>
-                    )
-                  return (
-                    <button className="btn btn-primary sm" onClick={() => onOpenBoss(selected.contractId)}>
-                      ⚔ Fazer a Prova de Domínio
-                    </button>
-                  )
-                })()}
-              {status === 'runas' && (
-                <p className="footnote left">Complete as 2 runas para liberar a Prova.</p>
-              )}
-              {status === 'bloqueada' && <p className="footnote left">Domine a skill anterior primeiro.</p>}
-            </div>
+          {rusted && (
+            <p className="footnote left rust-warn">
+              Sem uso, sua equipe enferrujou aqui — contratos do bairro dessa skill pagam menos. Uma revisão
+              rápida tira a ferrugem.
+            </p>
           )}
+          {rusted && (
+            <button className="btn btn-primary sm" onClick={() => onReview(selected.id)}>
+              🔧 Revisar (tirar a ferrugem)
+            </button>
+          )}
+          {done && (
+            <button
+              className={`btn ${rusted ? 'btn-ghost' : 'btn-primary'} sm`}
+              onClick={() => onOpenBoss(selected.contractId)}
+            >
+              Revisar a Prova
+            </button>
+          )}
+          {bossReady &&
+            (() => {
+              const cd = bossCooldownMsLeft(game, selected.contractId, now)
+              const boss = contractById(selected.contractId)
+              const hwBlock = !!boss && !hardwareOk(game, boss)
+              if (cd > 0)
+                return <p className="footnote left">⏳ Prova em cooldown — tente em {fmtCooldown(cd)}.</p>
+              if (hwBlock)
+                return (
+                  <p className="footnote left">
+                    🖥 Requer {HARDWARE[boss?.minHardware ?? 0]?.nome}. Faça o upgrade na garagem.
+                  </p>
+                )
+              return (
+                <button className="btn btn-primary sm" onClick={() => onOpenBoss(selected.contractId)}>
+                  ⚔ Fazer a Prova de Domínio
+                </button>
+              )
+            })()}
+          {status === 'runas' && <p className="footnote left">Complete as 2 runas para liberar a Prova.</p>}
+          {status === 'bloqueada' && <p className="footnote left">Domine a skill anterior primeiro.</p>}
         </div>
-      </div>
+      ) : (
+        <div className="skill-graph-viewport">
+          <div className="skill-graph-canvas" style={{ width: layout.bounds.w, height: layout.bounds.h }}>
+            <svg
+              className="skill-graph"
+              viewBox={`${layout.bounds.x} ${layout.bounds.y} ${layout.bounds.w} ${layout.bounds.h}`}
+              width={layout.bounds.w}
+              height={layout.bounds.h}
+              role="img"
+              aria-label="Mapa da árvore de skills"
+            >
+              {layout.edges.map((e) => {
+                const from = layout.byId.get(e.from)
+                const to = layout.byId.get(e.to)
+                if (!from || !to) return null
+                const toSkill = skillById(e.to)
+                const edgeActive = !!toSkill && skillStatus(game, toSkill) !== 'bloqueada'
+                return (
+                  <line
+                    key={`${e.from}-${e.to}`}
+                    className={`skill-edge${edgeActive ? '' : ' dim'}`}
+                    x1={from.x}
+                    y1={from.y}
+                    x2={to.x}
+                    y2={to.y}
+                  />
+                )
+              })}
+
+              {layout.nodes.map((n) => {
+                const s = skillById(n.id)
+                if (!s) return null
+                const nStatus = skillStatus(game, s)
+                const nMeta = STATUS_META[nStatus]
+                const nRusted = nStatus === 'dominada' && isRusted(game, s.id, hoje)
+                return (
+                  <g
+                    key={n.id}
+                    transform={`translate(${n.x}, ${n.y})`}
+                    className={`skill-node-g is-${nStatus}${nRusted ? ' is-rusted' : ''}`}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`${s.nome} — ${nRusted ? 'Enferrujada' : nMeta.label}`}
+                    onClick={() => toggleSelected(n.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        toggleSelected(n.id)
+                      }
+                    }}
+                  >
+                    <circle className="skill-node-circle" r={NODE_R} />
+                    <text className="skill-node-icon" y={8} textAnchor="middle">
+                      {nMeta.glyph}
+                    </text>
+                    <text className="skill-node-nome" y={NODE_R + 18} textAnchor="middle">
+                      {s.nome}
+                    </text>
+                  </g>
+                )
+              })}
+            </svg>
+          </div>
+        </div>
+      )}
 
       <p className="footnote">
         A árvore brilhando é o retrato do seu conhecimento. Você pode perder o lab — nunca as skills.

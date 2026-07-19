@@ -1379,6 +1379,12 @@ button {
 
 /* ------------------------------------------------------------------ ÁRVORE DE SKILLS */
 .skill-graph-viewport {
+  /* Altura travada de propósito: sem isso o overflow:auto nunca tinha o que
+     rolar (o canvas só crescia junto), então era a PÁGINA inteira que rolava
+     — daí o popup em coordenadas do canvas conseguir ficar "fora da tela"
+     sem nenhum scroll container de verdade barrando. Com altura fixa, vira
+     uma janela de rolagem de verdade. */
+  max-height: 58vh;
   overflow: auto;
   border: 1px solid var(--line);
   border-radius: var(--r);
@@ -1453,10 +1459,6 @@ button {
   fill: #ff9f47;
   animation: none;
 }
-.skill-node-g.is-selected .skill-node-circle {
-  stroke-width: 2.5;
-  stroke: var(--text);
-}
 @keyframes orb-pulse {
   50% {
     text-shadow: 0 0 14px var(--lime);
@@ -1480,28 +1482,18 @@ button {
   border-color: var(--line-bright);
 }
 .skill-popup {
-  position: absolute;
-  transform: translateX(-50%);
-  width: 240px;
-  max-width: calc(100vw - 64px);
+  /* Não é mais uma tooltip ancorada em cima do nó (posição absoluta em
+     coordenadas do canvas) — é um painel de fluxo normal logo abaixo da
+     árvore. Motivo: o conteúdo do popup (~300px) é bem mais alto que o
+     espaçamento entre linhas da árvore (118px), então qualquer versão
+     ancorada no canvas — clamp, flip, o que for — inevitavelmente cobre o
+     nó da linha vizinha. Fora do canvas, isso deixa de ser possível. */
+  position: relative;
   background: var(--panel-2);
   border: 1px solid var(--line-bright);
   border-radius: var(--r);
   padding: 14px;
   box-shadow: var(--shadow), 0 0 26px -8px rgba(182, 241, 69, 0.3);
-  z-index: 2;
-}
-.skill-popup::before {
-  content: '';
-  position: absolute;
-  top: -7px;
-  left: 50%;
-  width: 12px;
-  height: 12px;
-  background: var(--panel-2);
-  border-left: 1px solid var(--line-bright);
-  border-top: 1px solid var(--line-bright);
-  transform: translateX(-50%) rotate(45deg);
 }
 .skill-popup-close {
   position: absolute;
