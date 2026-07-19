@@ -570,17 +570,24 @@ export function GarageScene({
         </g>
       )}
 
-      {/* cadeira (parada, sem animação) — voltou ao formato de antes da última leva */}
+      {/* cadeira (parada, sem animação). Base+assento é UMA caixa sólida do chão (z=0)
+          até o topo do estofado (z=0.83, onde o personagem começa) — mesmo padrão da
+          cadeirinha do estagiário. As 3 caixas finas de antes (assento/base/encosto
+          separados) deixavam a base flutuando sem perna (base começava em z=0.34, sem
+          nada ligando ao chão) e o personagem sobrava por cima do assento (pegada do
+          assento menor que a do personagem). Pegada agora excede a do personagem em
+          todos os lados. */}
       <g className="chair">
-        <Box x={3.3} y={1.2} z={0.49} w={0.3} d={0.25} h={0.34} tone="chair" />
-        <Box x={3.15} y={1.05} z={0.34} w={0.6} d={0.55} h={0.11} tone="chair" />
-        <Box x={3.15} y={1.62} z={0.45} w={0.6} d={0.13} h={0.68} tone="chair" />
+        <Box x={3.15} y={1.0} z={0} w={0.6} d={0.5} h={0.83} tone="chair" />
+        {/* encosto: mais largo que o personagem (w=0.44) pra sobrar uma faixa visível
+            dos dois lados mesmo com o deslocamento da projeção iso por estar mais "atrás"
+            (y maior) — sobe até acima da cabeça do personagem. */}
+        <Box x={3.0} y={1.5} z={0.45} w={0.95} d={0.16} h={1.25} tone="chair" />
       </g>
 
       {/* personagem (de costas, digitando — estilo GDT), com bob próprio.
-          z começa no topo do estofado do assento (0.83, era 0.48 — ficava por baixo
-          do topo do assento e a caixa opaca do corpo engolia o assento visualmente).
-          Todo o grupo (corpo + capuz) sobe junto pra manter a proporção. */}
+          z começa no topo do estofado do assento (0.83) — a pegada da cadeira agora
+          excede a do personagem, então não sobra nenhuma borda "flutuando" no ar. */}
       <g className="dev">
         <Box x={3.24} y={1.08} z={0.83} w={0.44} d={0.36} h={0.6} tone="person" />
         {/* capuz: uma única forma (sem cabeça separada) */}
