@@ -264,14 +264,6 @@ export function GarageScene({
     [2.62, 0.75],
   ]
 
-  // Porta de escritório (remodeled): parede A, canto livre depois da mesa.
-  // X1/X2 empurrados p/ x>=5.25 de propósito — abaixo disso o polígono da porta
-  // colide visualmente com o gabinete (Box em x=5.05..5.45,y=0.3..0.72), que fica
-  // bem na frente dessa mesma faixa da parede. Ver hit rects abaixo (mesmo motivo).
-  const OFFICE_DOOR_X1 = 5.25
-  const OFFICE_DOOR_X2 = 5.95
-  const OFFICE_DOOR_Z = 2.05
-
   // Quadro de skills (corkboard) na parede A (y=0)
   const board = wallQuadA(0.5, 2.0, 1.0, 2.0)
   // Tapete sob a mesa/cadeira — camada externa opaca (esconde a grade do piso) + interna clara.
@@ -279,11 +271,13 @@ export function GarageScene({
   const rugInner = pts(iso(2.25, 0.2), iso(5.25, 0.2), iso(5.25, 2.25), iso(2.25, 2.25))
 
   // Pôster de IA/ML (rede neural, eco do logo) na parede B — centralizado no vão
-  // entre o fim do portão e o fim da parede (não num ponto fixo).
+  // entre o fim do portão e o fim da parede (não num ponto fixo). Some no modo
+  // remodeled: a porta da Sala Comercial ocupa esse mesmo vão (ver mais abaixo).
   const POSTER_W = 0.9
   const POSTER_CY = (GD_Y2 + ROWS) / 2
   const POSTER_Y1 = POSTER_CY - POSTER_W / 2
   const POSTER_Y2 = POSTER_CY + POSTER_W / 2
+  const DOOR_Z = 2.0
   const netLayers = [
     [
       { y: POSTER_CY - 0.26, z: 1.52 },
@@ -315,17 +309,20 @@ export function GarageScene({
       <polygon className="wall" points={wallA} />
       <polygon className="wall wall-b" points={wallB} />
 
-      {/* pôster de IA/ML na parede B — rede neural (eco do logo) */}
-      <g className="poster">
-        <polygon points={wallQuadB(POSTER_Y1, POSTER_Y2, 0.75, 1.85)} />
-        {netEdges.map(([a, b], i) => (
-          <line key={i} className="pne" x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} />
-        ))}
-        {netLayers.flat().map((n, i) => {
-          const [cx, cy] = iso(0, n.y, n.z)
-          return <circle key={i} className="pnn" cx={cx} cy={cy} r={2.2} />
-        })}
-      </g>
+      {/* pôster de IA/ML na parede B — rede neural (eco do logo). Some no modo
+          remodeled (a porta da Sala Comercial ocupa esse vão — ver abaixo). */}
+      {!remodeled && (
+        <g className="poster">
+          <polygon points={wallQuadB(POSTER_Y1, POSTER_Y2, 0.75, 1.85)} />
+          {netEdges.map(([a, b], i) => (
+            <line key={i} className="pne" x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} />
+          ))}
+          {netLayers.flat().map((n, i) => {
+            const [cx, cy] = iso(0, n.y, n.z)
+            return <circle key={i} className="pnn" cx={cx} cy={cy} r={2.2} />
+          })}
+        </g>
+      )}
 
       {/* placa da virada de capítulo — só depois do Tier 1 completo (GDD §2) */}
       {remodeled &&
@@ -413,15 +410,18 @@ export function GarageScene({
         </g>
       ) : (
         <>
-          {/* janela na parede B (onde a porta ficava) — decorativa, vista da cidade */}
+          {/* janela na parede B (onde a porta da garagem ficava) — decorativa, vista da
+              cidade. Prédios são caixas (Box) de verdade — mesma técnica 3D do rack/gabinete
+              — em vez de silhuetas 2D chapadas. Sem moldura: só o vidro por cima, sem contorno. */}
           <g className="window" aria-hidden="true">
+            <Box x={0} y={0.95} z={0} w={0.14} d={0.32} h={0.95} tone="building1" />
+            <Box x={0} y={1.5} z={0} w={0.14} d={0.36} h={1.45} tone="building2" />
+            <Box x={0} y={2.02} z={0} w={0.14} d={0.26} h={0.7} tone="building1" />
+            <Box x={0} y={2.45} z={0} w={0.14} d={0.32} h={1.1} tone="building2" />
             <polygon className="window-glass" points={wallQuadB(0.85, 3.35, 0.3, 1.9)} />
-            <polygon className="window-building b1" points={wallQuadB(0.95, 1.35, 0.35, 1.1)} />
-            <polygon className="window-building b2" points={wallQuadB(1.5, 2.0, 0.35, 1.6)} />
-            <polygon className="window-building b3" points={wallQuadB(2.15, 2.6, 0.35, 0.95)} />
-            <polygon className="window-frame" points={wallQuadB(0.7, 3.5, 0, 2.05)} />
           </g>
-          {/* porta na parede A, canto livre depois da mesa — hotspot dos contratos */}
+          {/* porta da Sala Comercial: mesmo vão que o pôster usava na parede B (o pôster some
+              nesse modo — ver acima) — batente simples, redimensionado pro vão do pôster. */}
           <g
             className="hot"
             onClick={() => onSelect('door')}
@@ -435,26 +435,18 @@ export function GarageScene({
               }
             }}
           >
-            <polygon
-              className="office-door"
-              points={wallQuadA(OFFICE_DOOR_X1, OFFICE_DOOR_X2, 0, OFFICE_DOOR_Z)}
-            />
+            <polygon className="office-door" points={wallQuadB(POSTER_Y1, POSTER_Y2, 0, DOOR_Z)} />
             <polygon
               className="office-door-window"
-              points={wallQuadA(
-                OFFICE_DOOR_X1 + 0.15,
-                OFFICE_DOOR_X2 - 0.15,
-                OFFICE_DOOR_Z * 0.45,
-                OFFICE_DOOR_Z * 0.8,
-              )}
+              points={wallQuadB(POSTER_Y1 + 0.14, POSTER_Y2 - 0.14, DOOR_Z * 0.45, DOOR_Z * 0.82)}
             />
             <circle
               className="led"
-              cx={iso(OFFICE_DOOR_X2 - 0.12, 0, OFFICE_DOOR_Z * 0.35)[0]}
-              cy={iso(OFFICE_DOOR_X2 - 0.12, 0, OFFICE_DOOR_Z * 0.35)[1]}
+              cx={iso(0, POSTER_Y1 + 0.12, DOOR_Z * 0.35)[0]}
+              cy={iso(0, POSTER_Y1 + 0.12, DOOR_Z * 0.35)[1]}
               r={1.2}
             />
-            <rect className="hit" x={353} y={78} width={22} height={97} />
+            <rect className="hit" x={118} y={70} width={30} height={95} />
           </g>
         </>
       )}
@@ -563,22 +555,23 @@ export function GarageScene({
           />
           {/* luz no centro-baixo da face frontal do gabinete (face frontal = y+d, não y) */}
           <Leds x={5.25} y={0.7} z={0.1} n={level >= 1 ? 3 : 1} cls={`led ${level >= 1 ? 'cyan' : ''}`} />
-          {/* largura encurtada (era 32) — a borda direita entrava na hitbox da porta
-              do escritório (remodeled); a caixa visual (Box w=0.4) fica bem mais
-              estreita que isso, então ainda cobre a forma real com folga. */}
-          <rect className="hit" x={326} y={120} width={26} height={58} />
+          <rect className="hit" x={326} y={120} width={32} height={58} />
         </g>
       )}
 
-      {/* cadeira (parada, sem animação). Base+assento é UMA caixa sólida do chão (z=0)
-          até o topo do estofado (z=0.83, onde o personagem começa) — mesmo padrão da
-          cadeirinha do estagiário. As 3 caixas finas de antes (assento/base/encosto
-          separados) deixavam a base flutuando sem perna (base começava em z=0.34, sem
-          nada ligando ao chão) e o personagem sobrava por cima do assento (pegada do
-          assento menor que a do personagem). Pegada agora excede a do personagem em
-          todos os lados. */}
+      {/* cadeira de escritório de verdade: assento fino + 4 pernas visíveis + encosto —
+          não mais um bloco sólido só (parecia um pedestal, não uma cadeira). Assento
+          cobre a pegada do personagem com folga em todos os lados (sem sobra flutuando);
+          pernas vão do chão (z=0) até embaixo do assento; encosto redimensionado pra
+          aparecer atrás/acima da cabeça mesmo com o deslocamento da projeção iso. */}
       <g className="chair">
-        <Box x={3.15} y={1.0} z={0} w={0.6} d={0.5} h={0.83} tone="chair" />
+        {/* 4 pernas (canto a canto, sob o assento) */}
+        <Box x={3.23} y={1.08} z={0} w={0.07} d={0.07} h={0.75} tone="chair" />
+        <Box x={3.59} y={1.08} z={0} w={0.07} d={0.07} h={0.75} tone="chair" />
+        <Box x={3.23} y={1.34} z={0} w={0.07} d={0.07} h={0.75} tone="chair" />
+        <Box x={3.59} y={1.34} z={0} w={0.07} d={0.07} h={0.75} tone="chair" />
+        {/* assento: fino, pousado sobre as 4 pernas */}
+        <Box x={3.15} y={1.0} z={0.75} w={0.6} d={0.5} h={0.08} tone="chair" />
         {/* encosto: mais largo que o personagem (w=0.44) pra sobrar uma faixa visível
             dos dois lados mesmo com o deslocamento da projeção iso por estar mais "atrás"
             (y maior) — sobe até acima da cabeça do personagem. */}
@@ -603,10 +596,11 @@ export function GarageScene({
       {remodeled ? (
         <>
           {/* planta — vaso (crate2) + folhagem (book1, reaproveita o verde-lima já existente).
-              Posição longe do canto do rack (x=0.3..1.15,y=0.3..1.15) — esse canto colidia
-              com o rack de GPUs no nível 2, que não tem guarda de `level` como as caixas tinham. */}
-          <Box x={1.773} y={3.664} z={0} w={0.4} d={0.4} h={0.32} tone="crate2" />
-          <Box x={1.823} y={3.714} z={0.32} w={0.3} d={0.3} h={0.4} tone="book1" />
+              Canto vazio no fundo direito (longe do rack em x=0.3..1.15,y=0.3..1.15, do
+              gabinete quando level<2, do armário e da mesa do estagiário) — antes ficava no
+              meio do caminho (x=1.773,y=3.664, mesmo lugar da antiga pilha de caixas). */}
+          <Box x={5.3} y={5.3} z={0} w={0.4} d={0.4} h={0.32} tone="crate2" />
+          <Box x={5.35} y={5.35} z={0.32} w={0.3} d={0.3} h={0.4} tone="book1" />
           {/* armário de arquivo — reaproveita o tom "tower2" (metal ciano) já usado no gabinete */}
           <Box x={4.0} y={5.0} z={0} w={0.5} d={0.45} h={0.9} tone="tower2" />
         </>

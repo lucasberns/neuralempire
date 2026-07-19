@@ -860,18 +860,32 @@ button {
 .garage.remodeled .grid {
   stroke: rgba(88, 214, 255, 0.14);
 }
-.garage .window-frame {
-  fill: none;
-  stroke: rgba(88, 214, 255, 0.4);
-  stroke-width: 1;
-}
 .garage .window-glass {
-  fill: rgba(88, 214, 255, 0.16);
-  stroke: rgba(88, 214, 255, 0.5);
-  stroke-width: 0.6;
+  fill: rgba(88, 214, 255, 0.14);
 }
-.garage .window-building {
-  fill: rgba(10, 21, 25, 0.9);
+.garage .tone-building1 polygon {
+  stroke: rgba(88, 214, 255, 0.3);
+}
+.garage .tone-building1 .f-t {
+  fill: #14262c;
+}
+.garage .tone-building1 .f-r {
+  fill: #0e1b20;
+}
+.garage .tone-building1 .f-l {
+  fill: #091317;
+}
+.garage .tone-building2 polygon {
+  stroke: rgba(88, 214, 255, 0.3);
+}
+.garage .tone-building2 .f-t {
+  fill: #182c33;
+}
+.garage .tone-building2 .f-r {
+  fill: #102026;
+}
+.garage .tone-building2 .f-l {
+  fill: #0a161a;
 }
 .garage .office-door {
   fill: #14241f;
