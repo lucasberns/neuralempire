@@ -24,6 +24,14 @@ import { RunaSvmIntuicao } from './RunaSvmIntuicao'
 import { RunaSvmMatematica } from './RunaSvmMatematica'
 import { RunaRegularizacaoIntuicao } from './RunaRegularizacaoIntuicao'
 import { RunaRegularizacaoMatematica } from './RunaRegularizacaoMatematica'
+import { RunaRandomForestIntuicao } from './RunaRandomForestIntuicao'
+import { RunaRandomForestMatematica } from './RunaRandomForestMatematica'
+import { RunaGradientBoostingIntuicao } from './RunaGradientBoostingIntuicao'
+import { RunaGradientBoostingMatematica } from './RunaGradientBoostingMatematica'
+import { RunaClusteringIntuicao } from './RunaClusteringIntuicao'
+import { RunaClusteringMatematica } from './RunaClusteringMatematica'
+import { RunaReducaoDimensionalidadeIntuicao } from './RunaReducaoDimensionalidadeIntuicao'
+import { RunaReducaoDimensionalidadeMatematica } from './RunaReducaoDimensionalidadeMatematica'
 
 const TITLE: Record<RuneKind, { emoji: string; nome: string; sub: string }> = {
   intuicao: { emoji: '◆', nome: 'Runa da Intuição', sub: 'Sinta o que o algoritmo faz — sem fórmula.' },
@@ -45,6 +53,10 @@ const RUNAS: Record<string, Partial<Record<RuneKind, RunaComponent>>> = {
   'metricas-avancadas': { intuicao: RunaMetricasAvancadasIntuicao, matematica: RunaMetricasAvancadasMatematica },
   svm: { intuicao: RunaSvmIntuicao, matematica: RunaSvmMatematica },
   regularizacao: { intuicao: RunaRegularizacaoIntuicao, matematica: RunaRegularizacaoMatematica },
+  'random-forest': { intuicao: RunaRandomForestIntuicao, matematica: RunaRandomForestMatematica },
+  'gradient-boosting': { intuicao: RunaGradientBoostingIntuicao, matematica: RunaGradientBoostingMatematica },
+  clustering: { intuicao: RunaClusteringIntuicao, matematica: RunaClusteringMatematica },
+  'reducao-dimensionalidade': { intuicao: RunaReducaoDimensionalidadeIntuicao, matematica: RunaReducaoDimensionalidadeMatematica },
 }
 
 export function RunaScreen({
