@@ -1,0 +1,73 @@
+/* src/screens/RunaClusteringIntuicao.css */
+.runa-clustering-intuicao {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.rci-lead {
+  font-family: var(--sans);
+  color: var(--muted);
+  line-height: 1.5;
+}
+.rci-plot {
+  width: 100%;
+  max-width: 320px;
+  margin: 0 auto;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+}
+.rci-dot {
+  stroke: var(--panel);
+  stroke-width: 1;
+}
+.rci-dot.is-c0 {
+  fill: var(--lime);
+}
+.rci-dot.is-c1 {
+  fill: var(--cyan);
+}
+.rci-dot.is-c2 {
+  fill: var(--amber);
+}
+.rci-centro {
+  font-size: 13px;
+  font-weight: 700;
+  paint-order: stroke;
+  stroke: var(--panel);
+  stroke-width: 3px;
+}
+.rci-centro.is-c0 {
+  fill: var(--lime);
+}
+.rci-centro.is-c1 {
+  fill: var(--cyan);
+}
+.rci-centro.is-c2 {
+  fill: var(--amber);
+}
+.rci-slider {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.rci-slider-top {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.rci-val {
+  color: var(--text);
+}
+.rci-meter {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.rci-meter-hint {
+  color: var(--muted);
+  font-size: 0.8rem;
+  margin: 0;
+}
