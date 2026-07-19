@@ -5,11 +5,16 @@ import type { ClientState } from '../pyodide/client'
 import { GarageScene, type Hotspot } from './GarageScene'
 import {
   ACHIEVEMENTS,
+  ANDAR_INTEIRO_COST,
   HARDWARE,
+  PREDIO_COST,
   RENT_PER_TURN,
   SALA_COMERCIAL_COST,
   SKILLS,
+  andarInteiroHireable,
+  buyAndarInteiro,
   buyHardware,
+  buyPredio,
   buySalaComercial,
   chapterOf,
   currentHardware,
@@ -94,7 +99,13 @@ export function LabScreen({
           </span>
         </div>
         <span className="ov-chapter">
-          {chapterOf(game) === 2 ? 'CAP. 02 · A SALA COMERCIAL' : 'CAP. 01 · A GARAGEM'}
+          {chapterOf(game) === 4
+            ? 'CAP. 04 · O PRÉDIO'
+            : chapterOf(game) === 3
+              ? 'CAP. 03 · O ANDAR INTEIRO'
+              : chapterOf(game) === 2
+                ? 'CAP. 02 · A SALA COMERCIAL'
+                : 'CAP. 01 · A GARAGEM'}
         </span>
       </header>
 
@@ -273,6 +284,54 @@ export function LabScreen({
               ) : (
                 <button className="btn btn-ghost sm" disabled>
                   🔒 falta {money(SALA_COMERCIAL_COST - game.money)}
+                </button>
+              )}
+            </div>
+
+            <div className="cfg-row">
+              <span>O Andar Inteiro</span>
+              {game.andarInteiroComprado ? (
+                <span className="cc-lock ok">✓ adquirida</span>
+              ) : !andarInteiroHireable(game) ? (
+                <span className="cc-lock">🔒 domine o Tier 2</span>
+              ) : game.money >= ANDAR_INTEIRO_COST ? (
+                <button
+                  className="btn btn-ghost sm"
+                  onClick={() => {
+                    const g = buyAndarInteiro(game)
+                    if (g) onGameChange(g)
+                  }}
+                >
+                  Comprar · {money(ANDAR_INTEIRO_COST)}
+                </button>
+              ) : (
+                <button className="btn btn-ghost sm" disabled>
+                  🔒 falta {money(ANDAR_INTEIRO_COST - game.money)}
+                </button>
+              )}
+            </div>
+
+            <div className="cfg-row">
+              <span>O Prédio</span>
+              {game.predioComprado ? (
+                <span className="cc-lock ok">✓ adquirida</span>
+              ) : chapterOf(game) < 4 ? (
+                <span className="cc-lock">🔒 domine o Tier 3</span>
+              ) : !game.andarInteiroComprado ? (
+                <span className="cc-lock">🔒 requer o Andar Inteiro</span>
+              ) : game.money >= PREDIO_COST ? (
+                <button
+                  className="btn btn-ghost sm"
+                  onClick={() => {
+                    const g = buyPredio(game)
+                    if (g) onGameChange(g)
+                  }}
+                >
+                  Comprar · {money(PREDIO_COST)}
+                </button>
+              ) : (
+                <button className="btn btn-ghost sm" disabled>
+                  🔒 falta {money(PREDIO_COST - game.money)}
                 </button>
               )}
             </div>

@@ -207,9 +207,13 @@ export default function App() {
       ? '← Árvore de Skills'
       : view === 'desafios'
         ? '← Mesa de Contratos'
-        : chapterOf(game) === 2
-          ? '← Sala Comercial'
-          : '← Garagem'
+        : chapterOf(game) === 4
+          ? '← O Prédio'
+          : chapterOf(game) === 3
+            ? '← O Andar Inteiro'
+            : chapterOf(game) === 2
+              ? '← Sala Comercial'
+              : '← Garagem'
   const abandonBoss = () => {
     if (active) setGame(failBoss(game, active.id, nowMs()))
     setAskLeave(false)
