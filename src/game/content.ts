@@ -62,9 +62,16 @@ export interface Achievement {
 const skillBossDone = (g: GameState) =>
   SKILLS.filter((s) => g.contracts.doneIds.includes(s.contractId)).length
 
-/** Cap. 2 ("Sala Comercial") começa quando o jogador domina as 4 skills do Tier 1 — mesma
- *  condição da conquista `tier1-completo`. Fonte única pro custo fixo novo e pro rótulo do HUD. */
-export const chapterOf = (g: GameState): 1 | 2 => (skillBossDone(g) >= SKILLS_CH1.length ? 2 : 1)
+/** Capítulo = maior Tier inteiramente dominado + 1 (Tier 1 completo → Cap. 2, etc.).
+ *  Mesma checagem precisa que as conquistas tier2/tier3-completo já usam (troca a checagem
+ *  do Tier 1, que antes usava a contagem imprecisa `skillBossDone >= 4`, por essa mesma
+ *  precisão). Fonte única pro custo fixo, pro rótulo do HUD e pras compras da Loja. */
+export const chapterOf = (g: GameState): 1 | 2 | 3 | 4 => {
+  if (SKILLS_CH3.every((s) => isDone(g, s.contractId))) return 4
+  if (SKILLS_CH2.every((s) => isDone(g, s.contractId))) return 3
+  if (SKILLS_CH1.every((s) => isDone(g, s.contractId))) return 2
+  return 1
+}
 
 export const ACHIEVEMENTS: Achievement[] = [
   { id: 'primeira-entrega', nome: 'Primeiro cliente', desc: 'Entregue seu primeiro contrato.', test: (g) => g.contracts.doneIds.length >= 1 },
@@ -77,6 +84,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: 'faxineiro', nome: 'Dados limpos', desc: 'Domine Limpar Dados.', test: (g) => g.contracts.doneIds.includes('faxina-cadastro') },
   { id: 'tier2-completo', nome: 'Classificação dominada', desc: 'Domine as 4 skills do Tier 2.', test: (g) => SKILLS_CH2.every((s) => isDone(g, s.contractId)) },
   { id: 'tier3-completo', nome: 'Andar de cima', desc: 'Domine as 4 skills do Tier 3.', test: (g) => SKILLS_CH3.every((s) => isDone(g, s.contractId)) },
+  { id: 'tier4-completo', nome: 'Sede própria', desc: 'Domine as 4 skills do Tier 4.', test: (g) => SKILLS_CH4.every((s) => isDone(g, s.contractId)) },
   { id: 'primeiro-overfitting', nome: 'Primeiro overfitting', desc: 'Domine Validação e nomeie o que você já sentiu.', test: (g) => isDone(g, 'diagnostico-inadimplencia') },
   { id: 'estagiario-contratado', nome: 'Chefe', desc: 'Contrate seu primeiro estagiário.', test: (g) => g.interns.length >= 1 },
   { id: 'sobreviveu-agiota', nome: 'Sobreviveu ao agiota', desc: 'Supere uma falência (New Game+).', test: (g) => g.ngPlus >= 1 },
@@ -291,8 +299,8 @@ export function fmtCooldown(ms: number): string {
 // ---------------------------------------------------------------- Economia de tensão (GDD §4.4)
 // Conta diária do laboratório (energia + aluguel) — cresce com o hardware.
 // +50/dia (escritório) a partir do Cap. 2 — dobra a conta em torno da metade do jogo (GDD §4.1).
-export const dailyBill = (hardwareLevel: number, chapter: 1 | 2 = 1) =>
-  30 + hardwareLevel * 30 + (chapter === 2 ? 50 : 0)
+export const dailyBill = (hardwareLevel: number, chapter: 1 | 2 | 3 | 4 = 1) =>
+  30 + hardwareLevel * 30 + (chapter === 2 ? 50 : chapter === 3 ? 90 : chapter === 4 ? 140 : 0)
 export const LOAN = 400 // valor do empréstimo do agiota
 const DEBT_INTEREST = 1.1 // juros por dia sobre a dívida
 
@@ -387,6 +395,32 @@ export const salaComercialHireable = (g: GameState) => chapterOf(g) === 2 && !g.
 export function buySalaComercial(g: GameState): GameState | null {
   if (!salaComercialHireable(g) || g.money < SALA_COMERCIAL_COST) return null
   return { ...g, money: g.money - SALA_COMERCIAL_COST, salaComercialComprada: true }
+}
+
+// ---------------------------------------------------------------- Loja: Andar Inteiro / Prédio
+// Sedes dos Tiers 3/4 (GDD §2) — mesmo padrão da Sala Comercial: compra opcional, elegível só
+// depois do Tier correspondente. Prédio exige o Andar Inteiro já comprado (compra sequencial,
+// mesma lógica do hardware). Sem efeito visual ainda — cena própria é sub-projeto separado.
+export const ANDAR_INTEIRO_COST = 2000
+export const PREDIO_COST = 4500
+
+// >= 3 (não === 3): se usasse === 3, a janela de compra fecharia assim que o jogador
+// terminasse o Tier 3 e virasse Cap. 4 sem ter comprado ainda — travando o Prédio também
+// (que depende de andarInteiroComprado). Sala Comercial não tem esse problema porque não
+// havia Cap. 3+ pra "passar direto"; aqui existe, então >= é o certo.
+export const andarInteiroHireable = (g: GameState) => chapterOf(g) >= 3 && !g.andarInteiroComprado
+
+export function buyAndarInteiro(g: GameState): GameState | null {
+  if (!andarInteiroHireable(g) || g.money < ANDAR_INTEIRO_COST) return null
+  return { ...g, money: g.money - ANDAR_INTEIRO_COST, andarInteiroComprado: true }
+}
+
+export const predioHireable = (g: GameState) =>
+  chapterOf(g) === 4 && g.andarInteiroComprado && !g.predioComprado
+
+export function buyPredio(g: GameState): GameState | null {
+  if (!predioHireable(g) || g.money < PREDIO_COST) return null
+  return { ...g, money: g.money - PREDIO_COST, predioComprado: true }
 }
 
 /** Roda 1x/dia (chamado junto de `applyDailyBill`): cada estagiário entrega o contrato do bairro

@@ -39,6 +39,9 @@ export interface GameState {
   interns: string[]
   // Loja da Sala Comercial: comprada uma vez, desbloqueia estagiário + PC nível 3 + cena remodelada.
   salaComercialComprada: boolean
+  // Loja: sedes dos Tiers 3/4, mesma lógica sequencial do hardware (Prédio exige Andar Inteiro).
+  andarInteiroComprado: boolean
+  predioComprado: boolean
 }
 
 const SAVE_KEY = 'save'
@@ -67,6 +70,8 @@ export function newGameState(): GameState {
     bossCooldown: {},
     interns: [],
     salaComercialComprada: false,
+    andarInteiroComprado: false,
+    predioComprado: false,
   }
 }
 
@@ -84,6 +89,8 @@ function normalize(raw: GameState): GameState {
     bossCooldown: raw.bossCooldown ?? {},
     interns: raw.interns ?? [],
     salaComercialComprada: raw.salaComercialComprada ?? false,
+    andarInteiroComprado: raw.andarInteiroComprado ?? false,
+    predioComprado: raw.predioComprado ?? false,
   }
 }
 
