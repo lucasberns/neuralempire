@@ -549,11 +549,10 @@ export function GarageScene({
         </g>
       )}
 
-      {/* cadeira de escritório de verdade: assento fino + 4 pernas visíveis + encosto —
-          não mais um bloco sólido só (parecia um pedestal, não uma cadeira). Assento
-          cobre a pegada do personagem com folga em todos os lados (sem sobra flutuando);
-          pernas vão do chão (z=0) até embaixo do assento; encosto redimensionado pra
-          aparecer atrás/acima da cabeça mesmo com o deslocamento da projeção iso. */}
+      {/* cadeira de escritório de verdade: assento fino + 4 pernas visíveis, sem encosto
+          (removido a pedido) — não mais um bloco sólido só (parecia um pedestal, não uma
+          cadeira). Assento cobre a pegada do personagem com folga em todos os lados
+          (sem sobra flutuando); pernas vão do chão (z=0) até embaixo do assento. */}
       <g className="chair">
         {/* 4 pernas curtas (canto a canto, sob o assento) */}
         <Box x={3.23} y={1.08} z={0} w={0.07} d={0.07} h={0.38} tone="chair" />
@@ -566,11 +565,6 @@ export function GarageScene({
         <Box x={3.59} y={1.08} z={0.12} w={0.07} d={0.33} h={0.05} tone="chair" />
         {/* assento: fino, pousado sobre as 4 pernas */}
         <Box x={3.15} y={1.0} z={0.38} w={0.6} d={0.5} h={0.08} tone="chair" />
-        {/* encosto: menor. x centralizado calculando o deslocamento da projeção iso
-            (screen_x = 238+(x-y)*22 — em y=1.5 precisa de x_centro≈3.7 pra alinhar
-            com o centro do personagem na tela), senão o encosto fica deslocado pra
-            esquerda e o personagem "ultrapassa" o lado direito sem cobertura nenhuma. */}
-        <Box x={3.28} y={1.5} z={0.38} w={0.8} d={0.14} h={0.55} tone="chair" />
       </g>
 
       {/* personagem (de costas, digitando — estilo GDT), com bob próprio.
