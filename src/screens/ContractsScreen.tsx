@@ -87,22 +87,9 @@ export function ContractsScreen({
         <p className="muted">Traduza o problema do cliente em código. O holdout é secreto.</p>
       </div>
 
-      <div className="contracts-tabbar" role="tablist">
-        {TAB_ORDER.map((t) => (
-          <button
-            key={t}
-            type="button"
-            role="tab"
-            aria-selected={tab === t}
-            className={`contracts-tab ${TAB_META[t].colorClass}${tab === t ? ' is-active' : ''}`}
-            onClick={() => setTab(t)}
-          >
-            <span aria-hidden>{TAB_META[t].glyph}</span> {TAB_META[t].label}{' '}
-            <span className="ct-n">{tabCounts[t]}</span>
-          </button>
-        ))}
-      </div>
-
+      {/* Do dia a dia: sempre visível, independente da aba selecionada abaixo —
+          antes ficava misturado com a lista de bosses filtrada, dando a entender
+          (errado) que a aba também escondia/mostrava esse bloco. */}
       <article className={`contract-card relampago-card${relampagoOn ? '' : ' is-locked'}`}>
         <header className="cc-head">
           <span className="cc-emoji">⚡</span>
@@ -122,18 +109,6 @@ export function ContractsScreen({
           <p className="cc-lock ok">✓ Relâmpago de hoje já feito. Volte amanhã.</p>
         )}
       </article>
-
-      {visibleBosses.map(({ c, state }) => (
-        <BossCard
-          key={c.id}
-          c={c}
-          state={state}
-          cooldownMsLeft={bossCooldownMsLeft(game, c.id, now)}
-          hardwareBlocked={!hardwareOk(game, c)}
-          onAccept={() => open(c)}
-          onRunes={() => onNavigate('skills')}
-        />
-      ))}
 
       {(() => {
         const bairro = REPEATABLE.filter((c) => isAvailable(game, c))
@@ -214,6 +189,39 @@ export function ContractsScreen({
           </article>
         )
       })()}
+
+      {/* Mural de contratos por status: só esta parte muda de acordo com a aba. */}
+      <div className="screen-head bairro-head">
+        <h3 className="panel-title">Mural de contratos por status</h3>
+      </div>
+
+      <div className="contracts-tabbar" role="tablist">
+        {TAB_ORDER.map((t) => (
+          <button
+            key={t}
+            type="button"
+            role="tab"
+            aria-selected={tab === t}
+            className={`contracts-tab ${TAB_META[t].colorClass}${tab === t ? ' is-active' : ''}`}
+            onClick={() => setTab(t)}
+          >
+            <span aria-hidden>{TAB_META[t].glyph}</span> {TAB_META[t].label}{' '}
+            <span className="ct-n">{tabCounts[t]}</span>
+          </button>
+        ))}
+      </div>
+
+      {visibleBosses.map(({ c, state }) => (
+        <BossCard
+          key={c.id}
+          c={c}
+          state={state}
+          cooldownMsLeft={bossCooldownMsLeft(game, c.id, now)}
+          hardwareBlocked={!hardwareOk(game, c)}
+          onAccept={() => open(c)}
+          onRunes={() => onNavigate('skills')}
+        />
+      ))}
     </section>
   )
 }
