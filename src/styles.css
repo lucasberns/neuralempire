@@ -861,31 +861,8 @@ button {
   stroke: rgba(88, 214, 255, 0.14);
 }
 .garage .window-glass {
-  fill: rgba(88, 214, 255, 0.14);
-}
-.garage .tone-building1 polygon {
-  stroke: rgba(88, 214, 255, 0.3);
-}
-.garage .tone-building1 .f-t {
-  fill: #14262c;
-}
-.garage .tone-building1 .f-r {
-  fill: #0e1b20;
-}
-.garage .tone-building1 .f-l {
-  fill: #091317;
-}
-.garage .tone-building2 polygon {
-  stroke: rgba(88, 214, 255, 0.3);
-}
-.garage .tone-building2 .f-t {
-  fill: #182c33;
-}
-.garage .tone-building2 .f-r {
-  fill: #102026;
-}
-.garage .tone-building2 .f-l {
-  fill: #0a161a;
+  fill: rgba(88, 214, 255, 0.16);
+  filter: drop-shadow(0 0 10px rgba(88, 214, 255, 0.55));
 }
 .garage .office-door {
   fill: #14241f;

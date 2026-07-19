@@ -278,6 +278,11 @@ export function GarageScene({
   const POSTER_Y1 = POSTER_CY - POSTER_W / 2
   const POSTER_Y2 = POSTER_CY + POSTER_W / 2
   const DOOR_Z = 2.0
+  // +10px de largura visual em relação ao vão do pôster (10 / 22, escala de
+  // wallQuadB em y — ver iso(): screen_x varia 22 por unidade de y).
+  const DOOR_W = POSTER_W + 10 / 22
+  const DOOR_Y1 = POSTER_CY - DOOR_W / 2
+  const DOOR_Y2 = POSTER_CY + DOOR_W / 2
   const netLayers = [
     [
       { y: POSTER_CY - 0.26, z: 1.52 },
@@ -323,17 +328,6 @@ export function GarageScene({
           })}
         </g>
       )}
-
-      {/* placa da virada de capítulo — só depois do Tier 1 completo (GDD §2) */}
-      {remodeled &&
-        (() => {
-          const [sx, sy] = iso(0, (GD_Y1 + GD_Y2) / 2, GD_Z + 0.12)
-          return (
-            <text className="chapter-sign" x={sx} y={sy} textAnchor="middle">
-              SALA COMERCIAL
-            </text>
-          )
-        })()}
 
       {/* piso + grade */}
       <polygon className="floor" points={floor} />
@@ -411,17 +405,13 @@ export function GarageScene({
       ) : (
         <>
           {/* janela na parede B (onde a porta da garagem ficava) — decorativa, vista da
-              cidade. Prédios são caixas (Box) de verdade — mesma técnica 3D do rack/gabinete
-              — em vez de silhuetas 2D chapadas. Sem moldura: só o vidro por cima, sem contorno. */}
+              cidade. Sem prédios, sem moldura: só o vidro com um brilho suave (filter
+              drop-shadow), efeito de luz entrando, não silhuetas de prédio. */}
           <g className="window" aria-hidden="true">
-            <Box x={0} y={0.95} z={0} w={0.14} d={0.32} h={0.95} tone="building1" />
-            <Box x={0} y={1.5} z={0} w={0.14} d={0.36} h={1.45} tone="building2" />
-            <Box x={0} y={2.02} z={0} w={0.14} d={0.26} h={0.7} tone="building1" />
-            <Box x={0} y={2.45} z={0} w={0.14} d={0.32} h={1.1} tone="building2" />
             <polygon className="window-glass" points={wallQuadB(0.85, 3.35, 0.3, 1.9)} />
           </g>
-          {/* porta da Sala Comercial: mesmo vão que o pôster usava na parede B (o pôster some
-              nesse modo — ver acima) — batente simples, redimensionado pro vão do pôster. */}
+          {/* porta da Sala Comercial: vão do pôster na parede B (o pôster some nesse modo —
+              ver acima), alargada em +10px em relação ao vão original do pôster. */}
           <g
             className="hot"
             onClick={() => onSelect('door')}
@@ -435,18 +425,18 @@ export function GarageScene({
               }
             }}
           >
-            <polygon className="office-door" points={wallQuadB(POSTER_Y1, POSTER_Y2, 0, DOOR_Z)} />
+            <polygon className="office-door" points={wallQuadB(DOOR_Y1, DOOR_Y2, 0, DOOR_Z)} />
             <polygon
               className="office-door-window"
-              points={wallQuadB(POSTER_Y1 + 0.14, POSTER_Y2 - 0.14, DOOR_Z * 0.45, DOOR_Z * 0.82)}
+              points={wallQuadB(DOOR_Y1 + 0.14, DOOR_Y2 - 0.14, DOOR_Z * 0.45, DOOR_Z * 0.82)}
             />
             <circle
               className="led"
-              cx={iso(0, POSTER_Y1 + 0.12, DOOR_Z * 0.35)[0]}
-              cy={iso(0, POSTER_Y1 + 0.12, DOOR_Z * 0.35)[1]}
+              cx={iso(0, DOOR_Y1 + 0.12, DOOR_Z * 0.35)[0]}
+              cy={iso(0, DOOR_Y1 + 0.12, DOOR_Z * 0.35)[1]}
               r={1.2}
             />
-            <rect className="hit" x={118} y={70} width={30} height={95} />
+            <rect className="hit" x={116} y={70} width={35} height={97} />
           </g>
         </>
       )}
@@ -565,26 +555,31 @@ export function GarageScene({
           pernas vão do chão (z=0) até embaixo do assento; encosto redimensionado pra
           aparecer atrás/acima da cabeça mesmo com o deslocamento da projeção iso. */}
       <g className="chair">
-        {/* 4 pernas (canto a canto, sob o assento) */}
-        <Box x={3.23} y={1.08} z={0} w={0.07} d={0.07} h={0.75} tone="chair" />
-        <Box x={3.59} y={1.08} z={0} w={0.07} d={0.07} h={0.75} tone="chair" />
-        <Box x={3.23} y={1.34} z={0} w={0.07} d={0.07} h={0.75} tone="chair" />
-        <Box x={3.59} y={1.34} z={0} w={0.07} d={0.07} h={0.75} tone="chair" />
+        {/* 4 pernas curtas (canto a canto, sob o assento) */}
+        <Box x={3.23} y={1.08} z={0} w={0.07} d={0.07} h={0.38} tone="chair" />
+        <Box x={3.59} y={1.08} z={0} w={0.07} d={0.07} h={0.38} tone="chair" />
+        <Box x={3.23} y={1.34} z={0} w={0.07} d={0.07} h={0.38} tone="chair" />
+        <Box x={3.59} y={1.34} z={0} w={0.07} d={0.07} h={0.38} tone="chair" />
+        {/* travessas baixas ligando as pernas da frente e de trás, de cada lado
+            (referência: cadeiras de verdade têm esse reforço horizontal) */}
+        <Box x={3.23} y={1.08} z={0.12} w={0.07} d={0.33} h={0.05} tone="chair" />
+        <Box x={3.59} y={1.08} z={0.12} w={0.07} d={0.33} h={0.05} tone="chair" />
         {/* assento: fino, pousado sobre as 4 pernas */}
-        <Box x={3.15} y={1.0} z={0.75} w={0.6} d={0.5} h={0.08} tone="chair" />
-        {/* encosto: mais largo que o personagem (w=0.44) pra sobrar uma faixa visível
-            dos dois lados mesmo com o deslocamento da projeção iso por estar mais "atrás"
-            (y maior) — sobe até acima da cabeça do personagem. */}
-        <Box x={3.0} y={1.5} z={0.45} w={0.95} d={0.16} h={1.25} tone="chair" />
+        <Box x={3.15} y={1.0} z={0.38} w={0.6} d={0.5} h={0.08} tone="chair" />
+        {/* encosto: menor. x centralizado calculando o deslocamento da projeção iso
+            (screen_x = 238+(x-y)*22 — em y=1.5 precisa de x_centro≈3.7 pra alinhar
+            com o centro do personagem na tela), senão o encosto fica deslocado pra
+            esquerda e o personagem "ultrapassa" o lado direito sem cobertura nenhuma. */}
+        <Box x={3.28} y={1.5} z={0.38} w={0.8} d={0.14} h={0.55} tone="chair" />
       </g>
 
       {/* personagem (de costas, digitando — estilo GDT), com bob próprio.
-          z começa no topo do estofado do assento (0.83) — a pegada da cadeira agora
-          excede a do personagem, então não sobra nenhuma borda "flutuando" no ar. */}
+          z começa no topo do assento (0.46) — a pegada da cadeira excede a do
+          personagem em todos os lados, então não sobra nenhuma borda "flutuando". */}
       <g className="dev">
-        <Box x={3.24} y={1.08} z={0.83} w={0.44} d={0.36} h={0.6} tone="person" />
+        <Box x={3.24} y={1.08} z={0.46} w={0.44} d={0.36} h={0.6} tone="person" />
         {/* capuz: uma única forma (sem cabeça separada) */}
-        <circle className="dev-hood" cx={iso(3.46, 1.28, 1.62)[0]} cy={iso(3.46, 1.28, 1.62)[1]} r={7.2} />
+        <circle className="dev-hood" cx={iso(3.46, 1.28, 1.25)[0]} cy={iso(3.46, 1.28, 1.25)[1]} r={7.2} />
       </g>
 
       {/* caixotes / tralha da garagem — 3 modelos diferentes, espalhados pela garagem.
@@ -601,8 +596,9 @@ export function GarageScene({
               meio do caminho (x=1.773,y=3.664, mesmo lugar da antiga pilha de caixas). */}
           <Box x={5.3} y={5.3} z={0} w={0.4} d={0.4} h={0.32} tone="crate2" />
           <Box x={5.35} y={5.35} z={0.32} w={0.3} d={0.3} h={0.4} tone="book1" />
-          {/* armário de arquivo — reaproveita o tom "tower2" (metal ciano) já usado no gabinete */}
-          <Box x={4.0} y={5.0} z={0} w={0.5} d={0.45} h={0.9} tone="tower2" />
+          {/* armário de arquivo — tom "desk" (madeira), não "tower2" (ciano/metal do
+              gabinete — lido como peça eletrônica misteriosa, não como móvel) */}
+          <Box x={4.0} y={5.0} z={0} w={0.5} d={0.45} h={0.9} tone="desk" />
         </>
       ) : (
         <>
