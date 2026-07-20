@@ -860,6 +860,22 @@ button {
 .garage.remodeled .grid {
   stroke: rgba(88, 214, 255, 0.14);
 }
+
+/* Andar Inteiro (Cap. 3): paleta neutra/quente — o mural colorido é o destaque, não a parede. */
+.garage.andar-inteiro .wall {
+  fill: #1c1912;
+  stroke: rgba(255, 191, 71, 0.3);
+}
+.garage.andar-inteiro .wall-b {
+  fill: #14120c;
+}
+.garage.andar-inteiro .floor {
+  fill: #100e09;
+  stroke: rgba(255, 191, 71, 0.35);
+}
+.garage.andar-inteiro .grid {
+  stroke: rgba(255, 191, 71, 0.12);
+}
 .garage .window-glass {
   fill: rgba(88, 214, 255, 0.16);
   filter: drop-shadow(0 0 10px rgba(88, 214, 255, 0.55));
