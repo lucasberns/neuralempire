@@ -53,6 +53,13 @@ async function run(req: RunRequest): Promise<void> {
     post({ type: 'run-error', id: req.id, message: 'O TF.js ainda não terminou de carregar.' })
     return
   }
+  // Tensores do TF.js não são liberados pelo GC do JS — precisam de dispose() explícito.
+  // Sem isso, cada execução vaza a memória inteira da anterior (confirmado: 16→48→64
+  // tensores em 3 chamadas seguidas do mesmo contrato). tf.tidy() não aceita callback
+  // async (model.fit é assíncrono), então o escopo é aberto/fechado manualmente em volta
+  // de toda a execução — tudo criado por setup/código/testes/métricas é descartado ao
+  // final, já que nada sobrevive a um `run()` fora do que entra em `RunOutcome` (JSON puro).
+  tf.engine().startScope()
   const logs: string[] = []
   const originalLog = console.log
   console.log = (...args: unknown[]) => logs.push(args.map(String).join(' '))
@@ -95,6 +102,12 @@ async function run(req: RunRequest): Promise<void> {
       }
     }
   } finally {
+    tf.engine().endScope()
+    // endScope() de propósito NÃO descarta tf.Variable (pesos de modelo, estado do
+    // otimizador) — variáveis sobrevivem a escopos por design (servem pra treino
+    // contínuo). Como cada run() é uma execução isolada (nada de `ns` sobrevive entre
+    // chamadas), também não faz sentido nenhuma variável sobreviver — descarta todas.
+    tf.disposeVariables()
     console.log = originalLog
     post({
       type: 'result',
