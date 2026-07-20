@@ -73,11 +73,11 @@ export function PredioScene({
         }}
       >
         <polygon className="panelboard" points={wallQuadA(0.25, 2.0, 0.65, 2.2)} />
-        <line className="roadmap-mark" x1={iso(0, 0.5, 1.9)[0]} y1={iso(0, 0.5, 1.9)[1]} x2={iso(0, 1.8, 1.9)[0]} y2={iso(0, 1.8, 1.9)[1]} />
-        <line className="roadmap-mark" x1={iso(0, 0.5, 1.55)[0]} y1={iso(0, 0.5, 1.55)[1]} x2={iso(0, 1.5, 1.55)[0]} y2={iso(0, 1.5, 1.55)[1]} />
+        <line className="roadmap-mark" x1={iso(0.5, 0, 1.9)[0]} y1={iso(0.5, 0, 1.9)[1]} x2={iso(1.8, 0, 1.9)[0]} y2={iso(1.8, 0, 1.9)[1]} />
+        <line className="roadmap-mark" x1={iso(0.5, 0, 1.55)[0]} y1={iso(0.5, 0, 1.55)[1]} x2={iso(1.5, 0, 1.55)[0]} y2={iso(1.5, 0, 1.55)[1]} />
         <polygon className="roadmap-box" points={wallQuadA(0.5, 0.85, 1.15, 1.4)} />
         <polygon className="roadmap-box" points={wallQuadA(1.05, 1.4, 1.15, 1.4)} />
-        <line className="roadmap-mark" x1={iso(0, 0.85, 1.27)[0]} y1={iso(0, 0.85, 1.27)[1]} x2={iso(0, 1.05, 1.27)[0]} y2={iso(0, 1.05, 1.27)[1]} />
+        <line className="roadmap-mark" x1={iso(0.85, 0, 1.27)[0]} y1={iso(0.85, 0, 1.27)[1]} x2={iso(1.05, 0, 1.27)[0]} y2={iso(1.05, 0, 1.27)[1]} />
         <rect className="hit" x={240} y={18} width={45} height={88} />
       </g>
 
