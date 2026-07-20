@@ -4,6 +4,7 @@ import type { View } from '../nav'
 import type { ClientState } from '../pyodide/client'
 import { AndarInteiroScene } from './AndarInteiroScene'
 import { GarageScene } from './GarageScene'
+import { PredioScene } from './PredioScene'
 import type { Hotspot } from './isoPrimitives'
 import {
   ACHIEVEMENTS,
@@ -85,7 +86,9 @@ export function LabScreen({
       <span className="mote m2" aria-hidden />
       <span className="mote m3" aria-hidden />
       <span className="mote m4" aria-hidden />
-      {game.andarInteiroComprado ? (
+      {game.predioComprado ? (
+        <PredioScene level={game.hardwareLevel} onSelect={go} />
+      ) : game.andarInteiroComprado ? (
         <AndarInteiroScene level={game.hardwareLevel} internCount={game.interns.length} onSelect={go} />
       ) : (
         <GarageScene
