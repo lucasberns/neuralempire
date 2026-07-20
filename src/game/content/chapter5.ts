@@ -112,13 +112,13 @@ ns.result = { "Acurácia na entrega": Math.round(acc * 100) + "%", "Meta do cont
     hints: [
       'As duas colunas de entrada já normalizadas são horas_por_mes/60 e valor_plano/100 (em ns.xsTreino). O alvo é cancelou (em ns.ysTreino).',
       'Um perceptron sem camada escondida (só uma dense de saída) desenha uma reta — não separa esse padrão. Adicione uma tf.layers.dense com MAIS de 1 neurônio ANTES da camada de saída.',
-      'ns.model = tf.sequential(); ns.model.add(tf.layers.dense({units: 4, activation: "relu", inputShape: [2]})); ns.model.add(tf.layers.dense({units: 1, activation: "sigmoid"})); ns.model.compile({optimizer: tf.train.adam(0.05), loss: "binaryCrossentropy"}); await ns.model.fit(ns.xsTreino, ns.ysTreino, {epochs: 150, verbose: 0}).',
+      'ns.model = tf.sequential(); ns.model.add(tf.layers.dense({units: 8, activation: "tanh", inputShape: [2]})); ns.model.add(tf.layers.dense({units: 1, activation: "sigmoid"})); ns.model.compile({optimizer: tf.train.adam(0.05), loss: "binaryCrossentropy"}); await ns.model.fit(ns.xsTreino, ns.ysTreino, {epochs: 300, verbose: 0}).',
     ],
     solution: `ns.model = tf.sequential()
-ns.model.add(tf.layers.dense({ units: 4, activation: 'relu', inputShape: [2] }))
+ns.model.add(tf.layers.dense({ units: 8, activation: 'tanh', inputShape: [2] }))
 ns.model.add(tf.layers.dense({ units: 1, activation: 'sigmoid' }))
 ns.model.compile({ optimizer: tf.train.adam(0.05), loss: 'binaryCrossentropy' })
-await ns.model.fit(ns.xsTreino, ns.ysTreino, { epochs: 150, verbose: 0 })
+await ns.model.fit(ns.xsTreino, ns.ysTreino, { epochs: 300, verbose: 0 })
 `,
     interrogation: [
       {
@@ -133,7 +133,7 @@ await ns.model.fit(ns.xsTreino, ns.ysTreino, { epochs: 150, verbose: 0 })
       {
         q: 'O que a camada escondida faz de diferente da camada de saída?',
         options: [
-          'Aprende combinações não-lineares das entradas (via ativação ReLU), que a camada de saída depois combina numa decisão final',
+          'Aprende combinações não-lineares das entradas (via uma ativação não-linear, como tanh), que a camada de saída depois combina numa decisão final',
           'Só guarda os dados brutos sem processar nada',
           'Serve só pra deixar o modelo mais lento',
         ],
@@ -199,10 +199,10 @@ ns.result = { "Previsões feitas": preds.length }
       'Sem camada escondida (só uma dense de saída) não dá — adicione uma tf.layers.dense com mais de 1 neurônio antes da saída.',
     ],
     solution: `ns.model = tf.sequential()
-ns.model.add(tf.layers.dense({ units: 4, activation: 'relu', inputShape: [2] }))
+ns.model.add(tf.layers.dense({ units: 8, activation: 'tanh', inputShape: [2] }))
 ns.model.add(tf.layers.dense({ units: 1, activation: 'sigmoid' }))
 ns.model.compile({ optimizer: tf.train.adam(0.05), loss: 'binaryCrossentropy' })
-await ns.model.fit(ns.xsTreino, ns.ysTreino, { epochs: 150, verbose: 0 })
+await ns.model.fit(ns.xsTreino, ns.ysTreino, { epochs: 300, verbose: 0 })
 `,
     interrogation: [],
   },
@@ -217,8 +217,8 @@ export const LESSONS_CH5: Record<string, Lesson> = {
     passos: [
       { code: 'ns.model = tf.sequential()', explica: 'Cria um modelo em sequência de camadas.' },
       {
-        code: "ns.model.add(tf.layers.dense({ units: 4, activation: 'relu', inputShape: [2] }))",
-        explica: 'Camada escondida: 4 neurônios, aprende combinações não-lineares das 2 entradas.',
+        code: "ns.model.add(tf.layers.dense({ units: 8, activation: 'tanh', inputShape: [2] }))",
+        explica: 'Camada escondida: 8 neurônios, aprende combinações não-lineares das 2 entradas.',
       },
       {
         code: "ns.model.add(tf.layers.dense({ units: 1, activation: 'sigmoid' }))",
@@ -229,8 +229,8 @@ export const LESSONS_CH5: Record<string, Lesson> = {
         explica: 'Define como o modelo aprende (Adam) e como mede o erro (classificação binária).',
       },
       {
-        code: 'await ns.model.fit(ns.xsTreino, ns.ysTreino, { epochs: 150, verbose: 0 })',
-        explica: 'Treina a rede — ajusta os pesos por 150 rodadas até aprender o padrão.',
+        code: 'await ns.model.fit(ns.xsTreino, ns.ysTreino, { epochs: 300, verbose: 0 })',
+        explica: 'Treina a rede — ajusta os pesos por 300 rodadas até aprender o padrão.',
       },
     ],
   },
@@ -241,7 +241,7 @@ export const LESSONS_CH5: Record<string, Lesson> = {
     passos: [
       { code: 'ns.model = tf.sequential()', explica: 'Modelo em sequência de camadas.' },
       {
-        code: "ns.model.add(tf.layers.dense({ units: 4, activation: 'relu', inputShape: [2] }))",
+        code: "ns.model.add(tf.layers.dense({ units: 8, activation: 'tanh', inputShape: [2] }))",
         explica: 'Camada escondida — sem ela, a rede vira um Perceptron simples e não separa o padrão.',
       },
       {
@@ -253,8 +253,8 @@ export const LESSONS_CH5: Record<string, Lesson> = {
         explica: 'Adam + erro de classificação binária.',
       },
       {
-        code: 'await ns.model.fit(ns.xsTreino, ns.ysTreino, { epochs: 150, verbose: 0 })',
-        explica: '150 épocas de treino sobre os 48 clientes conhecidos.',
+        code: 'await ns.model.fit(ns.xsTreino, ns.ysTreino, { epochs: 300, verbose: 0 })',
+        explica: '300 épocas de treino sobre os 48 clientes conhecidos.',
       },
     ],
   },
