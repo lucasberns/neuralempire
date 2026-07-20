@@ -83,8 +83,9 @@ export function Leds({ x, y, z, n, cls }: { x: number; y: number; z: number; n: 
 export type Hotspot = 'pc' | 'door' | 'board'
 
 // Paredes+piso+grade+tapete: idêntico em toda sala (garagem, Sala Comercial, Andar Inteiro,
-// Prédio, ...) — extraído quando a 3ª sala (Prédio) tornou reaproveitar mais barato que duplicar
-// de novo. Cada sala desenha o que é seu (porta, janela, quadro, decoração) por cima/depois disso.
+// ...) — extraído da duplicata que existia entre GarageScene.tsx e AndarInteiroScene.tsx, pra
+// não repetir de novo em cada sala nova. Cada sala desenha o que é seu (porta, janela, quadro,
+// decoração) por cima/depois disso.
 export function RoomShell() {
   const grid: Pt[][] = []
   for (let i = 0; i <= COLS; i++) grid.push([iso(i, 0), iso(i, ROWS)])
