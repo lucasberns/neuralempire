@@ -10,7 +10,12 @@ export type ClientState =
 
 export type RunArgs = Omit<RunRequest, 'type' | 'id'>
 
-const RUN_TIMEOUT_MS = 60_000
+// Maior que o do Pyodide (60s): treinar rede de verdade é bem mais lento que rodar
+// pandas/sklearn no mesmo orçamento de tempo, mesmo em redes propositalmente pequenas
+// (confirmado nesta sessão: 200 épocas de um MLP 2-8-1 em 4 amostras já passa de 60s
+// no ambiente de desenvolvimento, com o backend CPU ou WebGL). O timeout continua
+// existindo pra pegar loop infinito de verdade, só com mais folga pro caso comum.
+const RUN_TIMEOUT_MS = 120_000
 
 interface Pending {
   resolve: (o: RunOutcome) => void
