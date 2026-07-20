@@ -2,12 +2,19 @@
 // kanban/post-its grande na parede, mesa em pé vazia ("vaga aberta", time crescendo). Mesmo
 // motor iso de GarageScene.tsx (projeção + mobília compartilhados via isoPrimitives/
 // OfficeFurniture), geometria de parede/decoração própria.
-import { Box, ROOM_VIEWBOX, type Hotspot, iso, pts, wallQuadA, wallQuadB } from './isoPrimitives'
+import {
+  Box,
+  COLS,
+  ROOM_VIEWBOX,
+  ROWS,
+  WH,
+  type Hotspot,
+  iso,
+  pts,
+  wallQuadA,
+  wallQuadB,
+} from './isoPrimitives'
 import { OfficeFurniture } from './OfficeFurniture'
-
-const COLS = 6
-const ROWS = 6
-const WH = 2.4
 
 export function AndarInteiroScene({
   level,
