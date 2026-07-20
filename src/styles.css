@@ -876,6 +876,22 @@ button {
 .garage.andar-inteiro .grid {
   stroke: rgba(255, 191, 71, 0.12);
 }
+
+/* Prédio (Cap. 4): paleta de aço/azul — "corporate glass tower", sede própria consolidada. */
+.garage.predio .wall {
+  fill: #10161c;
+  stroke: rgba(120, 170, 210, 0.3);
+}
+.garage.predio .wall-b {
+  fill: #0b1014;
+}
+.garage.predio .floor {
+  fill: #0a0d10;
+  stroke: rgba(120, 170, 210, 0.3);
+}
+.garage.predio .grid {
+  stroke: rgba(120, 170, 210, 0.12);
+}
 .garage .window-glass {
   fill: rgba(88, 214, 255, 0.16);
   filter: drop-shadow(0 0 10px rgba(88, 214, 255, 0.55));
@@ -1107,6 +1123,20 @@ button {
 .garage .note.n2 { fill: rgba(255, 191, 71, 0.5); }
 .garage .note.n3 { fill: rgba(88, 214, 255, 0.5); }
 .garage .note.n4 { fill: rgba(231, 240, 234, 0.35); }
+
+.garage.predio .panelboard {
+  fill: #d7dee5;
+  stroke: rgba(20, 40, 60, 0.4);
+}
+.roadmap-mark {
+  stroke: rgba(20, 40, 60, 0.55);
+  stroke-width: 1.5;
+}
+.roadmap-box {
+  fill: none;
+  stroke: rgba(20, 40, 60, 0.55);
+  stroke-width: 1.2;
+}
 
 /* hotspots */
 .garage .hot {
