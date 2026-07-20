@@ -95,7 +95,7 @@ export function AndarInteiroScene({
           }
         }}
       >
-        <polygon className="panelboard" points={wallQuadA(0.25, 2.3, 0.65, 2.2)} />
+        <polygon className="panelboard" points={wallQuadA(0.25, 2.15, 0.65, 2.2)} />
         <polygon className="note n1" points={wallQuadA(0.4, 0.68, 1.85, 2.1)} />
         <polygon className="note n3" points={wallQuadA(0.78, 1.06, 1.85, 2.1)} />
         <polygon className="note n2" points={wallQuadA(1.16, 1.44, 1.85, 2.1)} />
