@@ -84,12 +84,16 @@ export function PredioScene({
       <OfficeFurniture level={level} onSelect={onSelect} />
 
       {/* mesa de reunião + 4 cadeiras — centro da sala, decoração, sem hotspot. Longe da mobília
-          compartilhada (y até 1.5, perto da parede A) e do tapete (y até 2.4). */}
-      <Box x={2.1} y={3.1} z={0} w={1.9} d={1.1} h={0.6} tone="desk" />
-      <Box x={2.35} y={2.85} z={0} w={0.35} d={0.3} h={0.42} tone="chair" />
-      <Box x={3.3} y={2.85} z={0} w={0.35} d={0.3} h={0.42} tone="chair" />
-      <Box x={2.35} y={4.25} z={0} w={0.35} d={0.3} h={0.42} tone="chair" />
-      <Box x={3.3} y={4.25} z={0} w={0.35} d={0.3} h={0.42} tone="chair" />
+          compartilhada (y até 1.5, perto da parede A). y+0.45 vs. a 1ª tentativa: o tapete vai até
+          y=2.4 em coordenadas de sala, mas a projeção iso eleva as faces da mesa (z=0.6) pra cima
+          na tela, o que fazia a mesa (e 2 das 4 cadeiras) invadir visualmente o polígono do tapete
+          mesmo sem overlap em coordenadas de sala — medido e corrigido nesta sessão (overlap 0 a
+          partir de +0.4, aqui com folga). */}
+      <Box x={2.1} y={3.55} z={0} w={1.9} d={1.1} h={0.6} tone="desk" />
+      <Box x={2.35} y={3.3} z={0} w={0.35} d={0.3} h={0.42} tone="chair" />
+      <Box x={3.3} y={3.3} z={0} w={0.35} d={0.3} h={0.42} tone="chair" />
+      <Box x={2.35} y={4.7} z={0} w={0.35} d={0.3} h={0.42} tone="chair" />
+      <Box x={3.3} y={4.7} z={0} w={0.35} d={0.3} h={0.42} tone="chair" />
     </svg>
   )
 }
