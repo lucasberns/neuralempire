@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { GameState } from '../persistence/saveGame'
 import type { View } from '../nav'
 import type { ClientState } from '../pyodide/client'
+import { AndarInteiroScene } from './AndarInteiroScene'
 import { GarageScene } from './GarageScene'
 import type { Hotspot } from './isoPrimitives'
 import {
@@ -84,12 +85,16 @@ export function LabScreen({
       <span className="mote m2" aria-hidden />
       <span className="mote m3" aria-hidden />
       <span className="mote m4" aria-hidden />
-      <GarageScene
-        level={game.hardwareLevel}
-        remodeled={game.salaComercialComprada}
-        internCount={game.interns.length}
-        onSelect={go}
-      />
+      {game.andarInteiroComprado ? (
+        <AndarInteiroScene level={game.hardwareLevel} internCount={game.interns.length} onSelect={go} />
+      ) : (
+        <GarageScene
+          level={game.hardwareLevel}
+          remodeled={game.salaComercialComprada}
+          internCount={game.interns.length}
+          onSelect={go}
+        />
+      )}
 
       {/* HUD mínimo */}
       <header className="ov ov-tl" aria-hidden>
