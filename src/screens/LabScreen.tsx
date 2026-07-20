@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import type { GameState } from '../persistence/saveGame'
 import type { View } from '../nav'
 import type { ClientState } from '../pyodide/client'
-import { GarageScene, type Hotspot } from './GarageScene'
+import { GarageScene } from './GarageScene'
+import type { Hotspot } from './isoPrimitives'
 import {
   ACHIEVEMENTS,
   ANDAR_INTEIRO_COST,
