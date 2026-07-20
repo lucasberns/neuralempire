@@ -1,7 +1,8 @@
 import type { RunOutcome } from '../pyodide/messages'
 import { friendlyPyError } from '../pyodide/friendly'
+import { friendlyJsError } from '../tfjs/friendly'
 
-export function TestResults({ outcome }: { outcome: RunOutcome }) {
+export function TestResults({ outcome, runtime }: { outcome: RunOutcome; runtime?: 'tfjs' }) {
   const passed = outcome.tests.filter((t) => t.passed).length
   return (
     <div className="card">
@@ -10,10 +11,10 @@ export function TestResults({ outcome }: { outcome: RunOutcome }) {
           <h3>💥 O código quebrou antes dos testes</h3>
           <p>
             <span className="badge badge-fail">{outcome.error.kind}</span>{' '}
-            {friendlyPyError(outcome.error)}
+            {runtime === 'tfjs' ? friendlyJsError(outcome.error) : friendlyPyError(outcome.error)}
           </p>
           <details>
-            <summary>Mensagem original do Python</summary>
+            <summary>Mensagem original do {runtime === 'tfjs' ? 'JavaScript' : 'Python'}</summary>
             <pre>{outcome.error.message}</pre>
           </details>
         </div>

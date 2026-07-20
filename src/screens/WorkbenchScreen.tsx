@@ -374,7 +374,7 @@ export function WorkbenchScreen({
         </div>
       )}
 
-      {outcome && <TestResults outcome={outcome} />}
+      {outcome && <TestResults outcome={outcome} runtime={contract.runtime} />}
 
       {duelo && contract.disputado && (
         <div className={`panel duelo-panel ${duelo.venceu ? 'is-vitoria' : 'is-derrota'}`}>
