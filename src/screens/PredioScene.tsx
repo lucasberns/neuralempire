@@ -3,7 +3,15 @@
 // de post-its, mesa de reunião no centro da sala (clientes corporativos, projetos de risco). Sem
 // mesa de estagiário — nesta sede eles não aparecem na cena. Mesmo motor iso de GarageScene.tsx
 // (projeção + mobília compartilhados via isoPrimitives/OfficeFurniture).
-import { Box, ROOM_VIEWBOX, RoomShell, type Hotspot, iso, wallQuadA, wallQuadB } from './isoPrimitives'
+import {
+  Box,
+  ROOM_VIEWBOX,
+  RoomShell,
+  type Hotspot,
+  iso,
+  wallQuadA,
+  wallQuadB,
+} from './isoPrimitives'
 import { OfficeFurniture } from './OfficeFurniture'
 
 export function PredioScene({
@@ -76,7 +84,7 @@ export function PredioScene({
       <OfficeFurniture level={level} onSelect={onSelect} />
 
       {/* mesa de reunião + 4 cadeiras — centro da sala, decoração, sem hotspot. Longe da mobília
-          compartilhada (y até 1.34, perto da parede A) e do tapete (y até 2.4). */}
+          compartilhada (y até 1.5, perto da parede A) e do tapete (y até 2.4). */}
       <Box x={2.1} y={3.1} z={0} w={1.9} d={1.1} h={0.6} tone="desk" />
       <Box x={2.35} y={2.85} z={0} w={0.35} d={0.3} h={0.42} tone="chair" />
       <Box x={3.3} y={2.85} z={0} w={0.35} d={0.3} h={0.42} tone="chair" />

@@ -1128,11 +1128,11 @@ button {
   fill: #d7dee5;
   stroke: rgba(20, 40, 60, 0.4);
 }
-.roadmap-mark {
+.garage .roadmap-mark {
   stroke: rgba(20, 40, 60, 0.55);
   stroke-width: 1.5;
 }
-.roadmap-box {
+.garage .roadmap-box {
   fill: none;
   stroke: rgba(20, 40, 60, 0.55);
   stroke-width: 1.2;
