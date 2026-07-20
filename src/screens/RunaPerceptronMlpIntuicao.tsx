@@ -70,8 +70,8 @@ export function RunaPerceptronMlpIntuicao({ onComplete }: { onComplete: () => vo
           <ellipse
             cx={50}
             cy={50}
-            rx={48}
-            ry={22}
+            rx={52}
+            ry={20}
             transform="rotate(45 50 50)"
             className="rpm-fronteira is-curva"
           />
