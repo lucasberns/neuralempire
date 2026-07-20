@@ -18,15 +18,24 @@ const AsyncFunction = Object.getPrototypeOf(async () => {}).constructor as new (
   ...args: string[]
 ) => (...fnArgs: unknown[]) => Promise<unknown>
 
-function buildFn(body: string, ...params: string[]): (...args: unknown[]) => Promise<unknown> {
+function buildFn(
+  body: string,
+  sourceName: string,
+  ...params: string[]
+): (...args: unknown[]) => Promise<unknown> {
   // sourceURL dá um nome ao script compilado — ajuda a extrair linha de erro (melhor esforço).
-  return new AsyncFunction(...params, `${body}\n//# sourceURL=seu-codigo`)
+  // Cada fase (setup/código/teste/métricas) tem seu próprio nome, igual ao Pyodide
+  // (<setup>/<seu-codigo>/<teste>/<metricas>) — só "seu-codigo" conta como "linha do jogador".
+  return new AsyncFunction(...params, `${body}\n//# sourceURL=${sourceName}`)
 }
 
 function errorInfo(err: unknown): JsError {
   const e = err instanceof Error ? err : new Error(String(err))
   const lineMatch = /seu-codigo:(\d+)/.exec(e.stack ?? '')
-  return { kind: e.name, message: e.message, line: lineMatch ? Number(lineMatch[1]) : null }
+  // new Function/AsyncFunction sintetiza 2 linhas de cabeçalho antes do corpo do usuário
+  // (`async function anonymous(params\n) {\n`) — subtrai pra apontar a linha de verdade.
+  const line = lineMatch ? Number(lineMatch[1]) - 2 : null
+  return { kind: e.name, message: e.message, line: line !== null && line > 0 ? line : null }
 }
 
 async function init(): Promise<void> {
@@ -54,17 +63,19 @@ async function run(req: RunRequest): Promise<void> {
   }
   try {
     try {
-      await buildFn(req.setup, 'ns', 'tf', 'csv')(ns, tf, req.csv)
-      await buildFn(req.code, 'ns', 'tf', 'csv')(ns, tf, req.csv)
+      await buildFn(req.setup, 'setup', 'ns', 'tf', 'csv')(ns, tf, req.csv)
+      await buildFn(req.code, 'seu-codigo', 'ns', 'tf', 'csv')(ns, tf, req.csv)
     } catch (err) {
       out.ok = false
       out.error = errorInfo(err)
       return
     }
+    // Cada teste roda numa cópia rasa de `ns` (não a própria `ns`) — mesma regra do Pyodide
+    // (`exec(t["code"], dict(ns))`): um teste não pode vazar estado pro próximo.
     for (const t of req.tests) {
       const r: TestResult = { name: t.name, hidden: t.hidden, passed: false, message: null }
       try {
-        await buildFn(t.code, 'ns', 'tf')(ns, tf)
+        await buildFn(t.code, 'teste', 'ns', 'tf')({ ...ns }, tf)
         r.passed = true
       } catch (err) {
         const info = errorInfo(err)
@@ -76,8 +87,9 @@ async function run(req: RunRequest): Promise<void> {
     }
     if (req.metrics && out.ok) {
       try {
-        await buildFn(req.metrics, 'ns', 'tf')(ns, tf)
-        out.metrics = ns.result as Record<string, unknown> | undefined
+        const mns: Record<string, unknown> = { ...ns }
+        await buildFn(req.metrics, 'metricas', 'ns', 'tf')(mns, tf)
+        out.metrics = mns.result as Record<string, unknown> | undefined
       } catch {
         // métricas são cosméticas; nunca derrubam o resultado (mesma regra do Pyodide)
       }
@@ -96,6 +108,11 @@ async function run(req: RunRequest): Promise<void> {
   }
 }
 
+// Serializa as execuções: `run` é assíncrono (ao contrário do Pyodide, que bloqueia a
+// thread do worker), então duas mensagens `run` em sequência rápida poderiam se sobrepor
+// e disputar o `console.log` global. A fila garante que uma só roda por vez.
+let queue: Promise<void> = Promise.resolve()
+
 self.onmessage = (e: MessageEvent<WorkerRequest>) => {
   const msg = e.data
   if (msg.type === 'init') {
@@ -103,6 +120,6 @@ self.onmessage = (e: MessageEvent<WorkerRequest>) => {
       post({ type: 'init-error', message: err instanceof Error ? err.message : String(err) }),
     )
   } else {
-    void run(msg)
+    queue = queue.then(() => run(msg))
   }
 }
