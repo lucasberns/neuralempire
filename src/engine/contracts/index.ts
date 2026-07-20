@@ -26,10 +26,13 @@ export interface Contract {
   /** Ausente = Python/Pyodide (padrão de hoje). 'tfjs' = JS/TF.js (Cap. 5+). */
   runtime?: 'tfjs'
   starterCode: string
-  /** Python que prepara o namespace (dados_treino, dados_novos…); recebe o CSV em `_ne_csv`. */
+  /** Prepara o namespace antes do código do jogador. Python (padrão): recebe o CSV em
+   *  `_ne_csv`. TF.js (`runtime: 'tfjs'`): corpo de função que recebe `(ns, tf, csv)` e
+   *  expõe o que precisar via `ns.x = ...` (ver src/tfjs/worker.ts). */
   setupCode: string
   tests: TestSpec[]
-  /** Roda após todos os testes passarem; define `_ne_result` (dict) exibido ao jogador. */
+  /** Roda após todos os testes passarem. Python: define `_ne_result` (dict) exibido ao
+   *  jogador. TF.js: corpo de função `(ns, tf)` que deve definir `ns.result`. */
   metricsCode: string
   /** Dicas progressivas (onboarding guiado, GDD §12). */
   hints: string[]
