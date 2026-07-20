@@ -7,6 +7,7 @@ import { SKILLS_CH1, CONTRACTS_CH1, RELAMPAGO, KATAS_CH1, REPEATABLE, LESSONS_CH
 import { SKILLS_CH2, CONTRACTS_CH2, KATAS_CH2, LESSONS_CH2 } from './content/chapter2'
 import { SKILLS_CH3, CONTRACTS_CH3, KATAS_CH3, LESSONS_CH3 } from './content/chapter3'
 import { SKILLS_CH4, CONTRACTS_CH4, KATAS_CH4, LESSONS_CH4 } from './content/chapter4'
+import { SKILLS_CH5, CONTRACTS_CH5, KATAS_CH5, LESSONS_CH5 } from './content/chapter5'
 import { SPECIAL } from './content/special'
 
 // ---------------------------------------------------------------- Economia
@@ -39,7 +40,7 @@ export interface SkillDef {
   prereqSkillIds: string[]
 }
 
-export const SKILLS: SkillDef[] = [...SKILLS_CH1, ...SKILLS_CH2, ...SKILLS_CH3, ...SKILLS_CH4]
+export const SKILLS: SkillDef[] = [...SKILLS_CH1, ...SKILLS_CH2, ...SKILLS_CH3, ...SKILLS_CH4, ...SKILLS_CH5]
 
 export const skillById = (id: string) => SKILLS.find((s) => s.id === id)
 export const skillOfContract = (contractId: string) => SKILLS.find((s) => s.contractId === contractId)
@@ -47,8 +48,8 @@ export const skillOfKata = (kataId: string) => SKILLS.find((s) => s.kataId === k
 export const isKata = (id: string) => id.startsWith('kata-')
 
 // ---------------------------------------------------------------- Contratos (bosses + katas)
-export const CONTRACTS: Contract[] = [...CONTRACTS_CH1, ...CONTRACTS_CH2, ...CONTRACTS_CH3, ...CONTRACTS_CH4]
-export const KATAS: Contract[] = [...KATAS_CH1, ...KATAS_CH2, ...KATAS_CH3, ...KATAS_CH4]
+export const CONTRACTS: Contract[] = [...CONTRACTS_CH1, ...CONTRACTS_CH2, ...CONTRACTS_CH3, ...CONTRACTS_CH4, ...CONTRACTS_CH5]
+export const KATAS: Contract[] = [...KATAS_CH1, ...KATAS_CH2, ...KATAS_CH3, ...KATAS_CH4, ...KATAS_CH5]
 export { RELAMPAGO, REPEATABLE, SPECIAL }
 
 // ---------------------------------------------------------------- Conquistas (GDD §8)
@@ -133,7 +134,7 @@ export interface Lesson {
   passos: LessonStep[]
 }
 
-export const LESSONS: Record<string, Lesson> = { ...LESSONS_CH1, ...LESSONS_CH2, ...LESSONS_CH3, ...LESSONS_CH4 }
+export const LESSONS: Record<string, Lesson> = { ...LESSONS_CH1, ...LESSONS_CH2, ...LESSONS_CH3, ...LESSONS_CH4, ...LESSONS_CH5 }
 
 export const lessonFor = (id: string): Lesson | undefined => LESSONS[id]
 
