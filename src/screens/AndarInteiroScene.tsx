@@ -4,13 +4,10 @@
 // OfficeFurniture), geometria de parede/decoração própria.
 import {
   Box,
-  COLS,
   ROOM_VIEWBOX,
-  ROWS,
-  WH,
+  RoomShell,
   type Hotspot,
   iso,
-  pts,
   wallQuadA,
   wallQuadB,
 } from './isoPrimitives'
@@ -25,17 +22,6 @@ export function AndarInteiroScene({
   internCount: number
   onSelect: (h: Hotspot) => void
 }) {
-  const grid: [number, number][][] = []
-  for (let i = 0; i <= COLS; i++) grid.push([iso(i, 0), iso(i, ROWS)])
-  for (let j = 0; j <= ROWS; j++) grid.push([iso(0, j), iso(COLS, j)])
-
-  const floor = pts(iso(0, 0), iso(COLS, 0), iso(COLS, ROWS), iso(0, ROWS))
-  const wallA = pts(iso(0, 0, 0), iso(COLS, 0, 0), iso(COLS, 0, WH), iso(0, 0, WH))
-  const wallB = pts(iso(0, 0, 0), iso(0, ROWS, 0), iso(0, ROWS, WH), iso(0, 0, WH))
-
-  const rugOuter = pts(iso(2.1, 0.05), iso(5.4, 0.05), iso(5.4, 2.4), iso(2.1, 2.4))
-  const rugInner = pts(iso(2.25, 0.2), iso(5.25, 0.2), iso(5.25, 2.25), iso(2.25, 2.25))
-
   return (
     <svg
       className="garage andar-inteiro"
@@ -44,9 +30,7 @@ export function AndarInteiroScene({
       role="img"
       aria-label="Seu andar inteiro em vista isométrica"
     >
-      {/* paredes */}
-      <polygon className="wall" points={wallA} />
-      <polygon className="wall wall-b" points={wallB} />
+      <RoomShell />
 
       {/* janela na parede B — vidro com brilho, sem moldura (mesma técnica da Sala Comercial) */}
       <g className="window" aria-hidden="true">
@@ -72,14 +56,6 @@ export function AndarInteiroScene({
         <circle className="led" cx={iso(0, 4.19, 0.7)[0]} cy={iso(0, 4.19, 0.7)[1]} r={1.2} />
         <rect className="hit" x={116} y={70} width={35} height={97} />
       </g>
-
-      {/* piso + grade */}
-      <polygon className="floor" points={floor} />
-      {grid.map(([a, b], i) => (
-        <line key={i} className="grid" x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} />
-      ))}
-      <polygon className="rug-outer" points={rugOuter} />
-      <polygon className="rug-inner" points={rugInner} />
 
       {/* mural de kanban/post-its (parede A) — hotspot 'board', maior que o quadro original */}
       <g

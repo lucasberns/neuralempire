@@ -81,3 +81,31 @@ export function Leds({ x, y, z, n, cls }: { x: number; y: number; z: number; n: 
 }
 
 export type Hotspot = 'pc' | 'door' | 'board'
+
+// Paredes+piso+grade+tapete: idêntico em toda sala (garagem, Sala Comercial, Andar Inteiro,
+// Prédio, ...) — extraído quando a 3ª sala (Prédio) tornou reaproveitar mais barato que duplicar
+// de novo. Cada sala desenha o que é seu (porta, janela, quadro, decoração) por cima/depois disso.
+export function RoomShell() {
+  const grid: Pt[][] = []
+  for (let i = 0; i <= COLS; i++) grid.push([iso(i, 0), iso(i, ROWS)])
+  for (let j = 0; j <= ROWS; j++) grid.push([iso(0, j), iso(COLS, j)])
+
+  const floor = pts(iso(0, 0), iso(COLS, 0), iso(COLS, ROWS), iso(0, ROWS))
+  const wallA = pts(iso(0, 0, 0), iso(COLS, 0, 0), iso(COLS, 0, WH), iso(0, 0, WH))
+  const wallB = pts(iso(0, 0, 0), iso(0, ROWS, 0), iso(0, ROWS, WH), iso(0, 0, WH))
+  const rugOuter = pts(iso(2.1, 0.05), iso(5.4, 0.05), iso(5.4, 2.4), iso(2.1, 2.4))
+  const rugInner = pts(iso(2.25, 0.2), iso(5.25, 0.2), iso(5.25, 2.25), iso(2.25, 2.25))
+
+  return (
+    <>
+      <polygon className="wall" points={wallA} />
+      <polygon className="wall wall-b" points={wallB} />
+      <polygon className="floor" points={floor} />
+      {grid.map(([a, b], i) => (
+        <line key={i} className="grid" x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} />
+      ))}
+      <polygon className="rug-outer" points={rugOuter} />
+      <polygon className="rug-inner" points={rugInner} />
+    </>
+  )
+}
