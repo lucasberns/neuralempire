@@ -59,7 +59,7 @@ export function TestResults({ outcome, runtime }: { outcome: RunOutcome; runtime
       )}
       {outcome.stdout && (
         <details>
-          <summary>Saída do console (print)</summary>
+          <summary>Saída do console ({runtime === 'tfjs' ? 'console.log' : 'print'})</summary>
           <pre>{outcome.stdout}</pre>
         </details>
       )}
