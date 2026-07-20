@@ -3,6 +3,9 @@ import { Box, Leds, type Hotspot, iso, pts } from './isoPrimitives'
 // Mobília que é IDÊNTICA em qualquer sede (garagem, Sala Comercial, Andar Inteiro, Prédio, ...):
 // rack de GPUs, mesa+monitor+PC, cadeira, personagem. O que muda por sala (paredes, porta,
 // decoração, mesa do estagiário) fica em cada arquivo de cena, não aqui.
+// Coordenadas são absolutas assumindo a mesma geometria de sala em todo lugar (parede A em
+// y=0, parede B em x=0, mesa encostada em x≈2.4-5.0) — qualquer sala nova precisa manter esse
+// layout (ou não usar este componente).
 export function OfficeFurniture({
   level,
   onSelect,
