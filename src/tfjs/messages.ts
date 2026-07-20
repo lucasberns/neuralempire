@@ -1,3 +1,7 @@
+// Protocolo tipado entre a UI e o worker do TF.js. Espelha src/pyodide/messages.ts —
+// mesma forma (código como string, testes como código com asserts, métricas opcionais),
+// só a linguagem (JS em vez de Python) e o formato de erro mudam.
+
 export interface TestSpec {
   name: string
   /** Corpo de função JS com asserts (throw em caso de falha), recebe (ns, tf). */
