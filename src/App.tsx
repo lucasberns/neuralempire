@@ -222,7 +222,7 @@ export default function App() {
       ? '← Árvore de Skills'
       : view === 'desafios'
         ? '← Mesa de Contratos'
-        : chapterOf(game) === 4
+        : chapterOf(game) >= 4
           ? '← O Prédio'
           : chapterOf(game) === 3
             ? '← O Andar Inteiro'

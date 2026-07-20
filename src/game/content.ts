@@ -66,7 +66,8 @@ const skillBossDone = (g: GameState) =>
  *  Mesma checagem precisa que as conquistas tier2/tier3-completo já usam (troca a checagem
  *  do Tier 1, que antes usava a contagem imprecisa `skillBossDone >= 4`, por essa mesma
  *  precisão). Fonte única pro custo fixo, pro rótulo do HUD e pras compras da Loja. */
-export const chapterOf = (g: GameState): 1 | 2 | 3 | 4 => {
+export const chapterOf = (g: GameState): 1 | 2 | 3 | 4 | 5 => {
+  if (SKILLS_CH4.every((s) => isDone(g, s.contractId))) return 5
   if (SKILLS_CH3.every((s) => isDone(g, s.contractId))) return 4
   if (SKILLS_CH2.every((s) => isDone(g, s.contractId))) return 3
   if (SKILLS_CH1.every((s) => isDone(g, s.contractId))) return 2
@@ -299,8 +300,8 @@ export function fmtCooldown(ms: number): string {
 // ---------------------------------------------------------------- Economia de tensão (GDD §4.4)
 // Conta diária do laboratório (energia + aluguel) — cresce com o hardware.
 // +50/dia (escritório) a partir do Cap. 2 — dobra a conta em torno da metade do jogo (GDD §4.1).
-export const dailyBill = (hardwareLevel: number, chapter: 1 | 2 | 3 | 4 = 1) =>
-  30 + hardwareLevel * 30 + (chapter === 2 ? 50 : chapter === 3 ? 90 : chapter === 4 ? 140 : 0)
+export const dailyBill = (hardwareLevel: number, chapter: 1 | 2 | 3 | 4 | 5 = 1) =>
+  30 + hardwareLevel * 30 + (chapter === 2 ? 50 : chapter === 3 ? 90 : chapter === 4 ? 140 : chapter === 5 ? 200 : 0)
 export const LOAN = 400 // valor do empréstimo do agiota
 const DEBT_INTEREST = 1.1 // juros por dia sobre a dívida
 

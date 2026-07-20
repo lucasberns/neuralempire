@@ -108,8 +108,8 @@ export function LabScreen({
           </span>
         </div>
         <span className="ov-chapter">
-          {chapterOf(game) === 4
-            ? 'CAP. 04 · O PRÉDIO'
+          {chapterOf(game) >= 4
+            ? `CAP. ${chapterOf(game) === 5 ? '05' : '04'} · O PRÉDIO`
             : chapterOf(game) === 3
               ? 'CAP. 03 · O ANDAR INTEIRO'
               : chapterOf(game) === 2
