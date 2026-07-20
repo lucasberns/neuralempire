@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { EditorView, basicSetup } from 'codemirror'
 import { keymap } from '@codemirror/view'
 import { indentWithTab } from '@codemirror/commands'
+import { javascript } from '@codemirror/lang-javascript'
 import { python } from '@codemirror/lang-python'
 import { oneDark } from '@codemirror/theme-one-dark'
 
@@ -17,9 +18,11 @@ const touchTheme = EditorView.theme({
 interface Props {
   initialCode: string
   onChange: (code: string) => void
+  /** Padrão 'python' (todo o conteúdo existente). 'javascript' pros contratos de Cap. 5+. */
+  language?: 'python' | 'javascript'
 }
 
-export function CodeEditor({ initialCode, onChange }: Props) {
+export function CodeEditor({ initialCode, onChange, language = 'python' }: Props) {
   const host = useRef<HTMLDivElement>(null)
   const onChangeRef = useRef(onChange)
   onChangeRef.current = onChange
@@ -32,7 +35,7 @@ export function CodeEditor({ initialCode, onChange }: Props) {
       parent: host.current,
       extensions: [
         basicSetup,
-        python(),
+        language === 'javascript' ? javascript() : python(),
         oneDark,
         touchTheme,
         keymap.of([indentWithTab]),

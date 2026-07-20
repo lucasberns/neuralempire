@@ -23,6 +23,8 @@ export interface Contract {
   prereqContractIds: string[]
   /** CSV servido pelo próprio app (entra no precache do SW → offline). */
   datasetUrl: string
+  /** Ausente = Python/Pyodide (padrão de hoje). 'tfjs' = JS/TF.js (Cap. 5+). */
+  runtime?: 'tfjs'
   starterCode: string
   /** Python que prepara o namespace (dados_treino, dados_novos…); recebe o CSV em `_ne_csv`. */
   setupCode: string

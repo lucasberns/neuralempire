@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { PyodideClient, type ClientState } from './pyodide/client'
+import { TfjsClient, type ClientState as TfClientState } from './tfjs/client'
 import { TopBar } from './components/TopBar'
 import type { View, RuneKind } from './nav'
 import { LabScreen } from './screens/LabScreen'
@@ -46,6 +47,10 @@ export default function App() {
     phase: 'loading',
     progress: { message: 'Iniciando…', loaded: 0, total: 1 },
   })
+  const [tfState, setTfState] = useState<TfClientState>({
+    phase: 'loading',
+    progress: { message: 'Iniciando…', loaded: 0, total: 1 },
+  })
   const [game, setGame] = useState<GameState | null>(null)
   const [view, setView] = useState<View>('lab')
   const [runa, setRuna] = useState<{ skillId: string; kind: RuneKind } | null>(null)
@@ -56,12 +61,22 @@ export default function App() {
   const dismissNotice = () => setNotices((n) => n.slice(1))
   const [askLeave, setAskLeave] = useState(false)
   const clientRef = useRef<PyodideClient | null>(null)
+  const tfClientRef = useRef<TfjsClient | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     clientRef.current = new PyodideClient(setPyState)
     void loadGame().then((s) => setGame(s ?? newGameState()))
   }, [])
+
+  // TF.js é pesado — só cria o worker quando o jogador de fato abre um contrato desse
+  // runtime (Cap. 5+), pra não pesar o 1º load de quem nunca chega lá.
+  useEffect(() => {
+    const c = game?.contracts.activeId ? contractById(game.contracts.activeId) : undefined
+    if (view === 'workbench' && c?.runtime === 'tfjs' && !tfClientRef.current) {
+      tfClientRef.current = new TfjsClient(setTfState)
+    }
+  }, [view, game])
 
   useEffect(() => {
     if (!game) return
@@ -304,12 +319,12 @@ export default function App() {
                 }}
               />
             )}
-            {view === 'workbench' && active && clientRef.current && (
+            {view === 'workbench' && active && (active.runtime === 'tfjs' ? tfClientRef.current : clientRef.current) && (
               <WorkbenchScreen
                 contract={active}
                 mode={isKata(active.id) ? 'kata' : 'boss'}
-                client={clientRef.current}
-                pyState={pyState}
+                client={active.runtime === 'tfjs' ? tfClientRef.current! : clientRef.current!}
+                clientState={active.runtime === 'tfjs' ? tfState : pyState}
                 game={game}
                 onGameChange={setGame}
                 onNavigate={setView}

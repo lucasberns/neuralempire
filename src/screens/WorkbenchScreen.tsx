@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { PyodideClient, ClientState } from '../pyodide/client'
+import type { TfjsClient } from '../tfjs/client'
 import type { RunOutcome } from '../pyodide/messages'
 import type { GameState } from '../persistence/saveGame'
 import type { Contract } from '../engine/contracts'
@@ -31,7 +32,7 @@ export function WorkbenchScreen({
   contract,
   mode = 'boss',
   client,
-  pyState,
+  clientState,
   game,
   onGameChange,
   onNavigate,
@@ -40,8 +41,8 @@ export function WorkbenchScreen({
   contract: Contract
   /** 'kata' = Runa do Código (prática, não paga); 'boss' = Prova de Domínio. */
   mode?: 'kata' | 'boss'
-  client: PyodideClient
-  pyState: ClientState
+  client: PyodideClient | TfjsClient
+  clientState: ClientState
   game: GameState
   onGameChange: (g: GameState) => void
   onNavigate: (v: View) => void
@@ -64,7 +65,7 @@ export function WorkbenchScreen({
 
   const code = game.codeByContract[contract.id] ?? contract.starterCode
   const done = isDone(game, contract.id)
-  const pyReady = pyState.phase === 'ready'
+  const pyReady = clientState.phase === 'ready'
   // Prova de verdade = boss único (não kata, não bairro, não relâmpago). Só aqui vale a Fase 1.
   const isProva = mode === 'boss' && !contract.repeatable && contract.id !== RELAMPAGO.id
   // Fase 1: no boss NÃO tem aula/dica/solução — treino e prova ficam separados.
@@ -252,18 +253,27 @@ export function WorkbenchScreen({
       <div className="panel">
         <div className="panel-head">
           <h3 className="panel-title">Seu código</h3>
-          <span className="chip">python · sklearn</span>
+          <span className="chip">{contract.runtime === 'tfjs' ? 'javascript · tf.js' : 'python · sklearn'}</span>
         </div>
-        <CodeEditor key={`${contract.id}:${editorNonce}`} initialCode={code} onChange={setCode} />
+        <CodeEditor
+          key={`${contract.id}:${editorNonce}`}
+          initialCode={code}
+          onChange={setCode}
+          language={contract.runtime === 'tfjs' ? 'javascript' : 'python'}
+        />
 
-        {!pyReady && pyState.phase === 'loading' && (
+        {!pyReady && clientState.phase === 'loading' && (
           <p className="py-loading">
-            <span className="spinner" /> Carregando o motor Python… ({pyState.progress.message})
+            <span className="spinner" />{' '}
+            {contract.runtime === 'tfjs' ? 'Carregando o motor de redes neurais…' : 'Carregando o motor Python…'}{' '}
+            ({clientState.progress.message})
           </p>
         )}
-        {pyState.phase === 'error' && (
+        {clientState.phase === 'error' && (
           <p className="py-loading err">
-            Não consegui carregar o Python. No primeiro uso é preciso estar online (~60 MB).
+            {contract.runtime === 'tfjs'
+              ? 'Não consegui carregar o TF.js. No primeiro uso é preciso estar online.'
+              : 'Não consegui carregar o Python. No primeiro uso é preciso estar online (~60 MB).'}{' '}
             Verifique a conexão e recarregue.
           </p>
         )}
