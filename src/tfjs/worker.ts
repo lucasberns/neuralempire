@@ -120,6 +120,9 @@ self.onmessage = (e: MessageEvent<WorkerRequest>) => {
       post({ type: 'init-error', message: err instanceof Error ? err.message : String(err) }),
     )
   } else {
-    queue = queue.then(() => run(msg))
+    // .catch aqui é essencial: sem ele, um run() rejeitado (ex.: postMessage com dado não
+    // clonável) travaria a fila pra sempre — todo .then(() => run(...)) seguinte encadeado
+    // numa promise já rejeitada nunca chega a chamar seu callback.
+    queue = queue.then(() => run(msg)).catch(() => undefined)
   }
 }
