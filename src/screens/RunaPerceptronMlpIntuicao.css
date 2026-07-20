@@ -29,6 +29,10 @@
   stroke: var(--dim);
   stroke-dasharray: 3 2;
 }
+.rpm-fronteira.is-parcial {
+  stroke: var(--amber);
+  fill: rgba(255, 191, 71, 0.08);
+}
 .rpm-fronteira.is-curva {
   stroke: var(--lime);
   fill: rgba(182, 241, 69, 0.08);

@@ -18,18 +18,28 @@ const GRUPOS: readonly Grupo[] = [
   { cx: 78, cy: 22, classe: 'fica', label: 'uso alto, valor alto' },
 ]
 
-const N_MIN_CURVA = 2
-
-// Pra cada nº de neurônios (0-3), quais grupos a fronteira classifica certo (pré-calibrado —
-// com 0 (reta única) só acerta 2 dos 4; com 1 já melhora mas ainda erra 1; com 2+ acerta os 4).
+// Pra cada nº de neurônios (0-3), quais grupos a fronteira classifica certo (pré-calibrado,
+// geometria conferida contra as coordenadas de GRUPOS acima — não é só um número solto):
+// - 0 (reta vertical x=50): separa os 4 pontos em 2 pares, cada par com 1 cancela + 1 fica —
+//   o máximo que UMA reta consegue nesse padrão XOR é 2 de 4 certos, não importa a reta.
+// - 1 (círculo pequeno em torno de só um dos 2 cantos "cancela"): pega esse canto certo, ainda
+//   erra o outro canto cancela (fica de fora) — 3 de 4.
+// - 2+ (elipse alongada na diagonal principal, cobrindo os 2 cantos "cancela" e excluindo os
+//   2 cantos "fica" na diagonal oposta): separa os 4 certo.
 const ACERTOS_POR_NEURONIO: Record<number, number> = { 0: 2, 1: 3, 2: 4, 3: 4 }
+
+function estadoFronteira(neuronios: number): 'reta' | 'parcial' | 'curva' {
+  if (neuronios === 0) return 'reta'
+  if (neuronios === 1) return 'parcial'
+  return 'curva'
+}
 
 export function RunaPerceptronMlpIntuicao({ onComplete }: { onComplete: () => void }) {
   const [neuronios, setNeuronios] = useState(0)
   const [solved, setSolved] = useState(false)
 
   const acertos = ACERTOS_POR_NEURONIO[neuronios]
-  const curva = neuronios >= N_MIN_CURVA
+  const estado = estadoFronteira(neuronios)
   const isGood = acertos === GRUPOS.length
 
   if (isGood && !solved) setSolved(true)
@@ -50,13 +60,21 @@ export function RunaPerceptronMlpIntuicao({ onComplete }: { onComplete: () => vo
       >
         <line x1="50" y1="0" x2="50" y2="100" className="rpm-eixo" />
         <line x1="0" y1="50" x2="100" y2="50" className="rpm-eixo" />
-        {curva ? (
-          <path
+        {estado === 'reta' && (
+          <line x1="50" y1="0" x2="50" y2="100" className="rpm-fronteira is-reta" />
+        )}
+        {estado === 'parcial' && (
+          <circle cx={22} cy={22} r={20} className="rpm-fronteira is-parcial" />
+        )}
+        {estado === 'curva' && (
+          <ellipse
+            cx={50}
+            cy={50}
+            rx={48}
+            ry={22}
+            transform="rotate(45 50 50)"
             className="rpm-fronteira is-curva"
-            d="M 50 0 C 20 20, 20 80, 50 100 C 80 80, 80 20, 50 0 Z"
           />
-        ) : (
-          <line x1="0" y1="100" x2="100" y2="0" className="rpm-fronteira is-reta" />
         )}
         {GRUPOS.map((g, i) => (
           <circle key={i} cx={g.cx} cy={g.cy} r={6} className={`rpm-ponto is-${g.classe}`} />
