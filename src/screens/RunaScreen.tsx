@@ -34,6 +34,8 @@ import { RunaReducaoDimensionalidadeIntuicao } from './RunaReducaoDimensionalida
 import { RunaReducaoDimensionalidadeMatematica } from './RunaReducaoDimensionalidadeMatematica'
 import { RunaPerceptronMlpIntuicao } from './RunaPerceptronMlpIntuicao'
 import { RunaPerceptronMlpMatematica } from './RunaPerceptronMlpMatematica'
+import { RunaBackpropagationIntuicao } from './RunaBackpropagationIntuicao'
+import { RunaBackpropagationMatematica } from './RunaBackpropagationMatematica'
 
 const TITLE: Record<RuneKind, { emoji: string; nome: string; sub: string }> = {
   intuicao: { emoji: '◆', nome: 'Runa da Intuição', sub: 'Sinta o que o algoritmo faz — sem fórmula.' },
@@ -60,6 +62,7 @@ const RUNAS: Record<string, Partial<Record<RuneKind, RunaComponent>>> = {
   clustering: { intuicao: RunaClusteringIntuicao, matematica: RunaClusteringMatematica },
   'reducao-dimensionalidade': { intuicao: RunaReducaoDimensionalidadeIntuicao, matematica: RunaReducaoDimensionalidadeMatematica },
   'perceptron-mlp': { intuicao: RunaPerceptronMlpIntuicao, matematica: RunaPerceptronMlpMatematica },
+  backpropagation: { intuicao: RunaBackpropagationIntuicao, matematica: RunaBackpropagationMatematica },
 }
 
 export function RunaScreen({
