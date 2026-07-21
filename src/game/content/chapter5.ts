@@ -233,8 +233,8 @@ const dL_dw1 = dL_dz1 * ns.x
 const dL_db1 = dL_dz1
 const w1Esperado = ns.w1 - ns.lr * dL_dw1
 const b1Esperado = ns.b1 - ns.lr * dL_db1
-if (Math.abs(ns.w1Novo - w1Esperado) > 1e-4) throw new Error('w1Novo incorreto: esperado ~' + w1Esperado.toFixed(4) + ', veio ' + ns.w1Novo)
-if (Math.abs(ns.b1Novo - b1Esperado) > 1e-4) throw new Error('b1Novo incorreto: esperado ~' + b1Esperado.toFixed(4) + ', veio ' + ns.b1Novo)
+if (!Number.isFinite(ns.w1Novo) || Math.abs(ns.w1Novo - w1Esperado) > 1e-4) throw new Error('w1Novo incorreto: esperado ~' + w1Esperado.toFixed(4) + ', veio ' + ns.w1Novo)
+if (!Number.isFinite(ns.b1Novo) || Math.abs(ns.b1Novo - b1Esperado) > 1e-4) throw new Error('b1Novo incorreto: esperado ~' + b1Esperado.toFixed(4) + ', veio ' + ns.b1Novo)
 `,
       },
       {
@@ -248,8 +248,8 @@ const dL_dw2 = dL_dz2 * h1
 const dL_db2 = dL_dz2
 const w2Esperado = ns.w2 - ns.lr * dL_dw2
 const b2Esperado = ns.b2 - ns.lr * dL_db2
-if (Math.abs(ns.w2Novo - w2Esperado) > 1e-4) throw new Error('w2Novo incorreto: esperado ~' + w2Esperado.toFixed(4) + ', veio ' + ns.w2Novo)
-if (Math.abs(ns.b2Novo - b2Esperado) > 1e-4) throw new Error('b2Novo incorreto: esperado ~' + b2Esperado.toFixed(4) + ', veio ' + ns.b2Novo)
+if (!Number.isFinite(ns.w2Novo) || Math.abs(ns.w2Novo - w2Esperado) > 1e-4) throw new Error('w2Novo incorreto: esperado ~' + w2Esperado.toFixed(4) + ', veio ' + ns.w2Novo)
+if (!Number.isFinite(ns.b2Novo) || Math.abs(ns.b2Novo - b2Esperado) > 1e-4) throw new Error('b2Novo incorreto: esperado ~' + b2Esperado.toFixed(4) + ', veio ' + ns.b2Novo)
 `,
       },
     ],
@@ -421,7 +421,7 @@ const h1n = Math.tanh(z1n)
 const yhatDepois = ns.w2Novo * h1n + ns.b2Novo
 const lossDepois = 0.5 * (yhatDepois - ns.y) ** 2
 
-if (lossDepois >= lossAntes) throw new Error('O erro não diminuiu (antes ' + lossAntes.toFixed(4) + ', depois ' + lossDepois.toFixed(4) + ') — o gradiente foi calculado e aplicado na direção certa?')
+if (!Number.isFinite(lossDepois) || lossDepois >= lossAntes) throw new Error('O erro não diminuiu (antes ' + lossAntes.toFixed(4) + ', depois ' + (Number.isFinite(lossDepois) ? lossDepois.toFixed(4) : 'NaN') + ') — o gradiente foi calculado e aplicado na direção certa?')
 `,
       },
     ],
