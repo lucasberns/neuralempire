@@ -26,8 +26,11 @@ const LABEL: Record<EstadoLr, string> = {
   muitoAlto: 'muito alto',
 }
 
+// Limites deixam folga pro raio do maior círculo (r=5, o "ponto atual") não ser cortado pela
+// borda do viewBox (SVG recorta por padrão — sem isso, a bolinha mais importante do estado
+// "muito alto" ficava parcialmente invisível bem na hora que mais precisa aparecer).
 function clamp(x: number): number {
-  return Math.max(2, Math.min(98, x))
+  return Math.max(7, Math.min(93, x))
 }
 
 function perdaY(x: number): number {
