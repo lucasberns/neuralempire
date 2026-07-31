@@ -1,0 +1,18 @@
+node_modules/
+dist/
+dev-dist/
+*.local
+.env
+.env.*
+!.env.example
+
+# Docs/ferramentas de dev locais — não precisam do app/repo funcionar, ficam só na máquina
+PLAN.md
+PROGRESS.md
+neural-empire-gdd.md
+.claude/
+docs/
+.superpowers/
+scripts/gen-icons.mjs
+icon-source.png
+graphify-out/

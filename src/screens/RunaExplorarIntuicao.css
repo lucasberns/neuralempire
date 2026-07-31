@@ -1,0 +1,75 @@
+.runa-explorar-intuicao {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.rei-em {
+  color: var(--lime);
+}
+.rei-lead {
+  font-family: var(--sans);
+  color: var(--muted);
+  line-height: 1.5;
+  margin: 0;
+}
+.rei-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+.rei-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.5rem;
+  cursor: pointer;
+}
+.rei-card:hover,
+.rei-card:focus-visible {
+  border-color: var(--lime);
+  outline: none;
+}
+.rei-card svg {
+  width: 100%;
+  aspect-ratio: 1;
+}
+.rei-dot {
+  fill: var(--cyan);
+}
+.rei-card-nome {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.rei-task {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.rei-pergunta {
+  font-family: var(--sans);
+  color: var(--text);
+  line-height: 1.45;
+  margin: 0;
+}
+.rei-feedback {
+  color: var(--amber);
+}
+.rei-sucesso {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.rei-sucesso-msg {
+  margin: 0;
+  padding: 12px 14px;
+  font-family: var(--sans);
+  line-height: 1.5;
+  color: var(--text);
+  border: 1px solid var(--lime);
+  border-radius: var(--r-sm);
+  background: rgba(182, 241, 69, 0.08);
+}

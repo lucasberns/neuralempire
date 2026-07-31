@@ -1,0 +1,65 @@
+/* src/screens/RunaBackpropagationIntuicao.css */
+.runa-backpropagation-intuicao {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.rbp-lead {
+  font-family: var(--sans);
+  color: var(--muted);
+  line-height: 1.5;
+}
+.rbp-plano {
+  width: 100%;
+  max-width: 280px;
+  margin: 0 auto;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+}
+.rbp-curva {
+  fill: none;
+  stroke: var(--line-bright);
+  stroke-width: 1.5;
+}
+.rbp-bola {
+  stroke: var(--panel);
+  stroke-width: 1;
+}
+.rbp-bola.is-passo {
+  fill: var(--cyan);
+}
+.rbp-bola.is-atual {
+  fill: var(--lime);
+}
+.rbp-slider {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+.rbp-slider-top {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.rbp-val {
+  color: var(--text);
+}
+.rbp-meter {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.rbp-resultado {
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  color: var(--dim);
+  margin: 0;
+  line-height: 1.4;
+}
+.rbp-resultado.is-good {
+  color: var(--lime);
+}

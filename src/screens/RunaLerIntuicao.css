@@ -1,0 +1,116 @@
+.runa-ler-intuicao {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.rli-em {
+  color: var(--lime);
+}
+.rli-lead {
+  font-family: var(--sans);
+  color: var(--muted);
+  line-height: 1.5;
+  margin: 0;
+}
+.rli-progresso {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0;
+}
+.rli-pergunta {
+  font-family: var(--sans);
+  color: var(--text);
+  line-height: 1.45;
+  margin: 0;
+}
+.rli-table-wrap {
+  overflow-x: auto;
+}
+.rli-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.rli-table th,
+.rli-table td {
+  padding: 0.4rem 0.6rem;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+}
+.rli-table tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.03);
+}
+.rli-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.rli-col-hint {
+  background: rgba(255, 191, 71, 0.18);
+  transition: background 0.2s ease;
+}
+.rli-row-clickable {
+  cursor: pointer;
+}
+.rli-row-clickable:hover,
+.rli-row-clickable:focus-visible {
+  background: rgba(182, 241, 69, 0.08);
+  outline: none;
+}
+.rli-table tbody tr.rli-row-certo {
+  background: rgba(182, 241, 69, 0.16);
+}
+.rli-task {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.rli-numero {
+  display: flex;
+  gap: 0.5rem;
+}
+.rli-numero input {
+  width: 5rem;
+}
+.rli-responder {
+  min-height: 46px;
+  padding: 13px 18px;
+  font-family: var(--mono);
+  font-weight: 700;
+  color: var(--text);
+  background: var(--panel-2);
+  border: 1px solid var(--line-bright);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+}
+.rli-responder:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+}
+.rli-responder:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.rli-feedback {
+  color: var(--amber);
+}
+.rli-feedback-ok {
+  color: var(--lime);
+}
+.rli-sucesso {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.rli-sucesso-msg {
+  margin: 0;
+  padding: 12px 14px;
+  font-family: var(--sans);
+  line-height: 1.5;
+  color: var(--text);
+  border: 1px solid var(--lime);
+  border-radius: var(--r-sm);
+  background: rgba(182, 241, 69, 0.08);
+}
